@@ -1,0 +1,215 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="2600" viewBox="0 0 1600 2600">
+  <defs>
+    <style>
+      .bg { fill: #050607; }
+      .title { fill: #f4f5f2; font: 700 42px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .subtitle { fill: #bfc7c0; font: 500 22px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .time { fill: #d6d4cb; font: 700 26px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .box-title { fill: #e7f3ea; font: 800 30px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .box-sub { fill: #b9d8ca; font: 600 23px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .box-small { fill: #cfd2cb; font: 600 21px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .muted { fill: #a9aaa3; font: 600 20px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .tiny { fill: #cfcfc8; font: 600 18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .hermes { fill: #0b5848; stroke: #2bc29a; }
+      .chatgpt { fill: #43378f; stroke: #8e81ff; }
+      .codex { fill: #0b4c6a; stroke: #45c6f5; }
+      .drive { fill: #454642; stroke: #a5a69d; }
+      .ledger { fill: #473711; stroke: #d4a433; }
+      .telegram { fill: #6f4307; stroke: #f0a12b; }
+      .approval { fill: #5b2027; stroke: #f36d7d; }
+      .card { stroke-width: 2.2; rx: 14; ry: 14; filter: url(#shadow); }
+      .line { stroke-width: 3; fill: none; marker-end: url(#arrow); }
+      .dashed { stroke-dasharray: 10 9; }
+      .thin { stroke-width: 2; }
+      .axis { stroke: #e3e2dc; stroke-width: 3; }
+      .grid { stroke: #77766f; stroke-width: 2; }
+    </style>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#c7d0c5"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1600" height="2600"/>
+
+  <text class="title" x="800" y="70" text-anchor="middle">Tender Export OS v4.1 - Current Daily Operating Model</text>
+  <text class="subtitle" x="800" y="108" text-anchor="middle">Hermes controls operations. data/events.jsonl is canonical. Drive, Sheets, Kanban, and briefs are projections.</text>
+
+  <!-- Timeline -->
+  <line class="axis" x1="130" y1="160" x2="130" y2="2470"/>
+  <g>
+    <text class="time" x="112" y="178" text-anchor="end">6:30pm</text>
+    <line class="grid" x1="120" y1="170" x2="132" y2="170"/>
+    <text class="time" x="112" y="345" text-anchor="end">7:00am</text>
+    <line class="grid" x1="120" y1="336" x2="132" y2="336"/>
+    <text class="time" x="112" y="700" text-anchor="end">8:00am</text>
+    <line class="grid" x1="120" y1="690" x2="132" y2="690"/>
+    <text class="time" x="112" y="1248" text-anchor="end">8:30am</text>
+    <line class="grid" x1="120" y1="1238" x2="132" y2="1238"/>
+    <text class="time" x="112" y="1550" text-anchor="end">9:00am</text>
+    <line class="grid" x1="120" y1="1540" x2="132" y2="1540"/>
+    <text class="time" x="112" y="2095" text-anchor="end">9:45am</text>
+    <line class="grid" x1="120" y1="2085" x2="132" y2="2085"/>
+    <text class="time" x="112" y="2325" text-anchor="end">10:00am</text>
+    <line class="grid" x1="120" y1="2315" x2="132" y2="2315"/>
+  </g>
+
+  <!-- Previous evening planning -->
+  <rect class="card hermes" x="165" y="135" width="530" height="110"/>
+  <text class="box-title" x="430" y="178" text-anchor="middle">Hermes writes tomorrow focus</text>
+  <text class="box-sub" x="430" y="214" text-anchor="middle">categories, portals, priorities, gates</text>
+
+  <rect class="card drive" x="775" y="135" width="500" height="110"/>
+  <text class="box-title" x="1025" y="178" text-anchor="middle">Drive projection updated</text>
+  <text class="box-sub" x="1025" y="214" text-anchor="middle">Focus packet for research boardroom</text>
+  <path class="line" stroke="#2bc29a" d="M695 190 L775 190"/>
+
+  <!-- ChatGPT research -->
+  <rect class="card chatgpt" x="165" y="305" width="530" height="140"/>
+  <text class="box-title" x="430" y="350" text-anchor="middle">ChatGPT bounded research run</text>
+  <text class="box-sub" x="430" y="386" text-anchor="middle">reads focus packet, cites sources</text>
+  <text class="box-sub" x="430" y="418" text-anchor="middle">returns opportunities, not commands</text>
+
+  <rect class="card drive" x="775" y="330" width="500" height="118"/>
+  <text class="box-title" x="1025" y="374" text-anchor="middle">Drive - research return</text>
+  <text class="box-sub" x="1025" y="410" text-anchor="middle">opportunities_YYYYMMDD.md</text>
+  <path class="line" stroke="#8e81ff" d="M695 375 L775 385"/>
+
+  <rect class="card chatgpt" x="165" y="480" width="530" height="105"/>
+  <text class="box-title" x="430" y="522" text-anchor="middle">Sources scanned</text>
+  <text class="box-sub" x="430" y="557" text-anchor="middle">GeM, CPPP, eProcure, portals, B2B RFQs</text>
+  <path class="line thin" stroke="#8e81ff" d="M430 445 L430 480"/>
+
+  <!-- Hermes start and canonical ledger -->
+  <rect class="card hermes" x="165" y="655" width="530" height="112"/>
+  <text class="box-title" x="430" y="699" text-anchor="middle">Hermes automation fires</text>
+  <text class="box-sub" x="430" y="735" text-anchor="middle">reads memory policy, run log, packets</text>
+
+  <rect class="card ledger" x="775" y="625" width="510" height="430"/>
+  <text class="box-title" x="1030" y="675" text-anchor="middle">Canonical state</text>
+  <text class="box-title" x="1030" y="715" text-anchor="middle">data/events.jsonl</text>
+  <line x1="825" y1="742" x2="1235" y2="742" stroke="#796d4a" stroke-width="1.5"/>
+  <text class="box-small" x="1030" y="786" text-anchor="middle">append-only event stream</text>
+  <text class="box-small" x="1030" y="826" text-anchor="middle">case mutations by case_id</text>
+  <text class="box-small" x="1030" y="866" text-anchor="middle">approval gates and receipts</text>
+  <text class="box-small" x="1030" y="906" text-anchor="middle">run logs and evidence links</text>
+  <text class="box-small" x="1030" y="946" text-anchor="middle">projection rebuild source</text>
+  <text class="muted" x="1030" y="1008" text-anchor="middle">CSV, Drive, Kanban, briefs are views</text>
+  <path class="line" stroke="#d4a433" d="M695 711 L775 711"/>
+  <path class="line thin dashed" stroke="#d4a433" d="M775 403 L730 403 L730 681 L775 681"/>
+
+  <!-- Internal passes -->
+  <rect class="card hermes" x="165" y="820" width="530" height="112"/>
+  <text class="box-title" x="430" y="864" text-anchor="middle">Pass 1 - filter and score</text>
+  <text class="box-sub" x="430" y="900" text-anchor="middle">kill rules, scores 0-100, rejects non-viable</text>
+  <path class="line thin" stroke="#2bc29a" d="M430 767 L430 820"/>
+  <path class="line thin" stroke="#d4a433" d="M695 876 L775 826"/>
+
+  <rect class="card hermes" x="165" y="980" width="530" height="112"/>
+  <text class="box-title" x="430" y="1024" text-anchor="middle">Pass 2 - deep read</text>
+  <text class="box-sub" x="430" y="1060" text-anchor="middle">requirements, BOQ, deadlines, compliance flags</text>
+  <path class="line thin" stroke="#2bc29a" d="M430 932 L430 980"/>
+  <path class="line thin" stroke="#d4a433" d="M695 1036 L775 906"/>
+
+  <rect class="card hermes" x="165" y="1140" width="530" height="112"/>
+  <text class="box-title" x="430" y="1184" text-anchor="middle">Pass 3 - supply chain</text>
+  <text class="box-sub" x="430" y="1220" text-anchor="middle">supplier gaps, logistics plan, proof needed</text>
+  <path class="line thin" stroke="#2bc29a" d="M430 1092 L430 1140"/>
+  <path class="line thin" stroke="#d4a433" d="M695 1196 L775 966"/>
+
+  <!-- Projections and Telegram 8:30 -->
+  <rect class="card drive" x="775" y="1115" width="510" height="240"/>
+  <text class="box-title" x="1030" y="1162" text-anchor="middle">Drive / Sheets projections</text>
+  <text class="box-sub" x="1030" y="1198" text-anchor="middle">master_cases.csv, run log, health</text>
+  <line x1="825" y1="1226" x2="1235" y2="1226" stroke="#696a64" stroke-width="1.5"/>
+  <text class="box-small" x="1030" y="1268" text-anchor="middle">Knowledge Bus packets and receipts</text>
+  <text class="box-small" x="1030" y="1308" text-anchor="middle">SYSTEM_BRAIN.xlsx stays a shared view</text>
+  <path class="line dashed" stroke="#d4a433" d="M1030 1055 L1030 1115"/>
+
+  <rect class="card telegram" x="1325" y="1180" width="230" height="112"/>
+  <text class="box-title" x="1440" y="1223" text-anchor="middle">Telegram 8:30</text>
+  <text class="box-sub" x="1440" y="1259" text-anchor="middle">short status</text>
+  <text class="box-sub" x="1440" y="1289" text-anchor="middle">owner can steer</text>
+  <path class="line dashed" stroke="#f0a12b" d="M1285 1238 L1325 1238"/>
+
+  <!-- Supplier research -->
+  <rect class="card chatgpt" x="165" y="1495" width="530" height="128"/>
+  <text class="box-title" x="430" y="1540" text-anchor="middle">ChatGPT supplier research</text>
+  <text class="box-sub" x="430" y="1576" text-anchor="middle">bounded packet per case</text>
+  <text class="box-sub" x="430" y="1606" text-anchor="middle">returns cited supplier findings</text>
+  <path class="line thin" stroke="#2bc29a" d="M430 1252 L430 1495"/>
+
+  <rect class="card drive" x="775" y="1505" width="510" height="118"/>
+  <text class="box-title" x="1030" y="1548" text-anchor="middle">Drive - supplier findings</text>
+  <text class="box-sub" x="1030" y="1584" text-anchor="middle">supplier_research_YYYYMMDD.md</text>
+  <path class="line" stroke="#8e81ff" d="M695 1559 L775 1564"/>
+
+  <!-- Codex and approval -->
+  <rect class="card codex" x="165" y="1690" width="530" height="118"/>
+  <text class="box-title" x="430" y="1735" text-anchor="middle">Codex artifact/runtime pass</text>
+  <text class="box-sub" x="430" y="1771" text-anchor="middle">spreadsheets, reports, packs, validators</text>
+  <path class="line thin" stroke="#8e81ff" d="M430 1623 L430 1690"/>
+
+  <rect class="card hermes" x="165" y="1855" width="530" height="112"/>
+  <text class="box-title" x="430" y="1899" text-anchor="middle">Pass 4 - bid and price engine</text>
+  <text class="box-sub" x="430" y="1935" text-anchor="middle">draft waterfalls, scenarios, supplier RFQ drafts</text>
+  <path class="line thin" stroke="#45c6f5" d="M430 1808 L430 1855"/>
+
+  <rect class="card approval" x="775" y="1818" width="510" height="150"/>
+  <text class="box-title" x="1030" y="1863" text-anchor="middle">Approval gate</text>
+  <text class="box-small" x="1030" y="1900" text-anchor="middle">no sends, submissions, DSC use, or payments</text>
+  <text class="box-small" x="1030" y="1930" text-anchor="middle">no final price, HSN, or origin claim</text>
+  <text class="box-small" x="1030" y="1960" text-anchor="middle">no supplier or delivery commitment</text>
+  <path class="line" stroke="#f36d7d" d="M695 1911 L775 1895"/>
+
+  <rect class="card hermes" x="165" y="2020" width="530" height="112"/>
+  <text class="box-title" x="430" y="2064" text-anchor="middle">Pass 5 - intel pass</text>
+  <text class="box-sub" x="430" y="2100" text-anchor="middle">second look, gap detection, ranking, flags</text>
+  <path class="line thin" stroke="#2bc29a" d="M430 1967 L430 2020"/>
+  <path class="line thin" stroke="#d4a433" d="M695 2076 L775 1990"/>
+
+  <!-- Final brief -->
+  <rect class="card chatgpt" x="165" y="2190" width="530" height="112"/>
+  <text class="box-title" x="430" y="2234" text-anchor="middle">Report renderer</text>
+  <text class="box-sub" x="430" y="2270" text-anchor="middle">reads projections, builds HTML daily brief</text>
+  <path class="line thin" stroke="#8e81ff" d="M430 2132 L430 2190"/>
+
+  <rect class="card drive" x="775" y="2185" width="510" height="118"/>
+  <text class="box-title" x="1030" y="2229" text-anchor="middle">Drive - final state written</text>
+  <text class="box-sub" x="1030" y="2265" text-anchor="middle">brief_YYYYMMDD.html + receipts</text>
+  <path class="line" stroke="#8e81ff" d="M695 2246 L775 2246"/>
+
+  <rect class="card telegram" x="1325" y="2205" width="230" height="118"/>
+  <text class="box-title" x="1440" y="2249" text-anchor="middle">Telegram 10:00</text>
+  <text class="box-sub" x="1440" y="2285" text-anchor="middle">final summary</text>
+  <text class="box-sub" x="1440" y="2315" text-anchor="middle">brief link</text>
+  <path class="line" stroke="#f0a12b" d="M1285 2264 L1325 2264"/>
+
+  <!-- Learning loop -->
+  <rect class="card ledger" x="775" y="2360" width="510" height="112"/>
+  <text class="box-title" x="1030" y="2404" text-anchor="middle">Learning loop</text>
+  <text class="box-sub" x="1030" y="2440" text-anchor="middle">staged memory/skill proposals, approval first</text>
+  <path class="line dashed" stroke="#d4a433" d="M1030 2303 L1030 2360"/>
+
+  <!-- Legend -->
+  <g transform="translate(170 2488)">
+    <rect class="card hermes" x="0" y="0" width="28" height="28" rx="4" ry="4" filter="none"/>
+    <text class="tiny" x="42" y="22">Hermes control plane</text>
+    <rect class="card chatgpt" x="275" y="0" width="28" height="28" rx="4" ry="4" filter="none"/>
+    <text class="tiny" x="317" y="22">ChatGPT research boardroom</text>
+    <rect class="card codex" x="645" y="0" width="28" height="28" rx="4" ry="4" filter="none"/>
+    <text class="tiny" x="687" y="22">Codex artifact runtime</text>
+    <rect class="card ledger" x="950" y="0" width="28" height="28" rx="4" ry="4" filter="none"/>
+    <text class="tiny" x="992" y="22">Canonical ledger</text>
+  </g>
+  <g transform="translate(170 2532)">
+    <rect class="card drive" x="0" y="0" width="28" height="28" rx="4" ry="4" filter="none"/>
+    <text class="tiny" x="42" y="22">Drive / Sheets / Kanban projections</text>
+    <rect class="card approval" x="430" y="0" width="28" height="28" rx="4" ry="4" filter="none"/>
+    <text class="tiny" x="472" y="22">Owner approval gate</text>
+    <rect class="card telegram" x="730" y="0" width="28" height="28" rx="4" ry="4" filter="none"/>
+    <text class="tiny" x="772" y="22">Telegram owner interface</text>
+  </g>
+</svg>
