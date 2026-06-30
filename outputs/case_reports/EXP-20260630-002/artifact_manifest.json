@@ -2,7 +2,7 @@
   "case_id": "EXP-20260630-002",
   "workflow_type": "EXPORT",
   "status": "APPROVAL_REQUIRED",
-  "generated_at": "2026-06-30T13:08:12",
+  "generated_at": "2026-06-30T15:52:04",
   "source": {
     "source_name": "Recovered local registers",
     "source_url": "",
@@ -36,7 +36,8 @@
     ],
     "daily_briefs": [
       "outputs/daily_briefs/brief_20260630.html",
-      "outputs/daily_briefs/sample_daily_brief.html"
+      "outputs/daily_briefs/sample_daily_brief.html",
+      "outputs/daily_briefs/weekly_system_review_20260630.html"
     ]
   },
   "open_gates": {

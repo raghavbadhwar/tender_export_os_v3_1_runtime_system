@@ -4,6 +4,32 @@
   "warning": "Review this manifest before any Drive upload. Secrets and restricted files are filtered locally.",
   "groups": [
     {
+      "drive_folder": "00_Project_Context/01_Instructions",
+      "files": [
+        "AGENTS.md",
+        "HERMES.md",
+        "README.md",
+        "SOUL.md",
+        "docs/CHATGPT_CODEX_HERMES_DRIVE_COMMUNICATION.md",
+        "docs/FINAL_ARCHITECTURE.md",
+        "docs/GOOGLE_DRIVE_KNOWLEDGE_BUS.md"
+      ]
+    },
+    {
+      "drive_folder": "00_Project_Context/02_State_Snapshots",
+      "files": [
+        "data/chatgpt_snapshot.md",
+        "outputs/drive_knowledge_bus_setup.json"
+      ]
+    },
+    {
+      "drive_folder": "00_Project_Context/03_Context_Receipts",
+      "files": [
+        "receipts/drive_setup/chatgpt_bridge_upload_20260630_0414.json",
+        "receipts/drive_setup/project_context_folder_20260630_143445.json"
+      ]
+    },
+    {
       "drive_folder": "00_Control_Center",
       "files": [
         "data/agent_run_log.csv",
@@ -21,11 +47,14 @@
       "files": [
         "config/schemas/approval_card.schema.json",
         "config/schemas/approvals_receipts.schema.json",
+        "config/schemas/buyer_master.schema.json",
+        "config/schemas/demand_research.schema.json",
         "config/schemas/drive_manifest.schema.json",
         "config/schemas/event.schema.json",
         "config/schemas/master_cases.schema.json",
         "config/schemas/plugin_run_receipt.schema.json",
         "config/schemas/quote_master.schema.json",
+        "config/schemas/rfq_master.schema.json",
         "config/schemas/supplier_master.schema.json"
       ]
     },
@@ -33,7 +62,8 @@
       "drive_folder": "01_Daily_Briefs",
       "files": [
         "outputs/daily_briefs/brief_20260630.html",
-        "outputs/daily_briefs/sample_daily_brief.html"
+        "outputs/daily_briefs/sample_daily_brief.html",
+        "outputs/daily_briefs/weekly_system_review_20260630.html"
       ]
     },
     {
@@ -50,8 +80,21 @@
         "outputs/case_reports/EXP-20260630-001/supplier_quote_request_drafts/SUP-009_Globus_Global_Trade_quote_request.txt",
         "outputs/case_reports/EXP-20260630-001/supplier_shortlist_EXP-20260630-001.md",
         "outputs/case_reports/EXP-20260630-002/artifact_manifest.json",
+        "outputs/case_reports/EXP-20260630-002/rfq_evidence_intake_EXP-20260630-002.md",
+        "outputs/case_reports/EXP-20260630-003/artifact_manifest.json",
+        "outputs/case_reports/EXP-20260630-004/artifact_manifest.json",
+        "outputs/case_reports/EXP-20260630-005/artifact_manifest.json",
+        "outputs/case_reports/EXP-20260630-006/artifact_manifest.json",
         "outputs/case_reports/GOV-20260630-001/artifact_manifest.json",
-        "outputs/case_reports/GOV-20260630-002/artifact_manifest.json"
+        "outputs/case_reports/GOV-20260630-001/supplier_shortlist_GOV-20260630-001.md",
+        "outputs/case_reports/GOV-20260630-002/artifact_manifest.json",
+        "outputs/case_reports/GOV-20260630-002/no_go_reason_note.txt",
+        "outputs/case_reports/GOV-20260630-003/artifact_manifest.json",
+        "outputs/case_reports/GOV-20260630-004/artifact_manifest.json",
+        "outputs/case_reports/GOV-20260630-005/artifact_manifest.json",
+        "outputs/case_reports/GOV-20260630-006/artifact_manifest.json",
+        "outputs/case_reports/GOV-20260630-007/artifact_manifest.json",
+        "outputs/case_reports/supplier_5_3_2_evidence_20260630T073827Z.json"
       ]
     },
     {
@@ -428,7 +471,13 @@
         "receipts/browser_research/GOV-20260630-001_20260630060630.json",
         "receipts/browser_research/GOV-20260630-001_20260630124535.json",
         "receipts/browser_research/GOV-20260630-001_20260630124658.json",
+        "receipts/browser_research/GOV-20260630-001_20260630130205.json",
+        "receipts/browser_research/GOV-20260630-001_20260630154545.json",
+        "receipts/browser_research/GOV-20260630-001_20260630154817.json",
+        "receipts/browser_research/GOV-20260630-001_20260630154949.json",
+        "receipts/browser_research/GOV-20260630-001_20260630155126.json",
         "receipts/drive_setup/chatgpt_bridge_upload_20260630_0414.json",
+        "receipts/drive_setup/project_context_folder_20260630_143445.json",
         "receipts/drive_sync/GOV-20260630-001_manifest_20260630055517.json",
         "receipts/drive_sync/GOV-20260630-001_manifest_20260630055519.json",
         "receipts/drive_sync/GOV-20260630-001_manifest_20260630055520.json",
@@ -798,6 +847,11 @@
         "receipts/drive_sync/GOV-20260630-001_manifest_20260630124534.json",
         "receipts/drive_sync/GOV-20260630-001_manifest_20260630124657.json",
         "receipts/drive_sync/GOV-20260630-001_manifest_20260630130151.json",
+        "receipts/drive_sync/GOV-20260630-001_manifest_20260630130205.json",
+        "receipts/drive_sync/GOV-20260630-001_manifest_20260630154545.json",
+        "receipts/drive_sync/GOV-20260630-001_manifest_20260630154816.json",
+        "receipts/drive_sync/GOV-20260630-001_manifest_20260630154949.json",
+        "receipts/drive_sync/GOV-20260630-001_manifest_20260630155126.json",
         "receipts/drive_sync/SYSTEM-90PLUS-DELIVERY-TEST_20260630124313_google_drive_sync.json",
         "receipts/mobile_delivery/SYSTEM-90PLUS-DELIVERY-TEST_20260630124128.json",
         "receipts/mobile_delivery/SYSTEM-90PLUS-DELIVERY-TEST_20260630124155_retry.json",
@@ -828,7 +882,14 @@
         "outputs/chatgpt_bridge/to_chatgpt/20260630_041417_daily_boardroom_snapshot/CHATGPT_BOARDROOM.md",
         "outputs/chatgpt_bridge/to_chatgpt/20260630_041417_daily_boardroom_snapshot/chatgpt_snapshot.md",
         "outputs/chatgpt_bridge/to_chatgpt/20260630_041417_daily_boardroom_snapshot/packet_manifest.json",
-        "outputs/chatgpt_bridge/to_chatgpt/20260630_041417_daily_boardroom_snapshot/project_instructions.md"
+        "outputs/chatgpt_bridge/to_chatgpt/20260630_041417_daily_boardroom_snapshot/project_instructions.md",
+        "outputs/chatgpt_bridge/to_chatgpt/20260630_131158_weekly_learning_review/CHATGPT_BOARDROOM.md",
+        "outputs/chatgpt_bridge/to_chatgpt/20260630_131158_weekly_learning_review/chatgpt_snapshot.md",
+        "outputs/chatgpt_bridge/to_chatgpt/20260630_131158_weekly_learning_review/packet_manifest.json",
+        "outputs/chatgpt_bridge/to_chatgpt/20260630_131158_weekly_learning_review/project_instructions.md",
+        "outputs/chatgpt_bridge/to_chatgpt/20260630_131158_weekly_learning_review/staged_memory_updates_20260630.json",
+        "outputs/chatgpt_bridge/to_chatgpt/20260630_131158_weekly_learning_review/staged_skill_updates_20260630.md",
+        "outputs/chatgpt_bridge/to_chatgpt/20260630_131158_weekly_learning_review/weekly_learning_review_20260630.md"
       ]
     },
     {

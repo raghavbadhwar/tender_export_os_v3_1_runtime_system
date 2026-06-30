@@ -2,7 +2,7 @@
   "case_id": "GOV-20260630-001",
   "workflow_type": "GOV",
   "status": "SUPPLIER_SEARCH",
-  "generated_at": "2026-06-30T13:15:14",
+  "generated_at": "2026-06-30T15:52:04",
   "source": {
     "source_name": "GeM",
     "source_url": "https://gem.gov.in",
@@ -393,6 +393,10 @@
       "receipts/browser_research/GOV-20260630-001_20260630124535.json",
       "receipts/browser_research/GOV-20260630-001_20260630124658.json",
       "receipts/browser_research/GOV-20260630-001_20260630130205.json",
+      "receipts/browser_research/GOV-20260630-001_20260630154545.json",
+      "receipts/browser_research/GOV-20260630-001_20260630154817.json",
+      "receipts/browser_research/GOV-20260630-001_20260630154949.json",
+      "receipts/browser_research/GOV-20260630-001_20260630155126.json",
       "receipts/drive_sync/GOV-20260630-001_manifest_20260630055517.json",
       "receipts/drive_sync/GOV-20260630-001_manifest_20260630055519.json",
       "receipts/drive_sync/GOV-20260630-001_manifest_20260630055520.json",
@@ -762,7 +766,11 @@
       "receipts/drive_sync/GOV-20260630-001_manifest_20260630124534.json",
       "receipts/drive_sync/GOV-20260630-001_manifest_20260630124657.json",
       "receipts/drive_sync/GOV-20260630-001_manifest_20260630130151.json",
-      "receipts/drive_sync/GOV-20260630-001_manifest_20260630130205.json"
+      "receipts/drive_sync/GOV-20260630-001_manifest_20260630130205.json",
+      "receipts/drive_sync/GOV-20260630-001_manifest_20260630154545.json",
+      "receipts/drive_sync/GOV-20260630-001_manifest_20260630154816.json",
+      "receipts/drive_sync/GOV-20260630-001_manifest_20260630154949.json",
+      "receipts/drive_sync/GOV-20260630-001_manifest_20260630155126.json"
     ],
     "daily_briefs": [
       "outputs/daily_briefs/brief_20260630.html",

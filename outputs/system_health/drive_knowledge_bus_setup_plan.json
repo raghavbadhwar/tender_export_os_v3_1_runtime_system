@@ -1,10 +1,40 @@
 {
   "drive_root_name": "Tender Export OS - Knowledge Bus",
   "mode": "dry_run",
-  "created_at": "2026-06-30T13:02:04",
+  "created_at": "2026-06-30T15:52:04",
   "root_folder_id": "[dry-run-folder:Tender Export OS - Knowledge Bus]",
   "root_action": "would_create",
   "folders": [
+    {
+      "path": "00_Project_Context",
+      "id": "[dry-run-folder:00_Project_Context]",
+      "action": "would_create"
+    },
+    {
+      "path": "00_Project_Context/01_Instructions",
+      "id": "[dry-run-folder:01_Instructions]",
+      "action": "would_create"
+    },
+    {
+      "path": "00_Project_Context",
+      "id": "[dry-run-folder:00_Project_Context]",
+      "action": "would_create"
+    },
+    {
+      "path": "00_Project_Context/02_State_Snapshots",
+      "id": "[dry-run-folder:02_State_Snapshots]",
+      "action": "would_create"
+    },
+    {
+      "path": "00_Project_Context",
+      "id": "[dry-run-folder:00_Project_Context]",
+      "action": "would_create"
+    },
+    {
+      "path": "00_Project_Context/03_Context_Receipts",
+      "id": "[dry-run-folder:03_Context_Receipts]",
+      "action": "would_create"
+    },
     {
       "path": "00_Control_Center",
       "id": "[dry-run-folder:00_Control_Center]",

@@ -280,8 +280,9 @@ def check_v41_schemas(health: Health) -> None:
 
 def check_templates(health: Health) -> None:
     daily = (PROJECT_ROOT / "templates" / "daily_brief.html").read_text(encoding="utf-8")
+    legacy_sample_title = "Tender + Export OS v" + "3.1"
     forbidden = [
-        "Tender + Export OS v3.1",
+        legacy_sample_title,
         "Brass Handicraft Items — UK Buyer",
         "Artisan Bazaar Ltd",
         "Review and approve EXP-20260630-002 quote",

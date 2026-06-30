@@ -2,7 +2,7 @@
   "case_id": "GOV-20260630-002",
   "workflow_type": "GOV",
   "status": "REJECTED",
-  "generated_at": "2026-06-30T13:02:04",
+  "generated_at": "2026-06-30T15:52:04",
   "source": {
     "source_name": "CPPP",
     "source_url": "https://eprocure.gov.in",
@@ -16,7 +16,8 @@
   },
   "artifacts": {
     "case_reports": [
-      "outputs/case_reports/GOV-20260630-002/artifact_manifest.json"
+      "outputs/case_reports/GOV-20260630-002/artifact_manifest.json",
+      "outputs/case_reports/GOV-20260630-002/no_go_reason_note.txt"
     ],
     "bid_packs": [],
     "export_quote_packs": [],
@@ -24,7 +25,8 @@
     "receipts": [],
     "daily_briefs": [
       "outputs/daily_briefs/brief_20260630.html",
-      "outputs/daily_briefs/sample_daily_brief.html"
+      "outputs/daily_briefs/sample_daily_brief.html",
+      "outputs/daily_briefs/weekly_system_review_20260630.html"
     ]
   },
   "open_gates": {
