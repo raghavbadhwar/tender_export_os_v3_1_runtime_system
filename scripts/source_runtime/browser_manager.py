@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
 from typing import Any
 
@@ -12,19 +11,10 @@ except ModuleNotFoundError:  # pragma: no cover
     from source_adapters.base import SourceBlocked  # type: ignore
 
 from .evidence_store import EvidenceStore, DEFAULT_EVIDENCE_ROOT, relative, safe_name
+from .blocker_assessment import assess_blockers
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 PROFILE_ROOT = PROJECT_ROOT / ".local" / "browser_profiles"
-
-BLOCKER_PATTERNS = {
-    "CAPTCHA_REQUIRED": r"captcha|recaptcha|hcaptcha|verify\s+you\s+are\s+human",
-    "OTP_REQUIRED": r"\botp\b|one[-\s]?time\s+password|phone\s+verification",
-    "MFA_REQUIRED": r"\bmfa\b|multi[-\s]?factor|two[-\s]?factor|2fa",
-    "LOGIN_REQUIRED": r"log\s*in|login required|sign\s*in|session expired",
-    "PAYMENT_REQUIRED": r"payment required|pay now|subscription required|subscribe",
-    "DSC_REQUIRED": r"\bDSC\b|digital\s*signature|certificate\s*prompt|signature\s*prompt",
-    "ACCESS_DENIED": r"access denied|forbidden|unauthorized|not authorized|blocked",
-}
 
 
 class BrowserManager:
@@ -89,15 +79,16 @@ class BrowserManager:
         return relative(path)
 
     def detect_blockers(self, page, source: str | None = None) -> None:
-        try:
-            content = f"{page.title()}\n{page.url}\n{page.content()[:150000]}"
-        except Exception:
-            content = ""
-        for reason, pattern in BLOCKER_PATTERNS.items():
-            if re.search(pattern, content, flags=re.I):
-                if self.evidence:
-                    self.evidence.add_blocker(reason, source_url=getattr(page, "url", ""))
-                raise SourceBlocked(source or self.source_slug, reason, True)
+        assessment = assess_blockers(page)
+        if self.evidence:
+            for label in assessment.get("forbidden_action_elements", []):
+                self.evidence.add_blocker("FORBIDDEN_ACTION_ELEMENT_PRESENT", source_url=getattr(page, "url", ""), details=label)
+        hard = assessment.get("hard_blockers", [])
+        if hard:
+            reason = "_".join(str(hard[0]).upper().split())
+            if self.evidence:
+                self.evidence.add_blocker(reason, source_url=getattr(page, "url", ""))
+            raise SourceBlocked(source or self.source_slug, reason, True)
 
     def __enter__(self) -> "BrowserManager":
         return self

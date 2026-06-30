@@ -10,7 +10,11 @@
     "blacklisted",
     "watchlisted",
     "created_at",
-    "updated_at"
+    "updated_at",
+    "gem_registration_verified_at",
+    "quote_proof_count",
+    "last_quote_proof_path",
+    "is_indicative_price_only"
   ],
   "required_fields": ["supplier_id", "supplier_name"],
   "enums": {
@@ -19,9 +23,13 @@
     "export_experience": ["", "TRUE", "FALSE"],
     "tender_experience": ["", "TRUE", "FALSE"],
     "gem_registered": ["", "TRUE", "FALSE"],
-    "apeda_registered": ["", "TRUE", "FALSE"]
+    "apeda_registered": ["", "TRUE", "FALSE"],
+    "is_indicative_price_only": ["", "TRUE", "FALSE"],
+    "first_order_credit_allowed": ["", "TRUE", "FALSE"],
+    "certificate_verification_status": ["", "verified", "missing", "unverified", "pending"],
+    "gst_verification_status": ["", "verified", "missing", "unverified", "pending"]
   },
-  "date_fields": ["last_quote_date", "created_at", "updated_at"],
+  "date_fields": ["last_quote_date", "created_at", "updated_at", "gem_registration_verified_at"],
   "numeric_fields": [
     "min_order_qty",
     "lead_time_days",
@@ -44,7 +52,11 @@
     "on_time_history_score",
     "defect_history_score",
     "communication_score",
-    "total_supplier_score"
+    "total_supplier_score",
+    "credit_days_offered",
+    "advance_required_pct",
+    "credit_limit_inr",
+    "quote_proof_count"
   ],
   "url_fields": ["website"]
 }

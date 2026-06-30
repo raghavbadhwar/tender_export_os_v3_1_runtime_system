@@ -1,3 +1,14 @@
 source: epublish
 start_url: https://eprocure.gov.in/epublish/app
-notes: "Safe placeholder; selectors pending."
+listing_card: ["table tbody tr", "tr", ".notice-card"]
+fields:
+  tender_id: ["td:nth-child(1)", ".notice-id", "[data-field='notice_id']"]
+  title: ["td:nth-child(2)", ".title", "[data-field='title']"]
+  buyer: ["td:nth-child(3)", ".buyer", ".organisation", "[data-field='buyer']"]
+  deadline: ["td:nth-child(4)", ".deadline", "[data-field='deadline']"]
+  value: ["td:nth-child(5)", ".value", "[data-field='value']"]
+  detail_link: ["a.detail-link", "td a"]
+  document_link: ["a[href$='.pdf']", "a[href*='download']"]
+  corrigendum_link: ["a[href*='corrigendum']"]
+  boq_link: ["a[href*='BOQ']", "a[href*='boq']"]
+unsafe_actions: [submit, upload, pay, dsc, declaration]

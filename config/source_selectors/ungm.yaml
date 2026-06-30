@@ -1,0 +1,18 @@
+source: ungm
+start_url: https://www.ungm.org/Public/Notice
+listing_card:
+  - ".notice"
+  - ".notice-card"
+  - "table tbody tr"
+  - "tr"
+fields:
+  tender_id: [".notice-id", "[data-field='notice_id']", "td:nth-child(1)"]
+  title: [".notice-title", ".title", "[data-field='title']", "td:nth-child(2)"]
+  buyer: [".agency", ".buyer", "[data-field='agency']", "td:nth-child(3)"]
+  deadline: [".deadline", "[data-field='deadline']", "td:nth-child(4)"]
+  value: [".value", "[data-field='value']"]
+  detail_link: ["a.notice-link", "a.detail-link", "td a"]
+  document_link: ["a[href$='.pdf']", "a[href*='download']", "a.document-link"]
+  corrigendum_link: ["a[href*='amendment']", "a[href*='corrigendum']"]
+  boq_link: ["a[href*='boq']", "a[href*='schedule']"]
+unsafe_actions: [submit, upload, pay, declaration]

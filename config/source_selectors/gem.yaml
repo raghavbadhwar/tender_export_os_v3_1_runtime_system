@@ -1,9 +1,21 @@
 source: gem
 start_url: https://bidplus.gem.gov.in/all-bids
-notes: "MVP uses generic text/link extraction. Add stable selectors only after verifying current portal DOM with owner-authorized session."
-unsafe_actions:
-  - submit
-  - upload
-  - pay
-  - dsc
-  - declaration
+listing_card:
+  - ".bid-card"
+  - ".card"
+  - "tr"
+fields:
+  tender_id: [".bid-number", ".bid_no", "[data-field='bid_number']", "td:nth-child(1)"]
+  title: [".bid-title", ".title", "[data-field='title']", "td:nth-child(2)"]
+  buyer: [".buyer", ".organisation", "[data-field='buyer']", "td:nth-child(3)"]
+  department: [".department", "[data-field='department']"]
+  ministry: [".ministry", "[data-field='ministry']"]
+  deadline: [".bid-end-date", ".deadline", "[data-field='deadline']", "td:nth-child(4)"]
+  quantity: [".quantity", "[data-field='quantity']"]
+  value: [".estimated-value", "[data-field='value']", "td:nth-child(5)"]
+  emd: [".emd", "[data-field='emd']"]
+  detail_link: ["a.detail-link", "a[href*='showbidDocument']", "a[href*='bid']"]
+  document_link: ["a.document-link", "a[href$='.pdf']", "a[href*='download']"]
+  corrigendum_link: ["a.corrigendum-link", "a[href*='corrigendum']"]
+  boq_link: ["a.boq-link", "a[href*='BOQ']", "a[href*='boq']"]
+unsafe_actions: [submit, upload, pay, dsc, declaration]

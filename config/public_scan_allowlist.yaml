@@ -1,0 +1,29 @@
+# Paths and patterns allowed in public-template private-data scans.
+# Keep this narrow: live data, outputs, receipts, and case evidence are skipped as private runtime paths.
+allowed_paths:
+  - docs/**
+  - AGENTS.md
+  - HERMES.md
+  - SOUL.md
+  - README.md
+  - codex/**
+  - config/**
+  - hermes/**
+  - scripts/**
+  - skills/**
+  - templates/**
+  - tests/**
+  - workflows/**
+  - data/examples/**
+  - outputs/examples/**
+  - receipts/examples/**
+allowed_literal_patterns:
+  - "{{GSTIN}}"
+  - "{{IEC}}"
+  - "[YOUR GSTIN]"
+  - "[YOUR IEC NUMBER]"
+  - "buyer@example.com"
+  - "owner@example.org"
+  - "password=secret-value"
+  - "https://example.com"
+  - "https://example.test"

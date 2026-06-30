@@ -11,7 +11,13 @@ runtime:
   external_side_effects_allowed: false
 
 evidence:
-  root: outputs/evidence
+  root: outputs/evidence/private
+  mode: private
+  allow_raw_html_commit: false
+  allow_screenshot_commit: false
+  redact_raw_html: true
+  screenshot_storage: local_only
+  redacted_root: outputs/evidence/redacted
   save_screenshots: true
   save_raw_html: true
   save_downloads: true

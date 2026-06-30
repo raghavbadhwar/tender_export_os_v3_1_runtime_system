@@ -1,0 +1,105 @@
+defaults:
+  actor_allowed: ["*"]
+  required_payload_fields: []
+  allowed_payload_fields: ["*"]
+  forbidden_payload_keys:
+    - password
+    - passwd
+    - token
+    - cookie
+    - session
+    - dsc
+    - bank_details
+    - raw_full_pdf_text
+    - raw_html
+    - supplier_table_dump
+  citation_required: false
+  private_data_allowed: false
+
+events:
+  system.snapshot_started: {object_type: system}
+  system.snapshot_completed: {object_type: system}
+  case.snapshot_imported: {object_type: case, citation_required: true}
+  case.created: {object_type: case, citation_required: true, required_payload_fields: [status]}
+  case.updated: {object_type: case, citation_required: true}
+  case.status_changed: {object_type: case, required_payload_fields: [new_status]}
+  case.workspace_created: {object_type: case_workspace, citation_required: true}
+  case.updated_from_corrigendum: {object_type: case, citation_required: true, required_payload_fields: [corrigendum_hash]}
+  approval.snapshot_imported: {object_type: approval, citation_required: true}
+  approval.created: {object_type: approval, citation_required: true}
+  approval.updated: {object_type: approval, citation_required: true}
+  approval.card_created: {object_type: approval, citation_required: true}
+  approval.owner_decision_recorded: {object_type: approval, citation_required: true}
+  approval.owner_approved: {object_type: approval, citation_required: true}
+  approval.owner_rejected: {object_type: approval, citation_required: true}
+  approval.changes_requested: {object_type: approval, citation_required: true}
+  approval.receipt_created: {object_type: approval, citation_required: true}
+  approval.timeout_reminder_due: {object_type: approval, citation_required: true}
+  approval.timed_out: {object_type: approval, citation_required: true}
+  supplier.snapshot_imported: {object_type: supplier, citation_required: true}
+  supplier.created: {object_type: supplier, citation_required: true}
+  supplier.updated: {object_type: supplier, citation_required: true}
+  supplier.verification_drafted: {object_type: supplier, citation_required: true}
+  supplier.match_candidates_created: {object_type: supplier_match, citation_required: true}
+  supplier.quote_proof_validated: {object_type: supplier, citation_required: true, required_payload_fields: [quote_proof_path]}
+  supplier.quote_proof_rejected: {object_type: supplier, citation_required: true, required_payload_fields: [reason]}
+  quote.snapshot_imported: {object_type: quote, citation_required: true}
+  quote.created: {object_type: quote, citation_required: true}
+  quote.updated: {object_type: quote, citation_required: true}
+  source_health.snapshot_imported: {object_type: source_health, citation_required: true}
+  source_health.updated: {object_type: source_health}
+  plugin_health.snapshot_imported: {object_type: plugin_health, citation_required: true}
+  plugin_health.updated: {object_type: plugin_health}
+  artifact.manifest_generated: {object_type: artifact, citation_required: true}
+  chatgpt.packet_prepared: {object_type: chatgpt_packet, citation_required: true}
+  chatgpt.return_staged: {object_type: chatgpt_return, citation_required: true}
+  chatgpt.return_rejected_schema_invalid: {object_type: chatgpt_return, citation_required: true, required_payload_fields: [reason]}
+  drive.knowledge_bus_setup: {object_type: drive_folder, citation_required: true}
+  drive.chatgpt_packet_uploaded: {object_type: drive_upload, citation_required: true}
+  drive.lock_acquired: {object_type: drive_lock}
+  drive.lock_released: {object_type: drive_lock}
+  drive.lock_timeout: {object_type: drive_lock, required_payload_fields: [lock_name]}
+  kanban.reconciliation_planned: {object_type: kanban_reconciliation, citation_required: true}
+  kanban.task_graph_created: {object_type: kanban_task_graph, citation_required: true}
+  source_adapter.mock_ran: {object_type: source_adapter, citation_required: true}
+  source_adapter.external_probe_ran: {object_type: source_adapter, citation_required: true}
+  source_adapter.scan_started: {object_type: source_adapter}
+  source_adapter.scan_completed: {object_type: source_adapter, citation_required: true}
+  source_adapter.deep_read_started: {object_type: source_adapter, citation_required: true}
+  source_adapter.deep_read_completed: {object_type: source_adapter, citation_required: true}
+  source_adapter.blocked: {object_type: source_adapter, citation_required: true, required_payload_fields: [blocker_status]}
+  source_adapter.extraction_completed: {object_type: source_adapter, citation_required: true}
+  source_adapter.document_downloaded: {object_type: source_adapter, citation_required: true}
+  source_adapter.document_parse_completed: {object_type: source_adapter, citation_required: true}
+  source_adapter.case_candidate_created: {object_type: source_adapter, citation_required: true}
+  source_adapter.case_candidate_skipped: {object_type: source_adapter, citation_required: true, required_payload_fields: [reason]}
+  source_adapter.dedupe_skipped: {object_type: source_adapter, citation_required: true}
+  source_adapter.error: {object_type: source_adapter, required_payload_fields: [error]}
+  external_task.intake_checked: {object_type: external_task, citation_required: true}
+  evidence.bundle_created: {object_type: evidence, citation_required: true}
+  evidence.url_captured: {object_type: evidence, citation_required: true}
+  evidence.file_hashed: {object_type: evidence, citation_required: true}
+  evidence.extraction_completed: {object_type: evidence, citation_required: true}
+  buyer.snapshot_imported: {object_type: buyer, citation_required: true}
+  buyer.created: {object_type: buyer, citation_required: true}
+  buyer.updated: {object_type: buyer, citation_required: true}
+  buyer.verification_drafted: {object_type: buyer, citation_required: true}
+  buyer.verification_stage_changed: {object_type: buyer, citation_required: true, required_payload_fields: [new_stage]}
+  rfq.snapshot_imported: {object_type: rfq, citation_required: true}
+  rfq.created: {object_type: rfq, citation_required: true}
+  rfq.updated: {object_type: rfq, citation_required: true}
+  demand_research.snapshot_imported: {object_type: demand_research, citation_required: true}
+  demand_research.created: {object_type: demand_research, citation_required: true}
+  demand_research.updated: {object_type: demand_research, citation_required: true}
+  pricing.draft_created: {object_type: pricing_draft, citation_required: true}
+  pricing.waterfall_drafted: {object_type: pricing, citation_required: true}
+  pricing.working_capital_drafted: {object_type: pricing, citation_required: true}
+  pricing.l1_sensitivity_drafted: {object_type: pricing, citation_required: true}
+  pricing.emd_cost_drafted: {object_type: pricing, citation_required: true}
+  compliance.risk_drafted: {object_type: compliance, citation_required: true}
+  corrigendum.detected: {object_type: corrigendum, citation_required: true, required_payload_fields: [corrigendum_hash]}
+  corrigendum.reviewed: {object_type: corrigendum, citation_required: true}
+  source_weight.recommendation_generated: {object_type: source_weight, citation_required: true}
+  pipeline.error: {object_type: pipeline_error, required_payload_fields: [reason]}
+  memory.proposal_staged: {object_type: memory_proposal, citation_required: true}
+  skill.proposal_staged: {object_type: skill_proposal, citation_required: true}

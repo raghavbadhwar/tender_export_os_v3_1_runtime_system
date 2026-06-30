@@ -17,6 +17,7 @@ from scripts.source_runtime.document_downloader import DocumentDownloader
 from scripts.source_runtime.document_parser import parse_document
 from scripts.source_runtime.evidence_store import EvidenceStore, relative, safe_name
 from scripts.source_runtime.html_parser import extract_document_links, html_to_text
+from scripts.source_runtime.selector_extractor import extract_cards, load_selector_config
 from scripts.source_runtime.source_session import load_runtime_config
 from scripts.source_runtime.tender_field_extractor import extract_fields
 
@@ -44,6 +45,27 @@ class GeMAdapter:
         self.headless = config.headless_default if headless is None else headless
         self.run_id = run_id or "manual"
         self.evidence_only = evidence_only
+        self.selector_config = load_selector_config(self.name)
+
+    def build_search_url(self) -> str:
+        if self.keyword:
+            return f"{self.base_url}?search={quote_plus(self.keyword)}"
+        return self.base_url
+
+    def apply_filters(self, page) -> None:
+        return None
+
+    def open_detail(self, page, opportunity: SourceOpportunity) -> None:
+        page.goto(opportunity.source_url, wait_until="domcontentloaded", timeout=60000)
+
+    def extract_detail_fields(self, opportunity: SourceOpportunity, parsed_results: list[dict]) -> object:
+        return extract_fields(opportunity, parsed_results, self.source_name)
+
+    def normalize_dates(self, value: str) -> str:
+        return value
+
+    def detect_source_specific_blockers(self, page) -> None:
+        return None
 
     def _blocked_opportunity(self, reason: str, details: str = "") -> SourceOpportunity:
         return SourceOpportunity(
@@ -59,6 +81,31 @@ class GeMAdapter:
         )
 
     def _extract_listing_opportunities(self, html: str, current_url: str) -> list[SourceOpportunity]:
+        selector_cards = extract_cards(html, current_url, self.selector_config)
+        selector_opportunities: list[SourceOpportunity] = []
+        for card in selector_cards[: self.limit]:
+            title = card.get("title", "")
+            if self.keyword and self.keyword.lower() not in (title + " " + card.get("text", "")).lower():
+                continue
+            selector_opportunities.append(
+                SourceOpportunity(
+                    source_name=self.source_name,
+                    source_type=self.source_type,
+                    workflow_type=self.workflow_type,
+                    source_url=card.get("detail_link") or current_url,
+                    external_reference=card.get("tender_id") or f"GEM-LISTING-{len(selector_opportunities) + 1}",
+                    opportunity_title=title or f"GeM listing match {len(selector_opportunities) + 1}",
+                    buyer_name=card.get("buyer", ""),
+                    product_or_service=self.keyword,
+                    deadline_date=card.get("deadline", ""),
+                    estimated_value_inr=card.get("value", ""),
+                    citations=[card.get("detail_link") or current_url],
+                    notes="Selector-first GeM public listing extraction; verify detail evidence before action.",
+                )
+            )
+        if selector_opportunities:
+            return selector_opportunities[: self.limit]
+
         text = html_to_text(html)
         links = re.findall(r'href=["\']([^"\']+)["\']', html, flags=re.I)
         bid_links = []
@@ -119,14 +166,14 @@ class GeMAdapter:
     def scan(self) -> list[SourceOpportunity]:
         if os.environ.get("DEEP_SOURCE_DISABLE_BROWSER") == "1":
             return [self._blocked_opportunity("BROWSER_DISABLED_BY_ENV")]
-        url = self.base_url
-        if self.keyword:
-            url = f"{url}?search={quote_plus(self.keyword)}"
+        url = self.build_search_url()
         browser = BrowserManager(self.name)
         try:
             context = browser.open_context(self.name, headless=self.headless)
             page = context.new_page()
             page.goto(url, wait_until="domcontentloaded", timeout=60000)
+            self.apply_filters(page)
+            self.detect_source_specific_blockers(page)
             browser.detect_blockers(page, self.source_name)
             try:
                 page.wait_for_timeout(1500)
@@ -159,7 +206,8 @@ class GeMAdapter:
         try:
             context = browser.open_context(self.name, headless=self.headless)
             page = context.new_page()
-            page.goto(opportunity.source_url, wait_until="domcontentloaded", timeout=60000)
+            self.open_detail(page, opportunity)
+            self.detect_source_specific_blockers(page)
             browser.detect_blockers(page, self.source_name)
             screenshots.append(browser.save_screenshot(page, temp_id, "detail_page", evidence))
             raw_html_paths.append(browser.save_raw_html(page, temp_id, "detail_page", evidence))
@@ -182,7 +230,7 @@ class GeMAdapter:
                 document.extraction_notes = result.notes
                 documents.append(document)
                 parsed_results.append(result.to_dict())
-            fields = extract_fields(opportunity, parsed_results, self.source_name)
+            fields = self.extract_detail_fields(opportunity, parsed_results)
             evidence.write_extracted_json("deep_extracted_fields.json", fields.to_dict())
             return DeepSourceOpportunity(
                 shallow=opportunity,
@@ -197,12 +245,12 @@ class GeMAdapter:
             )
         except SourceBlocked as exc:
             evidence.add_blocker(exc.reason, opportunity.source_url, exc.details)
-            fields = extract_fields(opportunity, parsed_results, self.source_name)
+            fields = self.extract_detail_fields(opportunity, parsed_results)
             evidence.write_extracted_json("deep_extracted_fields.json", fields.to_dict())
             return DeepSourceOpportunity(opportunity, fields, documents, screenshots, raw_html_paths, relative(evidence.base_dir), "BLOCKED", exc.reason, evidence.manifest["citations"])
         except Exception as exc:
             evidence.add_blocker("DEEP_READ_ERROR", opportunity.source_url, str(exc))
-            fields = extract_fields(opportunity, parsed_results, self.source_name)
+            fields = self.extract_detail_fields(opportunity, parsed_results)
             evidence.write_extracted_json("deep_extracted_fields.json", fields.to_dict())
             return DeepSourceOpportunity(opportunity, fields, documents, screenshots, raw_html_paths, relative(evidence.base_dir), "ERROR", "DEEP_READ_ERROR", evidence.manifest["citations"])
         finally:

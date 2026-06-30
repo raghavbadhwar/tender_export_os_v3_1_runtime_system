@@ -41,6 +41,8 @@ If any gate fails → do not produce pricing. Log gap and notify.
 
 ## Government Tender Pricing Waterfall
 
+Use `scripts/gov_tender_pricing_model.py` and `config/pricing_assumptions.yaml` for internal draft calculations. Pricing must include portal fee, document fee, bid submission fee, EMD amount, EMD lock days, EMD opportunity cost, PBG/BG charges, supplier payment day, buyer payment day, working capital gap, cash gap, financing cost, payment delay buffer, penalty risk buffer, margin, and L1 sensitivity. All outputs remain internal draft pricing until owner approval.
+
 ```
 ITEM: <product name>
 QUANTITY: <qty and unit>
@@ -83,6 +85,8 @@ P. Target Margin (%)                           ₹ _____
 ---
 
 ## Export Pricing Waterfall
+
+Use `scripts/export_landed_cost_calculator.py` for internal draft EXW/FOB/CIF calculations. Export pricing must include inland freight, CHA/docs, port handling, international freight, insurance, bank charges, inspection/certification, sample cost, currency buffer, payment risk, minimum viable order size, and draft-only quote warnings.
 
 ```
 PRODUCT: <name>

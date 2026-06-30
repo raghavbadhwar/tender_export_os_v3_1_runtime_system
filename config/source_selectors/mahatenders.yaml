@@ -1,3 +1,15 @@
 source: mahatenders
 start_url: https://mahatenders.gov.in/nicgep/app
-notes: "Safe placeholder; selectors pending."
+listing_card: ["table tbody tr", "tr", ".tender-card"]
+fields:
+  tender_id: ["td:nth-child(2)", ".tender-id", "[data-field='tender_id']"]
+  title: ["td:nth-child(3)", ".title", "[data-field='title']"]
+  buyer: ["td:nth-child(4)", ".buyer", ".organisation", "[data-field='buyer']"]
+  deadline: ["td:nth-child(5)", ".deadline", "[data-field='deadline']"]
+  value: ["td:nth-child(6)", ".value", "[data-field='value']"]
+  emd: [".emd", "[data-field='emd']"]
+  detail_link: ["a.detail-link", "td a"]
+  document_link: ["a[href$='.pdf']", "a[href*='download']"]
+  corrigendum_link: ["a[href*='corrigendum']"]
+  boq_link: ["a[href*='BOQ']", "a[href*='boq']"]
+unsafe_actions: [submit, upload, pay, dsc, declaration]

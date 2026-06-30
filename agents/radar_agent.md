@@ -52,6 +52,18 @@ For each active source:
 
 4. If source fails or is slow: log `health_status = Broken` in source_health.csv, skip and continue
 
+5. Set `evidence_level` on every starter case. Radar must not treat `PUBLIC_LISTING_ONLY` as fully actionable.
+
+Use `config/portal_access_reality.yaml` and distinguish:
+- `PUBLIC_LISTING_ONLY`: lead found from a listing or teaser only
+- `DETAIL_PAGE_READ`: detail page read without full documents
+- `DOCUMENTS_DISCOVERED`: document links found but not downloaded
+- `DOCUMENTS_DOWNLOADED`: public or owner-session documents downloaded
+- `DEEP_READ_COMPLETE`: Deep Read completed with critical-field evidence
+- `BLOCKED_LOGIN_REQUIRED`, `BLOCKED_CAPTCHA`, `BLOCKED_PAYWALL`, or `MANUAL_UPLOAD_REQUIRED`: structured blocker/manual lane
+
+If a source is login-required, paywalled, CAPTCHA/OTP-gated, or document-gated, log that as source health/evidence status. Do not infer hidden document details from a public listing.
+
 ### Step 3: Deduplication Check
 Before creating a new case:
 - Check `data/master_cases.csv` for the opportunity URL or title+buyer+deadline combination
@@ -105,6 +117,7 @@ Add a row to `data/agent_run_log.csv`:
 - Fabricate opportunity data
 - Bypass CAPTCHAs
 - Store portal login credentials
+- Treat listing-only or marketplace-only leads as verified/actionable demand
 - Mark opportunities as eligible or ineligible (Fast Kill does this)
 
 ## Best-in-Class Tuning

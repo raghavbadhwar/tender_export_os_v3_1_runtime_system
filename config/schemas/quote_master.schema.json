@@ -13,6 +13,10 @@
     "unit",
     "currency",
     "selected_for_pricing",
+    "indicative_price_only",
+    "quote_proof_type",
+    "quote_proof_path",
+    "locked_after_approval",
     "created_at",
     "updated_at"
   ],
@@ -20,9 +24,15 @@
   "enums": {
     "selected_for_pricing": ["", "TRUE", "FALSE"],
     "certificate_included": ["", "TRUE", "FALSE"],
-    "sample_available": ["", "TRUE", "FALSE"]
+    "sample_available": ["", "TRUE", "FALSE"],
+    "indicative_price_only": ["", "TRUE", "FALSE"],
+    "marketplace_listing_price": ["", "TRUE", "FALSE"],
+    "supplier_specific_quote": ["", "TRUE", "FALSE"],
+    "used_in_approved_bid": ["", "TRUE", "FALSE"],
+    "locked_after_approval": ["", "TRUE", "FALSE"],
+    "price_outlier_flag": ["", "TRUE", "FALSE"]
   },
-  "date_fields": ["created_at", "updated_at"],
+  "date_fields": ["created_at", "updated_at", "quote_validity_date"],
   "datetime_fields": ["quote_request_sent_at", "quote_received_at"],
   "numeric_fields": [
     "response_hrs",
@@ -40,6 +50,20 @@
     "fob_price_usd",
     "cif_price_usd",
     "quote_clarity_score",
-    "price_rank"
+    "price_rank",
+    "category_price_zscore"
+  ],
+  "cross_field_rules": [
+    {
+      "rule": "selected_for_pricing_not_indicative",
+      "if": {"selected_for_pricing": "TRUE", "indicative_price_only": "TRUE"},
+      "error": "selected_for_pricing cannot be TRUE when indicative_price_only is TRUE"
+    },
+    {
+      "rule": "locked_after_approval_requires_receipt",
+      "if": {"locked_after_approval": "TRUE"},
+      "requires_any": ["used_in_approved_bid", "quote_proof_path"],
+      "error": "locked_after_approval rows must carry approval usage or quote proof path"
+    }
   ]
 }

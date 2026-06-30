@@ -39,6 +39,24 @@
     }
     .stat-card .number { font-size: 28px; font-weight: 700; color: #60a5fa; }
     .stat-card .label { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+    .metrics-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .metric-pill {
+      border: 1px solid #334155;
+      border-radius: 8px;
+      background: #111827;
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12px;
+      color: #94a3b8;
+    }
+    .metric-pill strong { color: #e2e8f0; }
     .section {
       background: #1e293b;
       border: 1px solid #334155;
@@ -165,6 +183,11 @@
     <div class="number" style="color: #f87171">{{REJECTED_COUNT}}</div>
     <div class="label">Auto-Rejected</div>
   </div>
+</div>
+
+<!-- Trailing Metrics -->
+<div class="metrics-row">
+  {{TRAILING_30_METRICS}}
 </div>
 
 <!-- Section 2: Auto-Rejected -->

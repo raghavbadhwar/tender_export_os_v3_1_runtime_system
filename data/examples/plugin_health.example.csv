@@ -1,0 +1,2 @@
+plugin_or_tool,capability,status,last_checked_at,last_success_at,last_failure_at,last_error,notes,created_at,updated_at
+example_artifact_runtime,artifact_generation,Working,2099-01-01T09:00:00+05:30,2099-01-01T09:00:00+05:30,,,Sanitized public example plugin health.,2099-01-01,2099-01-01

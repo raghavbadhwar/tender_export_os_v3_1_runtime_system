@@ -85,6 +85,7 @@ class DeepExtractedFields:
     documents_required: list[str] = field(default_factory=list)
     boq_items: list[dict] = field(default_factory=list)
     important_clauses: list[dict] = field(default_factory=list)
+    field_evidence: dict[str, dict[str, Any]] = field(default_factory=dict)
     risk_flags: list[str] = field(default_factory=list)
     missing_fields: list[str] = field(default_factory=list)
     confidence_score: int = 0

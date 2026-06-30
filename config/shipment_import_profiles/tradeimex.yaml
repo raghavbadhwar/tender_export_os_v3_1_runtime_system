@@ -1,0 +1,5 @@
+provider: TradeImeX
+access_model: licensed_or_manual_export_only
+allowed_ingest: owner_provided_csv_or_xlsx
+forbidden: [credential_scraping, paywall_bypass, raw_cookie_import]
+required_fields: [buyer_name, country, product_description, shipment_date]

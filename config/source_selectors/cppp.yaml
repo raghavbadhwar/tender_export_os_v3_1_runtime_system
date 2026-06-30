@@ -1,9 +1,18 @@
 source: cppp
 start_url: https://eprocure.gov.in/cppp/latestactivetendersnew/cpppdata
-notes: "MVP uses generic text/link extraction. Detail selectors should be added from current public CPPP pages."
-unsafe_actions:
-  - submit
-  - upload
-  - pay
-  - dsc
-  - declaration
+listing_card:
+  - "table tbody tr"
+  - "tr"
+  - ".tender-card"
+fields:
+  tender_id: ["td:nth-child(2)", ".tender-id", "[data-field='tender_id']"]
+  title: ["td:nth-child(3)", ".tender-title", "[data-field='title']"]
+  buyer: ["td:nth-child(4)", ".organisation", ".buyer", "[data-field='buyer']"]
+  deadline: ["td:nth-child(5)", ".deadline", "[data-field='deadline']"]
+  value: ["td:nth-child(6)", ".value", "[data-field='value']"]
+  emd: [".emd", "[data-field='emd']"]
+  detail_link: ["a[href*='TenderDetails']", "a.detail-link", "td a"]
+  document_link: ["a[href$='.pdf']", "a[href*='download']", "a.document-link"]
+  corrigendum_link: ["a[href*='corrigendum']", "a.corrigendum-link"]
+  boq_link: ["a[href*='BOQ']", "a[href*='boq']", "a.boq-link"]
+unsafe_actions: [submit, upload, pay, dsc, declaration]

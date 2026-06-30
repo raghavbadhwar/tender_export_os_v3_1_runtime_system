@@ -1,0 +1,2 @@
+buyer_id,buyer_name,buyer_type,country,source_name,source_url,contact_path,identity_status,verification_status,buyer_stage,buyer_score,source_reliability_score,fraud_flags,evidence_links,notes,created_at,updated_at
+BUY-EXAMPLE-001,Example Overseas Buyer,Company,Exampleland,Example RFQ Board,https://example.com/rfq/fixture-001,portal contact form,VERIFIED,RFQ_VERIFIED,RFQ_VERIFIED,72,80,,https://example.com/rfq/fixture-001,Sanitized public example buyer.,2099-01-01,2099-01-01

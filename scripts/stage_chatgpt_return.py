@@ -10,10 +10,18 @@ import shutil
 from pathlib import Path
 
 from event_ledger import append_event
+from validate_chatgpt_return import validate_file
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_INBOX = PROJECT_ROOT / "outputs" / "chatgpt_bridge" / "from_chatgpt"
+
+
+def display_path(path: Path) -> str:
+    try:
+        return str(path.relative_to(PROJECT_ROOT))
+    except ValueError:
+        return str(path)
 
 
 def main() -> int:
@@ -31,6 +39,23 @@ def main() -> int:
         print(f"Input file not found: {source}")
         return 1
 
+    valid, errors = validate_file(source)
+    if not valid:
+        print("Rejected ChatGPT return before staging:")
+        for error in errors:
+            print(f"FAIL: {error}")
+        if args.record_event:
+            append_event(
+                "chatgpt.return_rejected_schema_invalid",
+                "stage_chatgpt_return",
+                case_id=args.case_id,
+                object_type="chatgpt_return",
+                object_id=source.stem,
+                payload={"reason": "; ".join(errors), "input": display_path(source)},
+                citations=[display_path(source)],
+            )
+        return 1
+
     timestamp = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
     inbox = Path(args.inbox)
     if not inbox.is_absolute():
@@ -46,7 +71,7 @@ def main() -> int:
         "staged_at": dt.datetime.now().replace(microsecond=0).isoformat(),
         "direction": "chatgpt_to_codex_hermes",
         "drive_folder": "08_ChatGPT_Bridge/02_From_ChatGPT",
-        "staged_file": str(staged_file.relative_to(PROJECT_ROOT)),
+        "staged_file": display_path(staged_file),
         "review_required": True,
         "state_mutation_allowed": False,
         "required_review_steps": [
@@ -67,8 +92,8 @@ def main() -> int:
             case_id=args.case_id,
             object_type="chatgpt_return",
             object_id=review_plan["return_id"],
-            payload={"staged_dir": str(staged_dir.relative_to(PROJECT_ROOT)), "case_id": args.case_id},
-            citations=[str(staged_file.relative_to(PROJECT_ROOT)), str(review_path.relative_to(PROJECT_ROOT))],
+            payload={"staged_dir": display_path(staged_dir), "case_id": args.case_id},
+            citations=[display_path(staged_file), display_path(review_path)],
         )
     return 0
 

@@ -59,42 +59,74 @@ class DocumentDownloader:
                 )
         return None
 
-    def download_url(self, url: str, filename: str = "") -> SourceDocument | None:
+    def _record_bytes(self, url: str, content: bytes, filename: str = "") -> SourceDocument:
         target_name = safe_name(filename) if filename else filename_from_url(url)
         target = self.evidence.path_for("downloads", target_name)
+        if len(content) > self.max_bytes:
+            raise ValueError(f"file exceeds configured size limit: {self.max_bytes} bytes")
+        target.write_bytes(content)
+        digest = sha256_file(target)
+        duplicate = self._already_downloaded(digest)
+        if duplicate:
+            target.unlink(missing_ok=True)
+            return duplicate
+        document = SourceDocument(
+            document_id=digest[:16],
+            document_type=target.suffix.lower().lstrip(".") or "unknown",
+            document_name=target.name,
+            source_url=url,
+            local_path=relative(target),
+            sha256=digest,
+            downloaded_at=now_iso(),
+        )
+        self.evidence.record_download(document.to_dict())
+        return document
+
+    def _record_failure(self, url: str, error: object) -> None:
+        self.evidence.record_download(
+            {
+                "source_url": url,
+                "local_path": "",
+                "sha256": "",
+                "downloaded_at": now_iso(),
+                "status": "FAILED_OR_BLOCKED",
+                "error": str(error),
+            }
+        )
+        self.evidence.add_blocker("DOCUMENT_DOWNLOAD_FAILED_OR_BLOCKED", source_url=url, details=str(error))
+
+    def download_public_url(self, url: str, filename: str = "") -> SourceDocument | None:
         try:
             request = urllib.request.Request(url, headers={"User-Agent": "TenderExportOS/4.1 evidence downloader"})
             with urllib.request.urlopen(request, timeout=self.timeout_seconds) as response:  # nosec B310 - configured source URLs only
                 content = response.read(self.max_bytes + 1)
-                if len(content) > self.max_bytes:
-                    raise ValueError(f"file exceeds configured size limit: {self.max_bytes} bytes")
-            target.write_bytes(content)
-            digest = sha256_file(target)
-            duplicate = self._already_downloaded(digest)
-            if duplicate:
-                target.unlink(missing_ok=True)
-                return duplicate
-            document = SourceDocument(
-                document_id=digest[:16],
-                document_type=target.suffix.lower().lstrip(".") or "unknown",
-                document_name=target.name,
-                source_url=url,
-                local_path=relative(target),
-                sha256=digest,
-                downloaded_at=now_iso(),
-            )
-            self.evidence.record_download(document.to_dict())
-            return document
+            return self._record_bytes(url, content, filename)
         except (urllib.error.URLError, TimeoutError, OSError, ValueError) as exc:
-            self.evidence.record_download(
-                {
-                    "source_url": url,
-                    "local_path": "",
-                    "sha256": "",
-                    "downloaded_at": now_iso(),
-                    "status": "FAILED_OR_BLOCKED",
-                    "error": str(exc),
-                }
-            )
-            self.evidence.add_blocker("DOCUMENT_DOWNLOAD_FAILED_OR_BLOCKED", source_url=url, details=str(exc))
+            self._record_failure(url, exc)
             return None
+
+    def download_from_browser_context(self, page, url: str, filename: str = "") -> SourceDocument | None:
+        try:
+            response = page.context.request.get(url, timeout=self.timeout_seconds * 1000)
+            if not response.ok:
+                raise ValueError(f"browser request failed: HTTP {response.status}")
+            return self._record_bytes(url, response.body(), filename)
+        except Exception as exc:
+            self._record_failure(url, exc)
+            return None
+
+    def download_from_click(self, page, selector: str, filename: str = "") -> SourceDocument | None:
+        try:
+            with page.expect_download(timeout=self.timeout_seconds * 1000) as download_info:
+                page.locator(selector).click()
+            download = download_info.value
+            suggested = filename or download.suggested_filename
+            target = self.evidence.path_for("downloads", suggested)
+            download.save_as(str(target))
+            return self._record_bytes(getattr(page, "url", selector), target.read_bytes(), suggested)
+        except Exception as exc:
+            self._record_failure(selector, exc)
+            return None
+
+    def download_url(self, url: str, filename: str = "") -> SourceDocument | None:
+        return self.download_public_url(url, filename)

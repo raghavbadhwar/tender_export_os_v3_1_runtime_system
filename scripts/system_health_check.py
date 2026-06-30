@@ -116,6 +116,72 @@ REQUIRED_FILES = [
     "tests/fixtures/chatgpt_returns/sample_return.md",
 ]
 
+PUBLIC_TEMPLATE_REQUIRED_FILES = [
+    "SOUL.md",
+    "HERMES.md",
+    "AGENTS.md",
+    "README.md",
+    "docs/FINAL_ARCHITECTURE.md",
+    "docs/HERMES_NATIVE_CONTROL_PLANE.md",
+    "docs/CODEX_APP_SERVER_RUNTIME.md",
+    "docs/HERMES_KANBAN_BOARD.md",
+    "docs/CODEX_PLUGIN_RUNTIME_POLICY.md",
+    "docs/GOOGLE_DRIVE_KNOWLEDGE_BUS.md",
+    "docs/CHATGPT_BOARDROOM.md",
+    "docs/PAPERCLIP_DECISION.md",
+    "docs/APPROVAL_BOUNDARIES.md",
+    "docs/V4_1_2_PHASEWISE_IMPLEMENTATION_PLAN.md",
+    "config/hermes_cron.yaml",
+    "config/codex_runtime_policy.yaml",
+    "config/kanban_board.yaml",
+    "config/memory_policy.yaml",
+    "config/plugin_routing.yaml",
+    "config/agent_capability_routing.yaml",
+    "config/sync_policy.yaml",
+    "config/source_strategy.yaml",
+    "config/public_scan_allowlist.yaml",
+    "config/schemas/master_cases.schema.json",
+    "config/schemas/approvals_receipts.schema.json",
+    "config/schemas/quote_master.schema.json",
+    "config/schemas/supplier_master.schema.json",
+    "config/schemas/event.schema.json",
+    "config/schemas/approval_card.schema.json",
+    "config/schemas/drive_manifest.schema.json",
+    "config/schemas/plugin_run_receipt.schema.json",
+    "data/examples/master_cases.example.csv",
+    "data/examples/supplier_master.example.csv",
+    "data/examples/buyer_master.example.csv",
+    "data/examples/quote_master.example.csv",
+    "data/examples/source_health.example.csv",
+    "data/examples/plugin_health.example.csv",
+    "data/examples/events.example.jsonl",
+    "outputs/.gitkeep",
+    "outputs/examples/sample_deep_source_report.html",
+    "receipts/.gitkeep",
+    "receipts/examples/sample_approval_card.html",
+    "templates/daily_brief.html",
+    "templates/approval_card.html",
+    "scripts/validate_register_schemas.py",
+    "scripts/check_no_private_runtime_data.py",
+    "scripts/system_health_check.py",
+    "tests/fixtures/sources/mock_opportunities.json",
+    "tests/fixtures/chatgpt_returns/sample_return.md",
+]
+
+PRIVATE_RUNTIME_REQUIRED_FILES = [
+    "data/events.jsonl",
+    "data/master_cases.csv",
+    "data/approvals_receipts.csv",
+    "data/drive_manifest.csv",
+    "data/source_health.csv",
+    "data/plugin_health.csv",
+    "data/supplier_master.csv",
+    "data/quote_master.csv",
+    "data/buyer_master.csv",
+    "data/rfq_master.csv",
+    "data/demand_research.csv",
+]
+
 
 def rel(path: Path) -> str:
     return str(path.relative_to(PROJECT_ROOT))
@@ -157,12 +223,13 @@ def run(command: list[str], timeout: int = 30) -> tuple[int, str, str]:
     return completed.returncode, completed.stdout, completed.stderr
 
 
-def check_required_files(health: Health) -> None:
-    missing = [path for path in REQUIRED_FILES if not (PROJECT_ROOT / path).exists()]
+def check_required_files(health: Health, required_files: list[str] | None = None, label: str = "v4.1") -> None:
+    files = required_files or REQUIRED_FILES
+    missing = [path for path in files if not (PROJECT_ROOT / path).exists()]
     if missing:
         health.fail(f"Missing required files: {', '.join(missing)}")
     else:
-        health.pass_("All required v4.1 files exist")
+        health.pass_(f"All required {label} files exist")
 
 
 def check_json(health: Health) -> None:
@@ -278,6 +345,35 @@ def check_v41_schemas(health: Health) -> None:
         health.pass_("v4.1 register schemas and event ledger validate")
 
 
+def check_public_examples(health: Health) -> None:
+    examples = [
+        PROJECT_ROOT / "data" / "examples" / "master_cases.example.csv",
+        PROJECT_ROOT / "data" / "examples" / "supplier_master.example.csv",
+        PROJECT_ROOT / "data" / "examples" / "buyer_master.example.csv",
+        PROJECT_ROOT / "data" / "examples" / "quote_master.example.csv",
+        PROJECT_ROOT / "data" / "examples" / "source_health.example.csv",
+        PROJECT_ROOT / "data" / "examples" / "plugin_health.example.csv",
+    ]
+    malformed = []
+    for path in examples:
+        rows = load_csv(path)
+        for index, row in enumerate(rows, start=2):
+            if None in row:
+                malformed.append(f"{rel(path)}:{index} has extra cells {row[None]}")
+    if malformed:
+        health.fail("Malformed example CSV rows: " + " | ".join(malformed))
+    else:
+        health.pass_("Public example CSV rows match their headers")
+
+
+def check_private_data_scan(health: Health) -> None:
+    rc, stdout, stderr = run(["python3", "scripts/check_no_private_runtime_data.py", "--public-template"])
+    if rc != 0:
+        health.fail(f"Private runtime public-template scan failed: {stderr or stdout}")
+    else:
+        health.pass_("Private runtime public-template scan passes")
+
+
 def check_templates(health: Health) -> None:
     daily = (PROJECT_ROOT / "templates" / "daily_brief.html").read_text(encoding="utf-8")
     legacy_sample_title = "Tender + Export OS v" + "3.1"
@@ -291,6 +387,8 @@ def check_templates(health: Health) -> None:
     hits = []
     for path in scan_files:
         if not path.is_file():
+            continue
+        if path.suffix.lower() not in {"", ".html", ".md", ".txt", ".yaml", ".yml"}:
             continue
         text = path.read_text(encoding="utf-8")
         hits.extend(f"{rel(path)}: {item}" for item in forbidden if item in text)
@@ -395,19 +493,37 @@ def check_runtime(health: Health) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run Tender Export OS v4.1 system health check")
     parser.add_argument("--runtime", action="store_true", help="Include slower Hermes/Codex runtime checks")
+    parser.add_argument("--public-template", action="store_true", help="Validate public template files without live runtime data")
+    parser.add_argument("--private-runtime", action="store_true", help="Validate private runtime live data and ledgers")
     args = parser.parse_args()
 
     health = Health()
-    check_required_files(health)
-    check_json(health)
-    check_yaml(health)
-    check_csv_contracts(health)
-    check_v41_schemas(health)
-    check_templates(health)
-    check_existing_validators(health)
-    check_script_dry_runs(health)
-    if args.runtime:
-        check_runtime(health)
+    if args.public_template:
+        check_required_files(health, PUBLIC_TEMPLATE_REQUIRED_FILES, "public-template")
+        check_json(health)
+        check_yaml(health)
+        check_public_examples(health)
+        check_private_data_scan(health)
+        check_templates(health)
+        check_existing_validators(health)
+    elif args.private_runtime:
+        check_required_files(health, PRIVATE_RUNTIME_REQUIRED_FILES, "private-runtime")
+        check_csv_contracts(health)
+        check_v41_schemas(health)
+        check_existing_validators(health)
+        if args.runtime:
+            check_runtime(health)
+    else:
+        check_required_files(health)
+        check_json(health)
+        check_yaml(health)
+        check_csv_contracts(health)
+        check_v41_schemas(health)
+        check_templates(health)
+        check_existing_validators(health)
+        check_script_dry_runs(health)
+        if args.runtime:
+            check_runtime(health)
 
     print("Tender Export OS v4.1 System Health")
     print(f"Passes: {len(health.passes)}")

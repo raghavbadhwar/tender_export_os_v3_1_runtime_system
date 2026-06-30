@@ -10,6 +10,7 @@ import json
 import sys
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -21,10 +22,25 @@ from scripts.source_runtime.dedupe import DedupeEngine  # noqa: E402
 from scripts.source_runtime.evidence_store import safe_name  # noqa: E402
 
 MASTER_CASES = PROJECT_ROOT / "data" / "master_cases.csv"
+RUNTIME_CONFIG = PROJECT_ROOT / "config" / "deep_source_runtime.yaml"
 
 
 def today_compact() -> str:
-    return dt.datetime.now(dt.timezone.utc).strftime("%Y%m%d")
+    return dt.datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y%m%d")
+
+
+def today_iso() -> str:
+    return dt.datetime.now(ZoneInfo("Asia/Kolkata")).date().isoformat()
+
+
+def load_min_confidence_score(path: Path = RUNTIME_CONFIG) -> int:
+    try:
+        import yaml  # type: ignore
+
+        data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        return int(data.get("case_creation", {}).get("min_confidence_score", 55))
+    except Exception:
+        return 55
 
 
 def parse_date(value: str) -> dt.date | None:
@@ -99,28 +115,35 @@ def build_case_row(case_id: str, result: dict[str, Any]) -> dict[str, Any]:
         "pricing_done": "FALSE",
         "approval_status": "NOT_REQUESTED",
         "notes": f"Created from deep source evidence. Evidence: {result.get('evidence_dir', '')}. Missing fields: {', '.join(extracted.get('missing_fields', []))}",
-        "created_at": dt.date.today().isoformat(),
-        "updated_at": dt.date.today().isoformat(),
+        "created_at": today_iso(),
+        "updated_at": today_iso(),
         "created_by_agent": "deep_source_runtime",
     }
 
 
-def should_skip(result: dict[str, Any], respect_deadline: bool) -> tuple[bool, str]:
+def should_skip(result: dict[str, Any], respect_deadline: bool, min_confidence_score: int | None = None) -> tuple[bool, str]:
     if result.get("blocker_status") and not result.get("evidence_dir"):
         return True, "blocked page with no evidence"
     extracted = result.get("extracted", {})
     confidence = int(extracted.get("confidence_score") or 0)
-    if confidence < 55:
+    threshold = min_confidence_score if min_confidence_score is not None else load_min_confidence_score()
+    if confidence < threshold:
         return True, f"low confidence: {confidence}"
     if respect_deadline:
         deadline = parse_date(extracted.get("bid_end_date", ""))
-        if deadline and deadline < dt.date.today():
+        if deadline and deadline < dt.datetime.now(ZoneInfo("Asia/Kolkata")).date():
             return True, f"expired deadline: {deadline.isoformat()}"
     return False, ""
 
 
 def write_historical_intelligence(result: dict[str, Any], reason: str) -> Path:
-    root = PROJECT_ROOT / "outputs" / "intelligence" / ("expired_tenders" if "expired" in reason else "past_awards")
+    if "expired" in reason:
+        bucket = "expired_tenders"
+    elif "low confidence" in reason:
+        bucket = "low_confidence_leads"
+    else:
+        bucket = "blocked_or_incomplete_leads"
+    root = PROJECT_ROOT / "outputs" / "intelligence" / bucket
     root.mkdir(parents=True, exist_ok=True)
     name = safe_name(result.get("shallow", {}).get("external_reference", "") or result.get("shallow", {}).get("opportunity_title", "") or "source_result")
     path = root / f"{name}.json"
@@ -139,9 +162,10 @@ def create_cases_from_file(path: Path | str, respect_deadline: bool = False, rec
 
     dedupe = DedupeEngine()
     counters = next_case_ids()
+    min_confidence = load_min_confidence_score()
     created: list[str] = []
     for result in deep_results:
-        skip, reason = should_skip(result, respect_deadline)
+        skip, reason = should_skip(result, respect_deadline, min_confidence)
         if skip:
             evidence = write_historical_intelligence(result, reason)
             if record_event:

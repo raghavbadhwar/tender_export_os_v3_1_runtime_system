@@ -13,6 +13,7 @@ from typing import Any
 from .evidence_store import EvidenceStore, relative, safe_name
 from .html_parser import html_to_text
 from .table_extractor import extract_html_tables
+from .table_classifier import classify_table
 
 DATE_PATTERN = re.compile(
     r"\b(?:\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4}|\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\s+\d{2,4})\b",
@@ -110,6 +111,7 @@ def parse_docx(path: Path, evidence: EvidenceStore | None = None) -> ParseResult
 
 def parse_pdf(path: Path, evidence: EvidenceStore | None = None) -> ParseResult:
     text_parts: list[str] = []
+    tables: list[Any] = []
     page_count: int | None = None
     notes = ""
     try:
@@ -119,9 +121,6 @@ def parse_pdf(path: Path, evidence: EvidenceStore | None = None) -> ParseResult:
             page_count = doc.page_count
             for page in doc:
                 text_parts.append(page.get_text("text"))
-        result = _write_outputs(path, "\n".join(text_parts), [], "HIGH" if any(text_parts) else "LOW", evidence)
-        result.page_count = page_count
-        return result
     except Exception as exc:
         notes = f"PyMuPDF failed: {exc}"
     try:
@@ -129,13 +128,35 @@ def parse_pdf(path: Path, evidence: EvidenceStore | None = None) -> ParseResult:
 
         with pdfplumber.open(path) as pdf:
             page_count = len(pdf.pages)
-            for page in pdf.pages:
-                text_parts.append(page.extract_text() or "")
-        result = _write_outputs(path, "\n".join(text_parts), [], "MEDIUM" if any(text_parts) else "LOW", evidence)
-        result.page_count = page_count
-        return result
+            for page_number, page in enumerate(pdf.pages, start=1):
+                text = page.extract_text() or ""
+                if text:
+                    text_parts.append(text)
+                for table_index, table in enumerate(page.extract_tables() or [], start=1):
+                    rows = table or []
+                    tables.append(
+                        {
+                            "page": page_number,
+                            "table_index": table_index,
+                            "table_type": classify_table(rows),
+                            "rows": rows,
+                        }
+                    )
     except Exception as exc:
-        return ParseResult(source_path=relative(path), parse_status="FAILED", confidence="FAILED", notes=f"{notes}; pdfplumber failed: {exc}")
+        if not text_parts:
+            return ParseResult(source_path=relative(path), parse_status="FAILED", confidence="FAILED", notes=f"{notes}; pdfplumber failed: {exc}")
+        notes = f"{notes}; pdfplumber failed: {exc}"
+
+    confidence = "HIGH" if any(text_parts) and tables else "MEDIUM" if any(text_parts) else "LOW"
+    result = _write_outputs(path, "\n".join(text_parts), tables, confidence, evidence)
+    if not text_parts and not tables:
+        result.parse_status = "SCANNED_OR_UNREADABLE_PDF"
+        result.confidence = "FAILED"
+        result.notes = notes or "No extractable text or tables found; manual review required"
+    else:
+        result.notes = notes
+        result.page_count = page_count
+    return result
 
 
 def parse_zip(path: Path, evidence: EvidenceStore | None = None) -> ParseResult:

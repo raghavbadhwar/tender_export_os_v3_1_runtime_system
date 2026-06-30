@@ -395,6 +395,50 @@ The default schedule is:
 
 ---
 
+## v4.1.2 Safe Setup And Regression
+
+Use a local virtualenv for deterministic runs:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.lock.txt
+```
+
+If the lock file is too strict for a fresh platform, install the source requirements and regenerate the lock from the working environment:
+
+```bash
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m pip freeze > requirements.lock.txt
+```
+
+Public-template checks never upload, send, submit, pay, use DSC, or commit pricing/classification/origin claims:
+
+```bash
+.venv/bin/python scripts/check_no_private_runtime_data.py --public-template
+.venv/bin/python scripts/system_health_check.py --public-template
+.venv/bin/python scripts/run_full_safe_regression.py
+.venv/bin/pytest
+```
+
+Drive setup is dry-run and lock-protected by default:
+
+```bash
+.venv/bin/python scripts/setup_drive_folders.py --dry-run
+.venv/bin/python scripts/sync_to_drive.py
+```
+
+Safe source-adapter smoke commands:
+
+```bash
+.venv/bin/python scripts/test_source_adapters.py --safe --limit 5
+.venv/bin/python scripts/run_source_adapter.py --adapter gem --mode scan --keyword "water purifier" --limit 5 --headful
+.venv/bin/python scripts/run_source_adapter.py --adapter cppp --mode scan --keyword "data entry" --limit 5 --headful
+```
+
+The GeM/CPPP commands are read-only browser scans. CAPTCHA, OTP, login walls, payment pages, DSC prompts, and submit/upload buttons are blockers or forbidden-action evidence, not automation targets.
+
+---
+
 ## Key v4 Files
 
 - `docs/ARCHITECTURE_CRITIQUE_AND_V4_1_PROPOSAL.md`

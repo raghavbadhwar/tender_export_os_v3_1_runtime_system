@@ -14,6 +14,10 @@ sources:
     login_required: false
     paywalled: false
     scrape_type: "web"
+    source_weight: medium
+    auth_strategy_ref: india_business_portal
+    evidence_level_expected: DETAIL_PAGE_READ
+    manual_check_required: false
     frequency: daily
     notes: "DGFT-backed buyer-seller match. Genuine foreign buyer RFQs."
     health_status: Working
@@ -71,6 +75,10 @@ sources:
     login_required: true
     paywalled: false
     scrape_type: "manual_check"
+    source_weight: low
+    auth_strategy_ref: alibaba_rfq
+    evidence_level_expected: PUBLIC_LISTING_ONLY
+    manual_check_required: true
     frequency: daily
     notes: "High volume of buyer RFQs. Verify buyer carefully. Prefer Trade Assurance buyers."
     health_status: Needs Login
@@ -185,6 +193,10 @@ sources:
     login_required: false
     paywalled: false
     scrape_type: "web"
+    source_weight: medium
+    auth_strategy_ref: ungm
+    evidence_level_expected: DOCUMENTS_DISCOVERED
+    manual_check_required: true
     frequency: daily
     notes: "Domestic + some export buyer leads. Quick volume source."
     health_status: Working

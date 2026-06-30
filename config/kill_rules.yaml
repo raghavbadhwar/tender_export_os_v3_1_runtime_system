@@ -201,3 +201,31 @@ thresholds:
   supplier_minimum_candidates: 5
   supplier_minimum_source_types: 3
   supplier_minimum_quote_proofs: 2
+
+trader_specific_kills:
+  - manufacturer_only_tender
+  - authorized_dealer_or_oem_letter_missing
+  - mse_only_reservation_mismatch
+  - make_in_india_local_content_gap
+  - past_same_or_similar_government_experience_missing
+  - turnover_threshold_vs_tender_value_too_high
+  - emd_fee_pbg_exceeds_capital_limit
+  - l1_only_commodity_price_war
+  - remote_delivery_short_timeline
+  - factory_inspection_required_without_control
+  - mandatory_iso_bis_unavailable
+  - incumbent_or_repeat_order_tender
+  - qcbc_low_technical_score_risk
+  - supplier_credit_gap_unfundable
+
+workflow_sensitivity:
+  product_trading:
+    watchlist_if: [oem_required, mse_reserved, make_in_india_gap, supplier_credit_gap]
+  service_tender:
+    watchlist_if: [manpower_compliance, past_experience_required, short_delivery_timeline]
+  ai_data_digitisation_tender:
+    watchlist_if: [technical_score_risk, data_security_requirements, past_experience_required]
+  export_rfq:
+    watchlist_if: [buyer_unverified, payment_terms_unknown, compliance_certificate_unknown]
+  multilateral_procurement:
+    watchlist_if: [registration_required, document_language_gap, high_compliance_burden]

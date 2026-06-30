@@ -2,17 +2,26 @@
 # Approval Policy — defines what requires owner approval before any action is taken
 # Usage: Approval Desk Agent checks this before routing any action card
 # Principle: Agents prepare, draft, score, source. Humans approve external/money/legal actions.
-# 2026-06-30 owner update: supplier outreach and portal login/signup/credential acquisition
-# are covered by standing authorization inside the guardrails below.
+# v4.1.2 current contract: supplier outreach, buyer replies, portal credential-heavy
+# actions, submissions, payments, DSC, final prices, final classification, and origin
+# claims remain approval-gated unless a current owner approval receipt explicitly says otherwise.
 
 # ══════════════════════════════════
 # STANDING AUTHORIZATIONS — Owner-Preapproved Operating Actions
 # ══════════════════════════════════
 
 standing_authorizations:
-  last_updated: "2026-06-30"
-  owner_statement: "Owner granted standing approval for supplier outreach and portal login/signup/credential acquisition needed for Tender Export OS opportunity research."
+  last_updated: "2026-07-01"
+  owner_statement: "Archived: earlier broad standing authorization is superseded by the v4.1.2 AGENTS approval-gate summary for this workspace."
   authorized_without_per_case_approval:
+    - read_public_listing
+    - capture_public_evidence
+    - prepare_internal_draft
+  credential_handling:
+    storage: "macOS Keychain / approved secret store only; never CSV, YAML, Drive, reports, logs, prompts, or event payloads"
+    log_format: "secret alias only, never secret value"
+    otp_or_captcha: "may pause and request live owner assistance if an OTP, CAPTCHA, phone verification, or human-only identity challenge appears"
+  hard_limits_still_requiring_specific_owner_approval:
     - send_supplier_quote_request
     - send_supplier_clarification_request
     - send_supplier_follow_up
@@ -21,11 +30,6 @@ standing_authorizations:
     - portal_signup_for_research
     - portal_credential_creation
     - portal_session_refresh_for_research
-  credential_handling:
-    storage: "macOS Keychain / approved secret store only; never CSV, YAML, Drive, reports, logs, prompts, or event payloads"
-    log_format: "secret alias only, never secret value"
-    otp_or_captcha: "may pause and request live owner assistance if an OTP, CAPTCHA, phone verification, or human-only identity challenge appears"
-  hard_limits_still_requiring_specific_owner_approval:
     - send_buyer_rfq_reply
     - send_export_quotation
     - submit_tender_bid
@@ -44,7 +48,7 @@ standing_authorizations:
     - make_legal_tax_origin_certification
 
 # ══════════════════════════════════
-# MODE A — Autopilot Research + Standing-Authorized Supplier/Portal Actions
+# MODE A — Autopilot Research + Internal Draft Actions
 # ══════════════════════════════════
 
 mode_a_autopilot:
@@ -75,15 +79,6 @@ mode_a_autopilot:
     - generate_drive_sync_manifest
     - create_kanban_tasks_internal
     - produce_internal_artifact_drafts
-    # Standing-authorized by owner on 2026-06-30; still record receipts and never include final commitments.
-    - send_supplier_quote_request
-    - send_supplier_clarification_request
-    - send_supplier_follow_up
-    - request_supplier_price_and_availability
-    - portal_login_for_research
-    - portal_signup_for_research
-    - portal_credential_creation
-    - portal_session_refresh_for_research
 
 # ══════════════════════════════════
 # MODE B — Approval-Gated Actions (Requires Owner Approval)
@@ -95,10 +90,46 @@ mode_b_approval_gated:
 
   approval_required_for:
 
-    # send_supplier_quote_request moved to standing_authorizations on 2026-06-30.
-    # It is now allowed without per-case approval when limited to quote/availability
-    # requests and receipts are logged; buyer quotations, POs, payments, DSC,
-    # bid uploads, and final commitments remain explicitly approval-gated.
+    - action: "send_supplier_quote_request"
+      reason: "External supplier message; must be owner-approved and receipt-backed before outreach"
+      approval_type: per_case
+      card_required: true
+
+    - action: "send_supplier_clarification_request"
+      reason: "External supplier message; may create commercial expectations"
+      approval_type: per_case
+      card_required: true
+
+    - action: "send_supplier_follow_up"
+      reason: "External supplier follow-up; may create commercial expectations"
+      approval_type: per_case
+      card_required: true
+
+    - action: "request_supplier_price_and_availability"
+      reason: "External supplier quote request; must not be sent without approval card"
+      approval_type: per_case
+      card_required: true
+
+    - action: "portal_login_for_research"
+      reason: "Credential-heavy portal action; requires owner-controlled credential decision"
+      approval_type: per_source
+      card_required: true
+
+    - action: "portal_signup_for_research"
+      reason: "Creates a portal account or identity trail"
+      approval_type: per_source
+      card_required: true
+
+    - action: "portal_credential_creation"
+      reason: "Creates or uses credentials for an external service"
+      approval_type: per_source
+      card_required: true
+
+    - action: "portal_session_refresh_for_research"
+      reason: "Uses credentialed external session state"
+      approval_type: per_source
+      card_required: true
+
     - action: "send_buyer_rfq_reply"
       reason: "External reply to buyer — creates business impression and potential obligation"
       approval_type: per_case
@@ -221,6 +252,24 @@ mode_c_execution_tracker:
     - "Quote validity expiring in 24 hours → alert owner"
     - "Delivery deadline within 7 days → daily alert"
     - "Payment overdue by 3 days → escalate to owner"
+
+# ══════════════════════════════════
+# v4.1.2 Approval Timeout And Lifecycle Contract
+# ══════════════════════════════════
+
+approval_timeout_policy:
+  default_timeout_hours: 48
+  on_timeout_status: "CHANGES_REQUESTED"
+  owner_brief_label: "Approval stale; ask changes or reissue card"
+  rule: "Never infer approval from silence. Expired approval cards cannot unlock external execution."
+
+execution_lifecycle:
+  approved_case_entry_sub_status: "AWAITING_EXECUTION"
+  terminal_sub_statuses:
+    - "COMPLETED"
+    - "FAILED"
+    - "LOST"
+  rule: "Execution Tracker records follow-up state only inside the approved action scope and must not re-send, re-submit, pay, upload, or escalate without a fresh owner command."
 
 # ══════════════════════════════════
 # APPROVAL CARD REQUIREMENTS

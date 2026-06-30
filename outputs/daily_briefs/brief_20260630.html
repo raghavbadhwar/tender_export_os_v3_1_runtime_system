@@ -39,6 +39,24 @@
     }
     .stat-card .number { font-size: 28px; font-weight: 700; color: #60a5fa; }
     .stat-card .label { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+    .metrics-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .metric-pill {
+      border: 1px solid #334155;
+      border-radius: 8px;
+      background: #111827;
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12px;
+      color: #94a3b8;
+    }
+    .metric-pill strong { color: #e2e8f0; }
     .section {
       background: #1e293b;
       border: 1px solid #334155;
@@ -148,7 +166,7 @@
 
 <div class="header">
   <h1>📊 Today's Owner Brief</h1>
-  <div class="date">June 30, 2026 · Tender Export OS v4.1 · Generated 20:40 IST</div>
+  <div class="date">June 30, 2026 · Tender Export OS v4.1 · Generated 04:56 IST</div>
 </div>
 
 <!-- Stats Row -->
@@ -165,6 +183,11 @@
     <div class="number" style="color: #f87171">1</div>
     <div class="label">Auto-Rejected</div>
   </div>
+</div>
+
+<!-- Trailing Metrics -->
+<div class="metrics-row">
+  <div class="metric-pill"><span>Created</span><strong>14</strong></div><div class="metric-pill"><span>Rejected</span><strong>1</strong></div><div class="metric-pill"><span>Pending approvals</span><strong>1</strong></div><div class="metric-pill"><span>Expired approvals</span><strong>0</strong></div><div class="metric-pill"><span>Won/Lost</span><strong>0/0</strong></div><div class="metric-pill"><span>Source issues</span><strong>9</strong></div><div class="metric-pill"><span>Avg score</span><strong>69.3</strong></div>
 </div>
 
 <!-- Section 2: Auto-Rejected -->
@@ -302,8 +325,8 @@
 <div class="risk-item"><div class="risk-label">Source</div>IREPS — Indian Railways — Manual Check Required. Home reachable; public tender search is JavaScript-routed/manual. No login/CAPTCHA bypass attempted. Radar batch 20260630131554: created_cases=0.</div>
 <div class="risk-item"><div class="risk-label">Source</div>Tenders Info — Paywalled. Skipped by radar policy: paywalled/login-required source. Radar batch 20260630131554: created_cases=0.</div>
 <div class="risk-item"><div class="risk-label">Plugin</div>google_drive_external_sync — Working. gws emitted token-cache decrypt warning but command succeeded</div>
-<div class="risk-item"><div class="risk-label">Deadline</div>GOV-20260630-002 — Supply of Safety Helmets and PPE Kit: 5 days left.</div>
-<div class="risk-item"><div class="risk-label">Deadline</div>GOV-20260630-005 — GeM bid GEM/2026/B/7710556 — batteries,mine buzzer battery,soldering station,Flux,PPE kit: 6 days left.</div>
+<div class="risk-item"><div class="risk-label">Deadline</div>GOV-20260630-002 — Supply of Safety Helmets and PPE Kit: 4 days left.</div>
+<div class="risk-item"><div class="risk-label">Deadline</div>GOV-20260630-005 — GeM bid GEM/2026/B/7710556 — batteries,mine buzzer battery,soldering station,Flux,PPE kit: 5 days left.</div>
   </div>
 </div>
 

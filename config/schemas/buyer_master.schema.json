@@ -23,8 +23,36 @@
   "required_fields": ["buyer_id", "buyer_name", "verification_status", "buyer_stage", "created_at"],
   "enums": {
     "identity_status": ["", "UNKNOWN", "MASKED", "VISIBLE", "VERIFIED", "INSTITUTION"],
-    "verification_status": ["", "RAW_LEAD", "BUYER_VISIBLE", "BUYER_VERIFIED", "RFQ_VERIFIED", "READY_FOR_SUPPLIER_PROOF", "BLOCKED"],
-    "buyer_stage": ["", "RAW_LEAD", "BUYER_VISIBLE", "BUYER_VERIFIED", "RFQ_VERIFIED", "READY_FOR_SUPPLIER_PROOF", "BLOCKED"]
+    "buyer_stage": [
+      "",
+      "RAW_LEAD",
+      "BUYER_VISIBLE",
+      "COMPANY_VERIFIED",
+      "IMPORT_HISTORY_VERIFIED",
+      "CONTACT_VERIFIED",
+      "RFQ_VERIFIED",
+      "PAYMENT_TERMS_KNOWN",
+      "READY_FOR_APPROVAL",
+      "RISKY",
+      "BUYER_VERIFIED",
+      "READY_FOR_SUPPLIER_PROOF",
+      "BLOCKED"
+    ],
+    "verification_status": [
+      "",
+      "RAW_LEAD",
+      "BUYER_VISIBLE",
+      "COMPANY_VERIFIED",
+      "IMPORT_HISTORY_VERIFIED",
+      "CONTACT_VERIFIED",
+      "RFQ_VERIFIED",
+      "PAYMENT_TERMS_KNOWN",
+      "READY_FOR_APPROVAL",
+      "RISKY",
+      "BUYER_VERIFIED",
+      "READY_FOR_SUPPLIER_PROOF",
+      "BLOCKED"
+    ]
   },
   "date_fields": ["created_at", "updated_at"],
   "numeric_fields": ["buyer_score", "source_reliability_score"],

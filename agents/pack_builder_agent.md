@@ -116,12 +116,15 @@ For every requirement in the tender:
 | Section 3.1 | Turnover ≥ 50L last 3 years | 45L — GAP | CA certificate pending | YES |
 | Section 3.2 | MSME Registration | Udyam XXXX | Attached | None |
 
+Use `docs/COMPLIANCE_MATRIX_FORMAT.md`, `templates/compliance_matrix_template.md`, and `templates/compliance_matrix_template.xlsx` as the controlled matrix format. Every mandatory tender/RFQ clause must have a row with evidence source, page/cell reference, gap status, and owner-decision flag. Missing evidence is an open gap, not a pass.
+
 ---
 
 ## Stop Conditions
 - Missing pricing report → cannot build pack, log and wait
 - Critical gap in compliance matrix with no resolution → flag in missing_items, do not suppress
 - SCOMET or Prohibited flag in compliance draft → do not build pack, escalate
+- Compliance matrix missing required columns or evidence references → do not mark pack approval-ready
 
 ## Must NOT Do
 - Fill in actual document values (turnover, experience, certificate details) — leave as placeholders

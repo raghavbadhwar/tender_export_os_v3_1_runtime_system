@@ -14,6 +14,8 @@
     "deadline_date",
     "status",
     "approval_status",
+    "evidence_level",
+    "execution_sub_status",
     "created_at",
     "updated_at",
     "created_by_agent"
@@ -40,12 +42,50 @@
       "ARCHIVED"
     ],
     "approval_status": ["", "PENDING", "APPROVED", "REJECTED", "CHANGES_REQUESTED", "SUPERSEDED"],
+    "evidence_level": [
+      "",
+      "PUBLIC_LISTING_ONLY",
+      "DETAIL_PAGE_READ",
+      "DOCUMENTS_DISCOVERED",
+      "DOCUMENTS_DOWNLOADED",
+      "DEEP_READ_COMPLETE",
+      "MANUAL_UPLOAD_REQUIRED",
+      "BLOCKED_LOGIN_REQUIRED",
+      "BLOCKED_CAPTCHA",
+      "BLOCKED_PAYWALL"
+    ],
+    "execution_sub_status": [
+      "",
+      "SUBMITTED",
+      "TECHNICAL_EVALUATION",
+      "TECHNICAL_RESULT",
+      "FINANCIAL_BID_OPEN",
+      "REVERSE_AUCTION",
+      "L1_DECLARED",
+      "NEGOTIATION",
+      "LOI_RECEIVED",
+      "WORK_ORDER",
+      "DELIVERY",
+      "INVOICE_SUBMITTED",
+      "PAYMENT_PENDING",
+      "PAYMENT_RECEIVED"
+    ],
     "deep_read_done": ["", "TRUE", "FALSE"],
     "supplier_search_done": ["", "TRUE", "FALSE"],
     "pricing_done": ["", "TRUE", "FALSE"],
     "scomet_flag": ["", "TRUE", "FALSE"]
   },
-  "date_fields": ["deadline_date", "follow_up_date", "submitted_at", "approved_at", "created_at", "updated_at"],
+  "date_fields": [
+    "deadline_date",
+    "follow_up_date",
+    "submitted_at",
+    "approved_at",
+    "created_at",
+    "updated_at",
+    "last_corrigenda_check",
+    "last_corrigenda_date",
+    "approval_timeout_at"
+  ],
   "numeric_fields": [
     "quantity",
     "estimated_value_inr",
@@ -58,7 +98,21 @@
     "score_export",
     "buyer_credibility_score",
     "fob_price_usd",
-    "cif_price_usd"
+    "cif_price_usd",
+    "corrigenda_count",
+    "working_capital_gap_days",
+    "cash_gap_inr",
+    "emd_lock_days",
+    "emd_opportunity_cost",
+    "portal_fee_inr",
+    "document_fee_inr",
+    "bid_submission_fee_inr",
+    "pbg_amount_inr",
+    "pbg_cost_inr",
+    "buyer_repeat_score",
+    "past_tender_count",
+    "similar_category_awards",
+    "typical_l1_price"
   ],
   "url_fields": ["source_url"]
 }

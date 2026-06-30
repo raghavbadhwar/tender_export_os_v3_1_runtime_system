@@ -24,6 +24,7 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'data')
 CONFIG_DIR = os.path.join(os.path.dirname(__file__), '..', 'config')
 MASTER_CASES_FILE = os.path.join(DATA_DIR, 'master_cases.csv')
 SCORING_FILE = os.path.join(CONFIG_DIR, 'scoring_weights.yaml')
+KILL_RULES_FILE = os.path.join(CONFIG_DIR, 'kill_rules.yaml')
 
 
 # Hardcoded fallback weights (GOV)
@@ -48,6 +49,73 @@ EXPORT_WEIGHTS = {
     'order_size_vs_risk': 10,
     'payment_safety': 5,
 }
+
+
+def truthy(value) -> bool:
+    return str(value or '').strip().upper() in {'TRUE', 'YES', '1', 'Y'}
+
+
+def number(value) -> float:
+    try:
+        return float(str(value or '0').replace(',', ''))
+    except ValueError:
+        return 0.0
+
+
+def evaluate_trader_specific_kills(case: dict) -> dict:
+    """Return trader-specific reject/watchlist decision without guessing missing evidence."""
+    missing_evidence = []
+    flags = []
+    status = 'PASS'
+
+    if truthy(case.get('manufacturer_only_tender')):
+        flags.append('manufacturer_only_tender')
+        status = 'REJECTED'
+    if truthy(case.get('oem_required')) and not truthy(case.get('oem_authorization_available')):
+        flags.append('authorized_dealer_or_oem_letter_missing')
+        status = 'WATCHLIST' if not case.get('oem_authorization_available') else status
+    if truthy(case.get('msme_reserved')) and not truthy(case.get('msme_eligible')):
+        flags.append('mse_only_reservation_mismatch')
+        status = 'WATCHLIST'
+    if case.get('make_in_india_requirement') and not case.get('local_content_evidence'):
+        flags.append('make_in_india_local_content_gap')
+        status = 'WATCHLIST'
+    if truthy(case.get('past_experience_required')) and not case.get('experience_details'):
+        flags.append('past_same_or_similar_government_experience_missing')
+        status = 'WATCHLIST'
+    tender_value = number(case.get('estimated_value_inr'))
+    turnover = number(case.get('turnover_required_inr'))
+    if tender_value and turnover and turnover > tender_value * 5:
+        flags.append('turnover_threshold_vs_tender_value_too_high')
+        status = 'WATCHLIST'
+    capital_exposure = sum(number(case.get(field)) for field in ['emd_amount_inr', 'portal_fee_inr', 'document_fee_inr', 'pbg_amount_inr'])
+    max_capital = number(case.get('max_capital_exposure_inr') or 500000)
+    if capital_exposure > max_capital:
+        flags.append('emd_fee_pbg_exceeds_capital_limit')
+        status = 'WATCHLIST'
+    if 'l1' in (case.get('notes', '') + case.get('l1_sensitivity_summary', '')).lower() and 'commodity' in (case.get('category', '') + case.get('product_or_service', '')).lower():
+        flags.append('l1_only_commodity_price_war')
+        status = 'WATCHLIST'
+    if number(case.get('delivery_days')) and number(case.get('delivery_days')) <= 3:
+        flags.append('remote_delivery_short_timeline')
+        status = 'WATCHLIST'
+    if case.get('mandatory_certs') and not case.get('certificate_evidence'):
+        flags.append('mandatory_iso_bis_unavailable')
+        status = 'WATCHLIST'
+
+    for field in ['oem_required', 'past_experience_required', 'turnover_required_inr', 'emd_amount_inr']:
+        if case.get(field, '') == '':
+            missing_evidence.append(field)
+    if missing_evidence and status == 'PASS':
+        status = 'WATCHLIST'
+        flags.append('incomplete_evidence')
+
+    return {
+        'status': status,
+        'flags': flags,
+        'missing_evidence': missing_evidence,
+        'reason': ', '.join(flags),
+    }
 
 
 def load_case(case_id: str) -> dict:
@@ -208,12 +276,17 @@ def main():
         result = score_gov_opportunity(case, verbose=args.verbose)
     else:
         result = score_export_opportunity(case, verbose=args.verbose)
+    trader_decision = evaluate_trader_specific_kills(case)
 
     total = result['total']
     print(f"\n{'='*40}")
     print(f"  SCORE: {total}/100", end=" ")
 
-    if total >= 60:
+    if trader_decision['status'] == 'REJECTED':
+        print(f"❌ REJECT — {trader_decision['reason']}")
+    elif trader_decision['status'] == 'WATCHLIST':
+        print(f"⚠️  WATCHLIST — {trader_decision['reason']}")
+    elif total >= 60:
         print("✅ PROCEED — Deep Read")
     elif total >= 45:
         print("⚠️  WATCHLIST — Owner review")

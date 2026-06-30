@@ -1,0 +1,18 @@
+finance:
+  annual_financing_rate_pct: 18
+  emd_annual_opportunity_rate_pct: 10
+  default_margin_pct: 15
+  payment_delay_buffer_pct: 3
+  penalty_risk_buffer_pct: 2
+gov_tender:
+  gst_rate_pct: 18
+  portal_fee_inr: 0
+  document_fee_inr: 0
+  bid_submission_fee_inr: 0
+  pbg_charge_pct: 2
+export:
+  bank_charges_pct: 1
+  insurance_pct_for_cif: 0.5
+  currency_buffer_pct: 3
+  payment_risk_pct: 2
+  minimum_viable_order_usd: 1000

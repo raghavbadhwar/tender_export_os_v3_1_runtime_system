@@ -42,6 +42,24 @@ def _first_match(text: str, patterns: list[str]) -> str:
     return ""
 
 
+def _first_match_with_evidence(parsed_results: list[dict[str, Any]], patterns: list[str]) -> tuple[str, dict[str, Any]]:
+    for item in parsed_results:
+        text = str(item.get("text", ""))
+        for pattern in patterns:
+            match = re.search(pattern, text, flags=re.I)
+            if match:
+                value = " ".join(match.group(1).split())[:300]
+                return value, {
+                    "value": value,
+                    "confidence": 0.82 if item.get("confidence") in {"HIGH", "MEDIUM"} else 0.55,
+                    "evidence_file": item.get("source_path", ""),
+                    "page": item.get("page", ""),
+                    "extraction_method": "regex_text",
+                    "review_required": False,
+                }
+    return "", {}
+
+
 def _extract_boq_items(tables: list[Any]) -> list[dict[str, str]]:
     items: list[dict[str, str]] = []
     for table in tables:
@@ -88,8 +106,19 @@ def extract_fields(
 
     for field, patterns in CRITICAL_FIELDS.items():
         if getattr(fields, field):
+            fields.field_evidence[field] = {
+                "value": getattr(fields, field),
+                "confidence": 0.6,
+                "evidence_file": opportunity.source_url,
+                "page": "",
+                "extraction_method": "listing",
+                "review_required": True,
+            }
             continue
-        setattr(fields, field, _first_match(text, patterns))
+        value, evidence = _first_match_with_evidence(parsed_results, patterns)
+        setattr(fields, field, value)
+        if evidence:
+            fields.field_evidence[field] = evidence
 
     documents: list[str] = []
     for pattern in DOCUMENT_PATTERNS:
@@ -99,6 +128,15 @@ def extract_fields(
                 documents.append(candidate)
     fields.documents_required = documents[:20]
     fields.boq_items = _extract_boq_items(tables)
+    if fields.boq_items:
+        fields.field_evidence["boq_items"] = {
+            "value": f"{len(fields.boq_items)} item(s)",
+            "confidence": 0.86,
+            "evidence_file": next((item.get("source_path", "") for item in parsed_results if item.get("tables")), ""),
+            "page": "",
+            "extraction_method": "table_classifier",
+            "review_required": False,
+        }
 
     important_clauses = []
     for label, pattern in {

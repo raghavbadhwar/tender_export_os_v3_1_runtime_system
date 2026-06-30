@@ -45,6 +45,21 @@ def score_supplier(row: dict[str, str], tender_terms: set[str]) -> tuple[int, li
     return min(100, base), risk_flags
 
 
+def is_quote_proof(candidate: dict[str, Any]) -> bool:
+    proof_type = str(candidate.get("quote_proof_type", "")).lower()
+    proof_path = str(candidate.get("quote_proof_path", ""))
+    indicative = bool(candidate.get("indicative_price_only")) or bool(candidate.get("not_a_quote_warning"))
+    accepted = {"supplier_specific_response", "proforma", "email_quote", "quotation_pdf", "verified_portal_quote"}
+    return bool(proof_path and proof_type in accepted and not indicative)
+
+
+def gem_registration_gate(candidate: dict[str, Any], workflow: str = "GOV") -> dict[str, Any]:
+    registered = str(candidate.get("gem_registered", "UNKNOWN")).upper()
+    if workflow == "GOV" and registered != "TRUE":
+        return {"passed": False, "reason": "GeM supplier registration missing or unverified"}
+    return {"passed": True, "reason": ""}
+
+
 def load_result(path: Path) -> dict[str, Any]:
     data = json.loads(path.read_text(encoding="utf-8"))
     if "shallow" in data:
@@ -69,10 +84,20 @@ def match_suppliers(result: dict[str, Any], limit: int = 10) -> list[dict[str, A
                     {
                         "supplier_name": row.get("supplier_name", ""),
                         "source": row.get("source_platform") or row.get("source_type", "supplier_master"),
+                        "evidence_url": row.get("website", ""),
+                        "evidence_file": "",
                         "location": ", ".join(part for part in [row.get("city", ""), row.get("state", ""), row.get("country", "")] if part),
                         "product_fit": score,
                         "contact_available": bool(row.get("phone") or row.get("email") or row.get("website")),
+                        "gem_registered": row.get("gem_registered") or "UNKNOWN",
+                        "gem_registration_verified_at": row.get("gem_registration_verified_at", ""),
+                        "gst_or_business_id_status": "verified" if row.get("gstin") else "missing",
                         "quote_needed": True,
+                        "quote_status": "not_requested",
+                        "quote_proof_path": row.get("last_quote_proof_path", ""),
+                        "quote_proof_type": "",
+                        "indicative_price_only": str(row.get("is_indicative_price_only", "")).upper() == "TRUE",
+                        "not_a_quote_warning": str(row.get("is_indicative_price_only", "")).upper() == "TRUE" or not row.get("last_quote_proof_path", ""),
                         "gst_available": bool(row.get("gstin")),
                         "certification_available": bool(row.get("iso_certs") or row.get("other_certs")),
                         "estimated_price_range": row.get("last_quote_price", ""),
@@ -89,10 +114,20 @@ def match_suppliers(result: dict[str, Any], limit: int = 10) -> list[dict[str, A
                 {
                     "supplier_name": f"Manual search needed: {product}",
                     "source": source,
+                    "evidence_url": "",
+                    "evidence_file": "",
                     "location": "",
                     "product_fit": 30,
                     "contact_available": False,
+                    "gem_registered": "UNKNOWN",
+                    "gem_registration_verified_at": "",
+                    "gst_or_business_id_status": "missing",
                     "quote_needed": True,
+                    "quote_status": "not_requested",
+                    "quote_proof_path": "",
+                    "quote_proof_type": "",
+                    "indicative_price_only": True,
+                    "not_a_quote_warning": True,
                     "gst_available": False,
                     "certification_available": False,
                     "estimated_price_range": "",

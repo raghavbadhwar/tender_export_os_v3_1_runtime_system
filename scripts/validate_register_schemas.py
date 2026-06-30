@@ -116,6 +116,17 @@ def validate_csv_schema(schema_path: Path) -> list[str]:
             if value and not URL_RE.match(value):
                 errors.append(f"{schema['file']}:{index}: {field}={value!r} is not a URL")
 
+        for rule in schema.get("cross_field_rules", []):
+            expected = rule.get("if", {})
+            if not isinstance(expected, dict):
+                continue
+            if all(row.get(field, "") == value for field, value in expected.items()):
+                requires_any = rule.get("requires_any", [])
+                if requires_any and not any(row.get(field, "") for field in requires_any):
+                    errors.append(f"{schema['file']}:{index}: {rule.get('error', rule.get('rule', 'cross-field rule failed'))}")
+                elif not requires_any:
+                    errors.append(f"{schema['file']}:{index}: {rule.get('error', rule.get('rule', 'cross-field rule failed'))}")
+
     return errors
 
 

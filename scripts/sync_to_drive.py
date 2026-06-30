@@ -11,6 +11,7 @@ Prerequisites:
 Usage:
   # Dry-run (show what would be uploaded — safe, no writes)
   python3 scripts/sync_to_drive.py
+  python3 scripts/sync_to_drive.py --mode private-runtime --dry-run
 
   # Execute upload for a specific group
   python3 scripts/sync_to_drive.py --execute --group daily_briefs
@@ -265,6 +266,10 @@ def main() -> int:
     )
     parser.add_argument("--execute", action="store_true",
                         help="Actually upload files. Default is dry-run (safe).")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="Force dry-run mode. This is the default.")
+    parser.add_argument("--mode", choices=["public-template", "private-runtime"], default="private-runtime",
+                        help="Projection mode label for the manifest; dry-run remains safe in both modes.")
     parser.add_argument("--all", action="store_true",
                         help="Sync all groups. Requires DRIVE_ROOT_FOLDER_ID.")
     parser.add_argument("--group", default="",
@@ -280,7 +285,7 @@ def main() -> int:
     if args.check_auth:
         return 0 if check_auth() else 1
 
-    dry_run = not args.execute
+    dry_run = args.dry_run or not args.execute
 
     if dry_run:
         print("=== DRY RUN — no files will be uploaded ===")
@@ -318,6 +323,7 @@ def main() -> int:
     manifest = {
         "drive_root_name": "Tender Export OS - Knowledge Bus",
         "mode": "execute" if args.execute else "dry_run",
+        "projection_mode": args.mode,
         "warning": "Review this manifest before any Drive upload. Secrets and restricted files are filtered locally.",
         "groups": [],
         "never_sync_patterns": NEVER_SYNC_PATTERNS,

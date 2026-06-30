@@ -15,9 +15,14 @@ import datetime
 import html
 import os
 import subprocess
+import sys
 import webbrowser
 
 PROJECT_ROOT = os.path.join(os.path.dirname(__file__), '..')
+sys.path.insert(0, os.path.abspath(PROJECT_ROOT))
+
+from scripts.approval_lifecycle import classify_approval
+
 DATA_DIR = os.path.join(PROJECT_ROOT, 'data')
 TEMPLATES_DIR = os.path.join(PROJECT_ROOT, 'templates')
 OUTPUTS_DIR = os.path.join(PROJECT_ROOT, 'outputs', 'daily_briefs')
@@ -113,6 +118,66 @@ def get_todays_stats(cases, run_log, today_str):
         'export_new': export_new,
         'rejected_count': rejected
     }
+
+
+def _date_value(value):
+    if not value:
+        return None
+    try:
+        return datetime.date.fromisoformat(value[:10])
+    except ValueError:
+        return None
+
+
+def _score_value(case):
+    score = case.get('score_gov', '') or case.get('score_export', '')
+    try:
+        return float(score)
+    except (TypeError, ValueError):
+        return None
+
+
+def get_trailing_30_day_metrics(cases, approvals, source_health, today_str):
+    """Compute compact trailing metrics for owner context."""
+    today = datetime.datetime.strptime(today_str, '%Y%m%d').date() if today_str and len(today_str) == 8 else datetime.date.today()
+    start = today - datetime.timedelta(days=30)
+
+    def in_window(value):
+        parsed = _date_value(value)
+        return bool(parsed and start <= parsed <= today)
+
+    recent_cases = [case for case in cases if in_window(case.get('created_at') or case.get('updated_at'))]
+    scores = [score for score in (_score_value(case) for case in recent_cases) if score is not None]
+    now = datetime.datetime.combine(today, datetime.time(23, 59), tzinfo=datetime.timezone.utc)
+    expired = sum(1 for approval in approvals if classify_approval(approval, now=now).get('expired'))
+    return {
+        'created': len(recent_cases),
+        'rejected': sum(1 for case in recent_cases if case.get('status') in {'REJECTED', 'FAST_KILL'}),
+        'won': sum(1 for case in recent_cases if case.get('status') == 'WON'),
+        'lost': sum(1 for case in recent_cases if case.get('status') == 'LOST'),
+        'pending_approvals': sum(1 for approval in approvals if approval.get('approval_status') == 'PENDING'),
+        'expired_approvals': expired,
+        'source_issues': len(get_source_issues(source_health)),
+        'average_score': round(sum(scores) / len(scores), 1) if scores else 'N/A',
+    }
+
+
+def render_trailing_metrics(metrics):
+    labels = [
+        ('Created', 'created'),
+        ('Rejected', 'rejected'),
+        ('Pending approvals', 'pending_approvals'),
+        ('Expired approvals', 'expired_approvals'),
+        ('Won/Lost', 'won_lost'),
+        ('Source issues', 'source_issues'),
+        ('Avg score', 'average_score'),
+    ]
+    enriched = dict(metrics)
+    enriched['won_lost'] = f"{metrics['won']}/{metrics['lost']}"
+    return ''.join(
+        f'<div class="metric-pill"><span>{esc(label)}</span><strong>{esc(enriched[key])}</strong></div>'
+        for label, key in labels
+    )
 
 
 def get_best_opportunities(cases, top_n=3):
@@ -354,6 +419,7 @@ def generate_brief(date_str=None, send_gateway=False, gateway='telegram', log_ru
     plugin_issues = get_plugin_issues(plugin_health)
     urgent_deadlines = get_upcoming_deadlines(cases)
     cases_by_id = {case.get('case_id'): case for case in cases}
+    trailing_metrics = get_trailing_30_day_metrics(cases, approvals, source_health, date_str)
 
     # Load template
     try:
@@ -400,6 +466,7 @@ def generate_brief(date_str=None, send_gateway=False, gateway='telegram', log_ru
         '{{APPROVAL_REQUIRED}}': render_approval_cards(pending_approvals, cases_by_id),
         '{{RISKS_BLOCKERS}}': render_risks(source_issues, plugin_issues, urgent_deadlines, cases, rfqs),
         '{{RECOMMENDED_ACTION}}': rec,
+        '{{TRAILING_30_METRICS}}': render_trailing_metrics(trailing_metrics),
     }
 
     for placeholder, value in replacements.items():
@@ -607,14 +674,15 @@ def main():
                         help='Send the brief through Hermes gateway. Default is local file only.')
     parser.add_argument('--gateway', default='telegram', help='Hermes gateway target when --send-gateway is set')
     parser.add_argument('--no-log', action='store_true', help='Do not append agent_run_log row')
+    parser.add_argument('--dry-run', action='store_true', help='Generate local file only and do not log or send externally')
     args = parser.parse_args()
 
     print("\nGenerating daily brief...")
     output_path = generate_brief(
         date_str=args.date,
-        send_gateway=args.send_gateway,
+        send_gateway=False if args.dry_run else args.send_gateway,
         gateway=args.gateway,
-        log_run=not args.no_log,
+        log_run=False if args.dry_run else not args.no_log,
     )
 
     abs_path = os.path.abspath(output_path)

@@ -11,7 +11,7 @@ from typing import Any
 from .credential_policy import sanitize_payload
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_EVIDENCE_ROOT = PROJECT_ROOT / "outputs" / "evidence"
+DEFAULT_EVIDENCE_ROOT = PROJECT_ROOT / "outputs" / "evidence" / "private"
 
 
 def now_iso() -> str:

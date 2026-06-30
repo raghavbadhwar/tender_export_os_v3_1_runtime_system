@@ -14,6 +14,10 @@ sources:
     api_available: true
     api_url: "https://bidplus.gem.gov.in/all-bids"
     scrape_type: "api_or_web"
+    source_weight: high
+    auth_strategy_ref: gem
+    evidence_level_expected: PUBLIC_LISTING_ONLY
+    manual_check_required: true
     frequency: daily
     categories_supported: all
     notes: "Best source for small orders. Buyer verification built-in. L1 bidding."
@@ -27,6 +31,10 @@ sources:
     paywalled: false
     api_available: false
     scrape_type: "web"
+    source_weight: high
+    auth_strategy_ref: cppp
+    evidence_level_expected: DOCUMENTS_DISCOVERED
+    manual_check_required: false
     frequency: daily
     notes: "Central Govt ministries and PSUs. Check corrigenda regularly."
     health_status: Working
@@ -51,6 +59,10 @@ sources:
     paywalled: true
     api_available: false
     scrape_type: "manual_check"
+    source_weight: low
+    auth_strategy_ref: paid_aggregators
+    evidence_level_expected: BLOCKED_PAYWALL
+    manual_check_required: true
     frequency: weekly
     notes: "Paid aggregator. Use only if GeM/CPPP miss niche categories."
     health_status: Paywalled
@@ -117,6 +129,10 @@ sources:
     login_required: true
     paywalled: true
     scrape_type: "manual_check"
+    source_weight: low
+    auth_strategy_ref: paid_aggregators
+    evidence_level_expected: BLOCKED_PAYWALL
+    manual_check_required: true
     frequency: monthly
     notes: "Free tier limited. Use sparingly."
     health_status: Paywalled
