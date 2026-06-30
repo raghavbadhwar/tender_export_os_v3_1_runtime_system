@@ -2,7 +2,7 @@
   "case_id": "EXP-20260630-006",
   "workflow_type": "EXPORT",
   "status": "NEW",
-  "generated_at": "2026-06-30T15:52:04",
+  "generated_at": "2026-06-30T20:40:02",
   "source": {
     "source_name": "UNDP Procurement Notices",
     "source_url": "https://procurement-notices.undp.org/view_negotiation.cfm?nego_id=47079",

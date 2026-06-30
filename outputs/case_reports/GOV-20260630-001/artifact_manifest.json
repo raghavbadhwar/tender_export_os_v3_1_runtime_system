@@ -2,7 +2,7 @@
   "case_id": "GOV-20260630-001",
   "workflow_type": "GOV",
   "status": "SUPPLIER_SEARCH",
-  "generated_at": "2026-06-30T15:52:04",
+  "generated_at": "2026-06-30T20:40:02",
   "source": {
     "source_name": "GeM",
     "source_url": "https://gem.gov.in",
@@ -397,6 +397,14 @@
       "receipts/browser_research/GOV-20260630-001_20260630154817.json",
       "receipts/browser_research/GOV-20260630-001_20260630154949.json",
       "receipts/browser_research/GOV-20260630-001_20260630155126.json",
+      "receipts/browser_research/GOV-20260630-001_20260630155205.json",
+      "receipts/browser_research/GOV-20260630-001_20260630163202.json",
+      "receipts/browser_research/GOV-20260630-001_20260630163346.json",
+      "receipts/browser_research/GOV-20260630-001_20260630164701.json",
+      "receipts/browser_research/GOV-20260630-001_20260630164759.json",
+      "receipts/browser_research/GOV-20260630-001_20260630170836.json",
+      "receipts/browser_research/GOV-20260630-001_20260630172127.json",
+      "receipts/browser_research/GOV-20260630-001_20260630182657.json",
       "receipts/drive_sync/GOV-20260630-001_manifest_20260630055517.json",
       "receipts/drive_sync/GOV-20260630-001_manifest_20260630055519.json",
       "receipts/drive_sync/GOV-20260630-001_manifest_20260630055520.json",
@@ -770,7 +778,16 @@
       "receipts/drive_sync/GOV-20260630-001_manifest_20260630154545.json",
       "receipts/drive_sync/GOV-20260630-001_manifest_20260630154816.json",
       "receipts/drive_sync/GOV-20260630-001_manifest_20260630154949.json",
-      "receipts/drive_sync/GOV-20260630-001_manifest_20260630155126.json"
+      "receipts/drive_sync/GOV-20260630-001_manifest_20260630155126.json",
+      "receipts/drive_sync/GOV-20260630-001_manifest_20260630155204.json",
+      "receipts/drive_sync/GOV-20260630-001_manifest_20260630163201.json",
+      "receipts/drive_sync/GOV-20260630-001_manifest_20260630163346.json",
+      "receipts/drive_sync/GOV-20260630-001_manifest_20260630164701.json",
+      "receipts/drive_sync/GOV-20260630-001_manifest_20260630164759.json",
+      "receipts/drive_sync/GOV-20260630-001_manifest_20260630170836.json",
+      "receipts/drive_sync/GOV-20260630-001_manifest_20260630172127.json",
+      "receipts/drive_sync/GOV-20260630-001_manifest_20260630182656.json",
+      "receipts/owner_decisions/GOV-20260630-001_APR-002_20260630164556.json"
     ],
     "daily_briefs": [
       "outputs/daily_briefs/brief_20260630.html",
@@ -779,10 +796,8 @@
     ]
   },
   "open_gates": {
-    "approval_status": "PENDING",
-    "pending_approval_ids": [
-      "APR-002"
-    ],
+    "approval_status": "APPROVED",
+    "pending_approval_ids": [],
     "quote_proof_count": 2,
     "compliance_draft_required": false,
     "scomet_flag": ""

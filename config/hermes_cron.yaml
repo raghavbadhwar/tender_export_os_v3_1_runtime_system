@@ -12,6 +12,20 @@ rules:
   deliver_scheduled_briefs_to_telegram: true
 
 jobs:
+  - id: morning_opportunity_intelligence_html
+    cadence: "0 6 * * *"
+    local_time: "06:00 IST daily"
+    runtime: hermes_no_agent_script
+    max_runtime_minutes: 3
+    purpose: "Run the founder-requested morning pipeline: public/source intake, requirements pass, supplier 5-3-2 pass, supply-chain document drafts, pricing/quote assistance, blind-spot routing, and HTML report delivery."
+    command: "python3 scripts/run_morning_opportunity_intelligence.py"
+    stop_condition: "Internal report generation only; no portal login, supplier/buyer message, bid/RFQ submission, document upload, payment, DSC, final classification/origin claim, or final price/terms commitment."
+    outputs:
+      - outputs/opportunity_intelligence/daily_opportunity_intelligence_YYYYMMDD.html
+      - outputs/opportunity_intelligence/daily_opportunity_intelligence_YYYYMMDD.json
+      - outputs/supply_chain/supply_chain_<case_id>_YYYYMMDD.md
+      - outputs/external_intake/external_intake_report_YYYYMMDD_HHMMSS.md
+      - data/agent_run_log.csv
   - id: morning_operator_brief
     cadence: "30 8 * * *"
     local_time: "08:30 IST daily"

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-30T15:52:04",
+  "generated_at": "2026-06-30T20:40:02",
   "mode": "plan_only",
   "safety_note": "This plan does not write to Hermes Kanban. Review before executing with any future connector.",
   "actions": [
@@ -13,7 +13,7 @@
         "board_status": "running",
         "case_status": "SUPPLIER_SEARCH",
         "deadline": "2026-07-15",
-        "owner_approval_needed": true,
+        "owner_approval_needed": false,
         "next_action": "Complete supplier proof; do not price until two quote proofs exist."
       }
     },
@@ -41,7 +41,7 @@
         "board_status": "running",
         "case_status": "SUPPLIER_SEARCH",
         "deadline": "2026-07-10",
-        "owner_approval_needed": true,
+        "owner_approval_needed": false,
         "next_action": "Complete supplier proof; do not price until two quote proofs exist."
       }
     },
@@ -181,6 +181,20 @@
         "board_status": "triage",
         "case_status": "NEW",
         "deadline": "2026-06-30",
+        "owner_approval_needed": false,
+        "next_action": "Route to next valid workflow stage."
+      }
+    },
+    {
+      "action": "create_task",
+      "case_id": "EXP-20260630-007",
+      "desired": {
+        "case_id": "EXP-20260630-007",
+        "title": "Wanted: Agarbatti Incense Sticks",
+        "workflow_type": "EXPORT",
+        "board_status": "todo",
+        "case_status": "WATCHLIST",
+        "deadline": "",
         "owner_approval_needed": false,
         "next_action": "Route to next valid workflow stage."
       }

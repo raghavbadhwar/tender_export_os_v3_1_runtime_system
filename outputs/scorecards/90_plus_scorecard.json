@@ -1,10 +1,10 @@
 {
-  "score": 100,
+  "score": 80,
   "checks": [
     {
       "name": "Core schema/compile checks",
       "weight": 20,
-      "passed": true
+      "passed": false
     },
     {
       "name": "Mobile payload dry-run",

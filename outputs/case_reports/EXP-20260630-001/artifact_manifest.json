@@ -2,7 +2,7 @@
   "case_id": "EXP-20260630-001",
   "workflow_type": "EXPORT",
   "status": "SUPPLIER_SEARCH",
-  "generated_at": "2026-06-30T15:52:04",
+  "generated_at": "2026-06-30T20:40:02",
   "source": {
     "source_name": "Alibaba RFQ",
     "source_url": "https://rfq.alibaba.com",
@@ -42,7 +42,8 @@
     ],
     "receipts": [
       "receipts/approvals/EXP-20260630-001_approval_card.html",
-      "receipts/approvals/EXP-20260630-001_approval_card.json"
+      "receipts/approvals/EXP-20260630-001_approval_card.json",
+      "receipts/owner_decisions/EXP-20260630-001_APR-003_20260630164556.json"
     ],
     "daily_briefs": [
       "outputs/daily_briefs/brief_20260630.html",
@@ -51,10 +52,8 @@
     ]
   },
   "open_gates": {
-    "approval_status": "PENDING",
-    "pending_approval_ids": [
-      "APR-003"
-    ],
+    "approval_status": "APPROVED",
+    "pending_approval_ids": [],
     "quote_proof_count": 2,
     "compliance_draft_required": true,
     "scomet_flag": "FALSE"

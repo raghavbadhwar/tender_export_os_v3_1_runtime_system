@@ -99,7 +99,6 @@ REQUIRED_GLOBAL_TEST_COVERAGE = {
 }
 
 HIGH_RISK_ACTIONS = {
-    "send_supplier_quote_request",
     "send_buyer_rfq_reply",
     "send_export_quotation",
     "submit_tender_bid",

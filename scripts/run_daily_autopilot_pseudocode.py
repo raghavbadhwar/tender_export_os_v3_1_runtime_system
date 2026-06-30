@@ -197,7 +197,9 @@ def run_deep_read_agent(surviving_cases):
 def run_supplier_engine(deep_read_cases, supplier_master, sources_supplier):
     """
     Find minimum 5 candidates across 3+ source types.
-    Prepare draft quote requests (requires owner approval to send).
+    Supplier quote/availability outreach is standing-authorized by the owner;
+    send only non-final RFQs/clarifications, log receipts, and keep buyer quote,
+    PO, payment, DSC, bid upload, and final commitment gates intact.
     """
     print(f"\n[{NOW}] === PHASE 4: Supplier Engine Agent ===")
 
@@ -219,7 +221,8 @@ def run_supplier_engine(deep_read_cases, supplier_master, sources_supplier):
         # else:
         #     save_supplier_shortlist(case, shortlist)
         #     prepare_quote_request_drafts(case, shortlist)
-        #     create_approval_card_for_quote_requests(case, shortlist)
+        #     send_or_queue_supplier_quote_requests_under_standing_authorization(case, shortlist)
+        #     write_supplier_outreach_receipts(case, shortlist)
 
         pass
 

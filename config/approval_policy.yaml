@@ -2,9 +2,49 @@
 # Approval Policy — defines what requires owner approval before any action is taken
 # Usage: Approval Desk Agent checks this before routing any action card
 # Principle: Agents prepare, draft, score, source. Humans approve external/money/legal actions.
+# 2026-06-30 owner update: supplier outreach and portal login/signup/credential acquisition
+# are covered by standing authorization inside the guardrails below.
 
 # ══════════════════════════════════
-# MODE A — Autopilot Research (No Approval Needed)
+# STANDING AUTHORIZATIONS — Owner-Preapproved Operating Actions
+# ══════════════════════════════════
+
+standing_authorizations:
+  last_updated: "2026-06-30"
+  owner_statement: "Owner granted standing approval for supplier outreach and portal login/signup/credential acquisition needed for Tender Export OS opportunity research."
+  authorized_without_per_case_approval:
+    - send_supplier_quote_request
+    - send_supplier_clarification_request
+    - send_supplier_follow_up
+    - request_supplier_price_and_availability
+    - portal_login_for_research
+    - portal_signup_for_research
+    - portal_credential_creation
+    - portal_session_refresh_for_research
+  credential_handling:
+    storage: "macOS Keychain / approved secret store only; never CSV, YAML, Drive, reports, logs, prompts, or event payloads"
+    log_format: "secret alias only, never secret value"
+    otp_or_captcha: "may pause and request live owner assistance if an OTP, CAPTCHA, phone verification, or human-only identity challenge appears"
+  hard_limits_still_requiring_specific_owner_approval:
+    - send_buyer_rfq_reply
+    - send_export_quotation
+    - submit_tender_bid
+    - upload_tender_documents
+    - use_dsc
+    - pay_emd_or_bid_security
+    - pay_security_deposit
+    - pay_advance_to_supplier
+    - place_supplier_purchase_order
+    - accept_payment_terms
+    - commit_final_price
+    - commit_delivery_timeline
+    - confirm_hsn_itchs_classification
+    - claim_country_of_origin
+    - purchase_paid_subscription_or_portal_plan
+    - make_legal_tax_origin_certification
+
+# ══════════════════════════════════
+# MODE A — Autopilot Research + Standing-Authorized Supplier/Portal Actions
 # ══════════════════════════════════
 
 mode_a_autopilot:
@@ -35,6 +75,15 @@ mode_a_autopilot:
     - generate_drive_sync_manifest
     - create_kanban_tasks_internal
     - produce_internal_artifact_drafts
+    # Standing-authorized by owner on 2026-06-30; still record receipts and never include final commitments.
+    - send_supplier_quote_request
+    - send_supplier_clarification_request
+    - send_supplier_follow_up
+    - request_supplier_price_and_availability
+    - portal_login_for_research
+    - portal_signup_for_research
+    - portal_credential_creation
+    - portal_session_refresh_for_research
 
 # ══════════════════════════════════
 # MODE B — Approval-Gated Actions (Requires Owner Approval)
@@ -46,11 +95,10 @@ mode_b_approval_gated:
 
   approval_required_for:
 
-    - action: "send_supplier_quote_request"
-      reason: "Initiates external communication with supplier; creates business relationship"
-      approval_type: per_case
-      card_required: true
-
+    # send_supplier_quote_request moved to standing_authorizations on 2026-06-30.
+    # It is now allowed without per-case approval when limited to quote/availability
+    # requests and receipts are logged; buyer quotations, POs, payments, DSC,
+    # bid uploads, and final commitments remain explicitly approval-gated.
     - action: "send_buyer_rfq_reply"
       reason: "External reply to buyer — creates business impression and potential obligation"
       approval_type: per_case

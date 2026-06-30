@@ -1,0 +1,44 @@
+{
+  "case_id": "EXP-20260630-007",
+  "workflow_type": "EXPORT",
+  "status": "WATCHLIST",
+  "generated_at": "2026-06-30T20:40:02",
+  "source": {
+    "source_name": "go4WorldBusiness",
+    "source_url": "https://go4worldbusiness.com/inquiries/send/buyleads/1304702/wanted--agarbatti-incense-sticks",
+    "evidence_gap": false
+  },
+  "register_rows": {
+    "case": "data/master_cases.csv",
+    "approvals": [],
+    "quotes": [],
+    "suppliers": []
+  },
+  "artifacts": {
+    "case_reports": [
+      "outputs/case_reports/EXP-20260630-007/artifact_manifest.json"
+    ],
+    "bid_packs": [],
+    "export_quote_packs": [],
+    "approval_cards": [],
+    "receipts": [],
+    "daily_briefs": [
+      "outputs/daily_briefs/brief_20260630.html",
+      "outputs/daily_briefs/sample_daily_brief.html",
+      "outputs/daily_briefs/weekly_system_review_20260630.html"
+    ]
+  },
+  "open_gates": {
+    "approval_status": "",
+    "pending_approval_ids": [],
+    "quote_proof_count": 0,
+    "compliance_draft_required": true,
+    "scomet_flag": ""
+  },
+  "sources_used": [
+    "data/master_cases.csv",
+    "data/approvals_receipts.csv",
+    "data/quote_master.csv",
+    "data/supplier_master.csv"
+  ]
+}

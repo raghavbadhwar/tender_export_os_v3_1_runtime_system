@@ -34,7 +34,9 @@ FINAL_ACTIONS = {
 
 INTERNAL_APPROVAL_ACTIONS = {
     "send_supplier_quote_request",
+    "send_supplier_quote_requests",
     "request_supplier_quote",
+    "request_supplier_quotes",
     "request_buyer_clarification",
 }
 

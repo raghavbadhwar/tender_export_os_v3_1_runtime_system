@@ -77,8 +77,8 @@ def task_body(case: dict[str, str], task: dict[str, Any]) -> str:
         "Rules:",
         "- Use case_id in every output and comment.",
         "- Cite sources used.",
-        "- Write internal drafts/artifacts only unless owner approval is already recorded.",
-        "- Stop at approval gates; do not send, submit, upload, pay, use DSC, confirm HSN/ITC-HS, claim origin, or commit price/delivery/payment terms.",
+        "- Internal drafts/artifacts are always allowed; supplier RFQ/follow-up and portal login/signup are standing-authorized with receipts.",
+        "- Stop at remaining approval gates; do not contact buyers, submit, upload, pay, use DSC, confirm HSN/ITC-HS, claim origin, place POs, or commit final price/delivery/payment terms.",
         "- Record durable state changes through the event ledger or documented projection scripts.",
     ])
 

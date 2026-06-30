@@ -2,7 +2,7 @@
   "case_id": "EXP-20260630-002",
   "workflow_type": "EXPORT",
   "status": "APPROVAL_REQUIRED",
-  "generated_at": "2026-06-30T15:52:04",
+  "generated_at": "2026-06-30T20:40:02",
   "source": {
     "source_name": "Recovered local registers",
     "source_url": "",
