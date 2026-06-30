@@ -1,0 +1,35 @@
+{
+  "run_id": "20260630165753-55950c",
+  "mode": "scan",
+  "adapter": "gem",
+  "create_cases": false,
+  "external_side_effects": false,
+  "results": [
+    {
+      "adapter": "gem",
+      "mode": "scan",
+      "opportunities": [
+        {
+          "source_name": "GeM",
+          "source_type": "primary",
+          "workflow_type": "GOV",
+          "source_url": "https://bidplus.gem.gov.in/all-bids",
+          "external_reference": "GEM-BLOCKED",
+          "opportunity_title": "GeM source blocked: CODEX_RUNTIME_OR_PLAYWRIGHT_UNAVAILABLE",
+          "buyer_name": "",
+          "product_or_service": "",
+          "quantity": "",
+          "unit": "",
+          "deadline_date": "",
+          "estimated_value_inr": "",
+          "estimated_value_usd": "",
+          "blocker_status": "CODEX_RUNTIME_OR_PLAYWRIGHT_UNAVAILABLE",
+          "citations": [
+            "https://bidplus.gem.gov.in/all-bids"
+          ],
+          "notes": "No module named 'playwright'"
+        }
+      ]
+    }
+  ]
+}

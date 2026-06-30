@@ -1,0 +1,44 @@
+runtime:
+  browser: playwright
+  headless_default: false
+  max_results_per_source: 25
+  max_deep_reads_per_source: 10
+  timeout_seconds: 60
+  download_timeout_seconds: 120
+  pause_on_captcha: true
+  pause_on_otp: true
+  pause_on_login_required: true
+  external_side_effects_allowed: false
+
+evidence:
+  root: outputs/evidence
+  save_screenshots: true
+  save_raw_html: true
+  save_downloads: true
+  save_parsed_text: true
+  save_extracted_json: true
+
+parsing:
+  pdf_engine: pymupdf
+  excel_engine: openpyxl
+  ocr_fallback: false
+  min_confidence_for_case_creation: 60
+
+case_creation:
+  create_cases_default: false
+  require_deadline_active: true
+  reject_expired: true
+  min_relevance_score: 50
+  min_confidence_score: 55
+
+limits:
+  max_pages_per_source: 30
+  max_documents_per_opportunity: 20
+  max_file_size_mb: 100
+
+blocked_source_policy:
+  captcha: pause_and_log
+  otp: pause_and_log
+  login_required: pause_and_log
+  paywall: manual_check_required
+  restricted: do_not_scrape

@@ -192,6 +192,68 @@ python3 scripts/score_opportunity.py --case_id GOV-20260630-001
 python3 scripts/generate_chatgpt_snapshot.py
 ```
 
+### Deep Source Access Runtime
+Install the browser/document parsing dependencies before running authorised deep source access:
+
+```bash
+python3 -m pip install -r requirements.txt
+python3 -m playwright install chromium
+```
+
+If your Python is externally managed by Homebrew, use a virtualenv:
+
+```bash
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install -r requirements.txt
+python -m playwright install chromium
+```
+
+Safe scan mode remains output-only by default:
+
+```bash
+python3 scripts/run_source_adapter.py --adapter mock --mode scan --record-event
+python3 scripts/run_source_adapter.py --adapter gem --mode scan --keyword "water purifier" --limit 5 --headful --record-event
+python3 scripts/run_source_adapter.py --adapter cppp --mode scan --keyword "data entry" --limit 5 --headful --record-event
+python3 scripts/run_source_adapter.py --adapter all --mode scan --limit 5 --record-event
+```
+
+Deep evidence mode opens detail pages, saves raw HTML/screenshots, attempts document downloads where allowed, parses evidence, and writes source events. It does not create cases unless explicitly promoted:
+
+```bash
+python3 scripts/run_source_adapter.py \
+  --adapter gem \
+  --mode deep \
+  --keyword "water purifier" \
+  --limit 5 \
+  --headful \
+  --record-event \
+  --evidence-only
+```
+
+Deep outputs are written under:
+
+```text
+outputs/evidence/GOV/<candidate-id>/
+outputs/source_runs/<run_id>/deep_results.json
+outputs/deep_source_reports/report_YYYYMMDD_HHMM.html
+```
+
+Generate the HTML report from a run:
+
+```bash
+python3 scripts/generate_deep_source_report.py --input outputs/source_runs/<run_id>/deep_results.json
+```
+
+Case creation is gated and off by default. Review evidence first, then promote with:
+
+```bash
+python3 scripts/create_cases_from_deep_source_results.py outputs/source_runs/<run_id>/deep_results.json --respect-deadline --record-event
+python3 scripts/rebuild_projections_from_events.py
+```
+
+Approval boundaries remain hard: the runtime must not submit bids, upload tender documents, use DSC, pay EMD/security/subscriptions, accept legal declarations, send buyer quotations, commit price/delivery/origin/classification, or contact suppliers without the configured owner approval.
+
 ### Weekly (30 minutes)
 - ChatGPT Project: weekly review of wins/losses, source health, supplier performance
 - Update `config/categories.yaml` for new product focus areas

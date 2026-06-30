@@ -1,0 +1,15 @@
+playwright
+beautifulsoup4
+lxml
+pandas
+openpyxl
+python-docx
+PyMuPDF
+pdfplumber
+pydantic
+PyYAML
+python-dateutil
+rapidfuzz
+rich
+tenacity
+pytest

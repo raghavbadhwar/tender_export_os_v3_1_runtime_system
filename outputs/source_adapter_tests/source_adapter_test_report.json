@@ -1,16 +1,80 @@
 {
-  "generated_at": "2026-06-30T20:40:02",
+  "generated_at": "2026-06-30T22:33:29",
   "safe_mode": true,
   "summary": {
-    "adapters_checked": 1,
-    "passes": 1,
+    "adapters_checked": 10,
+    "passes": 10,
     "failures": 0
   },
   "results": [
     {
+      "adapter": "cppp",
+      "status": "PASS",
+      "items": 1,
+      "structured_blocker": true,
+      "missing_fields": []
+    },
+    {
+      "adapter": "epublish",
+      "status": "PASS",
+      "items": 1,
+      "structured_blocker": true,
+      "missing_fields": []
+    },
+    {
+      "adapter": "gem",
+      "status": "PASS",
+      "items": 1,
+      "structured_blocker": true,
+      "missing_fields": []
+    },
+    {
+      "adapter": "india_business_portal",
+      "status": "PASS",
+      "items": 1,
+      "structured_blocker": true,
+      "missing_fields": []
+    },
+    {
+      "adapter": "indian_trade_portal",
+      "status": "PASS",
+      "items": 1,
+      "structured_blocker": true,
+      "missing_fields": []
+    },
+    {
+      "adapter": "mahatenders",
+      "status": "PASS",
+      "items": 1,
+      "structured_blocker": true,
+      "missing_fields": []
+    },
+    {
       "adapter": "mock",
       "status": "PASS",
       "items": 2,
+      "structured_blocker": false,
+      "missing_fields": []
+    },
+    {
+      "adapter": "punjab",
+      "status": "PASS",
+      "items": 1,
+      "structured_blocker": true,
+      "missing_fields": []
+    },
+    {
+      "adapter": "supplier_directory",
+      "status": "PASS",
+      "items": 1,
+      "structured_blocker": true,
+      "missing_fields": []
+    },
+    {
+      "adapter": "ungm",
+      "status": "PASS",
+      "items": 1,
+      "structured_blocker": true,
       "missing_fields": []
     }
   ]

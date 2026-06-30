@@ -1,0 +1,9 @@
+source: cppp
+start_url: https://eprocure.gov.in/cppp/latestactivetendersnew/cpppdata
+notes: "MVP uses generic text/link extraction. Detail selectors should be added from current public CPPP pages."
+unsafe_actions:
+  - submit
+  - upload
+  - pay
+  - dsc
+  - declaration

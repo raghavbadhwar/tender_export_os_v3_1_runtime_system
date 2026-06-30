@@ -1,0 +1,9 @@
+source: gem
+start_url: https://bidplus.gem.gov.in/all-bids
+notes: "MVP uses generic text/link extraction. Add stable selectors only after verifying current portal DOM with owner-authorized session."
+unsafe_actions:
+  - submit
+  - upload
+  - pay
+  - dsc
+  - declaration
