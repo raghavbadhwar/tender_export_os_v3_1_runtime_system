@@ -1,0 +1,31 @@
+{
+  "packet_id": "CGPT-WEEKLY-20260630_131158",
+  "topic": "weekly_learning_review",
+  "created_at": "2026-06-30T13:11:58+05:30",
+  "direction": "hermes_to_chatgpt_project",
+  "task_id": "t_50fcbad9",
+  "files": [
+    "outputs/chatgpt_bridge/to_chatgpt/20260630_131158_weekly_learning_review/CHATGPT_BOARDROOM.md",
+    "outputs/chatgpt_bridge/to_chatgpt/20260630_131158_weekly_learning_review/chatgpt_snapshot.md",
+    "outputs/chatgpt_bridge/to_chatgpt/20260630_131158_weekly_learning_review/project_instructions.md",
+    "outputs/chatgpt_bridge/to_chatgpt/20260630_131158_weekly_learning_review/staged_memory_updates_20260630.json",
+    "outputs/chatgpt_bridge/to_chatgpt/20260630_131158_weekly_learning_review/staged_skill_updates_20260630.md",
+    "outputs/chatgpt_bridge/to_chatgpt/20260630_131158_weekly_learning_review/weekly_learning_review_20260630.md"
+  ],
+  "boundary": [
+    "Bounded strategy snapshot only; not raw operational database.",
+    "ChatGPT may research, synthesize, and recommend.",
+    "ChatGPT must not approve, send, submit, pay, classify finally, claim origin, price finally, or mutate registers.",
+    "Returned output must go through Hermes/Codex review before any operational change."
+  ],
+  "return_contract": {
+    "expected_sections": [
+      "executive_summary",
+      "cited_findings",
+      "recommended_strategy",
+      "risks_and_assumptions",
+      "suggested_hermes_codex_follow_up_tasks",
+      "evidence_gaps"
+    ]
+  }
+}

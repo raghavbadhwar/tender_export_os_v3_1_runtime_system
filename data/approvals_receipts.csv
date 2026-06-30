@@ -1,0 +1,4 @@
+approval_id,case_id,workflow_type,action_approved,proposed_by_agent,approval_card_path,amount_inr,amount_usd,approved_by,approved_at,approval_status,rejection_reason,changes_requested,receipt_id,receipt_path,external_effect,notes
+APR-001,EXP-20260630-002,EXPORT,send_export_quotation,pack_builder_agent,receipts/approvals/EXP-20260630-002_approval_card.html,56000,680,,,PENDING,,,,,,Awaiting owner review of brass handicraft quote to UK buyer.
+APR-002,GOV-20260630-001,GOV,send_supplier_quote_request,supplier_engine_agent,receipts/approvals/GOV-20260630-001_approval_card.html,,,,,PENDING,,,,,,Awaiting owner approval to send RFQ to Ravi Stationery for stationery tender.
+APR-003,EXP-20260630-001,EXPORT,send_supplier_quote_requests,supplier_engine_agent,receipts/approvals/EXP-20260630-001_approval_card.html,,,,,PENDING,,,,,,Owner approval required before sending six supplier quote/clarification drafts for EXP-20260630-001. No draft has been sent.

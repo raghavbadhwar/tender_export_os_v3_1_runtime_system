@@ -1,0 +1,64 @@
+version: 4
+name: codex_app_server_runtime_policy
+default_runtime: codex_app_server
+fallback_runtime: auto
+
+principle: "Use Hermes built-in Codex App-Server Runtime before building a custom Hermes-to-Codex bridge."
+
+local_readiness_checks:
+  hermes:
+    - "hermes doctor"
+    - "hermes --help"
+    - "hermes tools --help"
+    - "hermes skills --help"
+    - "hermes mcp --help"
+    - "hermes kanban --help"
+    - "hermes cron --help"
+  codex:
+    - "codex --version"
+    - "codex --help"
+    - "codex doctor"
+    - "codex plugin list --available --json"
+    - "codex app-server --help"
+
+activation:
+  preferred_slash_command: "/codex-runtime codex_app_server"
+  fallback_slash_command: "/codex-runtime auto"
+  verify_before_use: true
+
+use_codex_runtime_for:
+  - artifact_production
+  - pdf_and_boq_parsing
+  - spreadsheet_workbooks
+  - docx_and_pptx_generation
+  - dashboard_generation
+  - source_adapter_repair
+  - parser_testing
+  - plugin_inventory_checks
+  - structured_file_edits
+
+keep_in_hermes_default_runtime:
+  - memory_heavy_work
+  - session_search_heavy_work
+  - kanban_orchestration
+  - approval_desk_owner_interaction
+  - gateway_and_mobile_interaction
+  - weekly_learning_review
+
+fallback_bridge:
+  enabled_by_default: false
+  create_only_if:
+    - codex_app_server_unavailable
+    - codex_runtime_fails_consistently
+    - hermes_cannot_invoke_needed_codex_plugin_feature
+  inbox: runtime/codex_inbox
+  outbox: runtime/codex_outbox
+  create_task_script: scripts/hermes_create_codex_task.py
+  runner_script: scripts/codex_task_runner.py
+
+safety:
+  no_external_send_without_approval: true
+  no_bid_submission_without_approval_and_dsc: true
+  no_final_hsn_itchs_or_origin_claims: true
+  cite_sources_in_artifacts: true
+  append_agent_run_log: true

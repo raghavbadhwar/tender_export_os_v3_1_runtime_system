@@ -1,0 +1,203 @@
+# kill_rules.yaml
+# Fast Kill Rules for automatic rejection or watchlist placement
+# Usage: Fast Kill Agent applies these rules in order. First matching rule wins.
+# Result: REJECTED (auto-kill), WATCHLIST (human review needed), or PASS (proceed to Deep Read)
+
+# ══════════════════════════════════
+# GOVERNMENT TENDER KILL RULES
+# ══════════════════════════════════
+
+gov_kill_rules:
+
+  # --- Hard Kills (auto-reject immediately) ---
+
+  - rule_id: "GOV-KILL-01"
+    name: "Deadline Too Close"
+    description: "Bid submission deadline is within 5 calendar days from today"
+    condition: "days_to_deadline <= 5"
+    result: REJECTED
+    reason_code: "DEADLINE_TOO_CLOSE"
+    note: "Not enough time for document preparation, supplier sourcing, and approval."
+
+  - rule_id: "GOV-KILL-02"
+    name: "Turnover Requirement Too High"
+    description: "Minimum annual turnover required exceeds our current verified turnover"
+    condition: "required_turnover_inr > our_verified_turnover_inr"
+    result: REJECTED
+    reason_code: "TURNOVER_NOT_MET"
+    note: "Never fabricate turnover certificate. Do not proceed."
+
+  - rule_id: "GOV-KILL-03"
+    name: "Mandatory Past Experience Missing"
+    description: "Tender requires past experience in similar supply/project that we cannot document"
+    condition: "past_experience_required == true AND our_past_experience_documented == false"
+    result: REJECTED
+    reason_code: "PAST_EXPERIENCE_NOT_MET"
+
+  - rule_id: "GOV-KILL-04"
+    name: "OEM Authorization Required"
+    description: "Tender requires OEM/brand authorization letter that we do not have"
+    condition: "oem_authorization_required == true AND oem_authorization_available == false"
+    result: REJECTED
+    reason_code: "OEM_AUTHORIZATION_MISSING"
+
+  - rule_id: "GOV-KILL-05"
+    name: "Mandatory License or Certification Missing"
+    description: "Tender requires a specific license or certification we do not hold"
+    condition: "mandatory_license_required == true AND license_held == false"
+    result: REJECTED
+    reason_code: "MANDATORY_LICENSE_MISSING"
+
+  - rule_id: "GOV-KILL-06"
+    name: "EMD Too High for Capital"
+    description: "EMD or bid security exceeds our comfortable cash outlay threshold"
+    condition: "emd_amount_inr > max_emd_threshold_inr"
+    result: WATCHLIST
+    reason_code: "EMD_EXCEEDS_THRESHOLD"
+    note: "Flag for owner decision — sometimes worth it for large orders."
+
+  - rule_id: "GOV-KILL-07"
+    name: "Product Category Inactive"
+    description: "Product category is marked inactive in categories.yaml"
+    condition: "category_active == false"
+    result: REJECTED
+    reason_code: "CATEGORY_INACTIVE"
+
+  - rule_id: "GOV-KILL-08"
+    name: "Delivery Location Impossible"
+    description: "Delivery required to remote location with no viable logistics"
+    condition: "delivery_location_score == 'impossible'"
+    result: REJECTED
+    reason_code: "DELIVERY_IMPOSSIBLE"
+
+  - rule_id: "GOV-KILL-09"
+    name: "Unsafe Payment Terms"
+    description: "Payment is milestone-only with >90 days after delivery or performance-linked with no advance"
+    condition: "payment_risk_score == 'high'"
+    result: WATCHLIST
+    reason_code: "UNSAFE_PAYMENT_TERMS"
+    note: "Owner may still choose to proceed with advance negotiation."
+
+  - rule_id: "GOV-KILL-10"
+    name: "No Supplier Found"
+    description: "After minimum search on 3+ source types, no viable supplier found"
+    condition: "supplier_candidates_found < 3"
+    result: REJECTED
+    reason_code: "NO_SUPPLIER_AVAILABLE"
+
+  - rule_id: "GOV-KILL-11"
+    name: "Defence or Security Clearance Required"
+    description: "Tender requires security clearance or defence supply license"
+    condition: "security_clearance_required == true"
+    result: REJECTED
+    reason_code: "SECURITY_CLEARANCE_REQUIRED"
+
+  - rule_id: "GOV-KILL-12"
+    name: "Tender Requires Local Preference Ineligibility"
+    description: "Tender requires Make in India Class-I or Class-II local content we cannot meet"
+    condition: "local_content_requirement_unmet == true"
+    result: WATCHLIST
+    reason_code: "LOCAL_CONTENT_ISSUE"
+
+# ══════════════════════════════════
+# EXPORT OPPORTUNITY KILL RULES
+# ══════════════════════════════════
+
+export_kill_rules:
+
+  - rule_id: "EXP-KILL-01"
+    name: "SCOMET Item"
+    description: "Product matches SCOMET control list"
+    condition: "scomet_flag == true"
+    result: REJECTED
+    reason_code: "SCOMET_CONTROLLED"
+    note: "NEVER PURSUE. Immediate stop."
+
+  - rule_id: "EXP-KILL-02"
+    name: "Prohibited Export"
+    description: "Product category is prohibited for export under DGFT policy"
+    condition: "export_policy == 'Prohibited'"
+    result: REJECTED
+    reason_code: "EXPORT_PROHIBITED"
+
+  - rule_id: "EXP-KILL-03"
+    name: "Buyer Not Verifiable"
+    description: "Cannot verify buyer identity, business registration, or address"
+    condition: "buyer_verification_score < 40"
+    result: REJECTED
+    reason_code: "BUYER_NOT_VERIFIABLE"
+
+  - rule_id: "EXP-KILL-04"
+    name: "High-Risk Destination"
+    description: "Destination country is under UN sanctions, India trade embargo, or FATF blacklist"
+    condition: "destination_risk == 'high'"
+    result: REJECTED
+    reason_code: "HIGH_RISK_DESTINATION"
+
+  - rule_id: "EXP-KILL-05"
+    name: "Payment Terms Too Risky"
+    description: "Buyer offers only open account DA/DP with no LC/TT advance option"
+    condition: "payment_terms_risk == 'high' AND payment_negotiable == false"
+    result: REJECTED
+    reason_code: "PAYMENT_TERMS_UNSAFE"
+
+  - rule_id: "EXP-KILL-06"
+    name: "MOQ Below Viability"
+    description: "Minimum order quantity is too small to cover sourcing, CHA, and documentation costs"
+    condition: "estimated_gross_margin_usd < min_viable_margin_usd"
+    result: REJECTED
+    reason_code: "ORDER_TOO_SMALL"
+
+  - rule_id: "EXP-KILL-07"
+    name: "Deadline Too Close"
+    description: "RFQ response deadline is within 3 calendar days from today"
+    condition: "days_to_rfq_deadline <= 3"
+    result: REJECTED
+    reason_code: "DEADLINE_TOO_CLOSE"
+
+  - rule_id: "EXP-KILL-08"
+    name: "Supplier Not Available"
+    description: "Cannot find India-based supplier for product within search"
+    condition: "india_supplier_found == false AND global_supplier_viable == false"
+    result: REJECTED
+    reason_code: "NO_SUPPLIER_FOUND"
+
+  - rule_id: "EXP-KILL-09"
+    name: "Restricted Product — Policy Review Needed"
+    description: "Export policy is Restricted — requires DGFT license or STE canalisation"
+    condition: "export_policy == 'Restricted'"
+    result: WATCHLIST
+    reason_code: "EXPORT_RESTRICTED_POLICY"
+    note: "Owner to decide if licence can be obtained."
+
+  - rule_id: "EXP-KILL-10"
+    name: "Complex Compliance with No Specialist"
+    description: "Destination requires phytosanitary, SPS, or drug certification we cannot easily obtain"
+    condition: "compliance_complexity == 'high' AND specialist_available == false"
+    result: WATCHLIST
+    reason_code: "COMPLIANCE_TOO_COMPLEX"
+
+# ══════════════════════════════════
+# WATCHLIST PROMOTION RULES
+# ══════════════════════════════════
+
+watchlist_review:
+  review_within_days: 3
+  promote_to_deep_read_if: "owner_approves AND blocking_issue_resolved"
+  auto_archive_after_days: 14
+  notify_hermes: true
+
+# ══════════════════════════════════
+# THRESHOLD SETTINGS
+# ══════════════════════════════════
+
+thresholds:
+  max_emd_threshold_inr: 500000          # Adjust to your working capital comfort
+  min_viable_margin_usd: 200             # Minimum gross margin for export RFQ
+  min_viable_margin_inr: 15000           # Minimum gross margin for GOV tender
+  buyer_verification_min_score: 40       # Below this: buyer unverifiable → reject
+  min_days_to_deadline_gov: 5
+  min_days_to_deadline_export: 3
+  supplier_minimum_candidates: 5
+  supplier_minimum_source_types: 3
+  supplier_minimum_quote_proofs: 2

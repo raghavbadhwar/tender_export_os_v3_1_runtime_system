@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daily Owner Brief — June 30, 2026</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      padding: 24px;
+      max-width: 900px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+    .header {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .header h1 { font-size: 22px; color: #f8fafc; font-weight: 700; }
+    .header .date { color: #94a3b8; font-size: 14px; margin-top: 4px; }
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+    }
+    .stat-card .number { font-size: 28px; font-weight: 700; color: #60a5fa; }
+    .stat-card .label { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+    .section {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    .section-header {
+      background: #0f172a;
+      padding: 12px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #94a3b8;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-bottom: 1px solid #334155;
+    }
+    .section-body { padding: 16px 20px; }
+    .case-card {
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 12px;
+      background: #0f172a;
+    }
+    .case-card:last-child { margin-bottom: 0; }
+    .case-id {
+      font-size: 11px;
+      font-weight: 700;
+      color: #60a5fa;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .case-title { font-size: 15px; font-weight: 600; color: #f1f5f9; margin: 4px 0; }
+    .case-meta { font-size: 12px; color: #64748b; display: flex; gap: 16px; flex-wrap: wrap; }
+    .score-badge {
+      display: inline-block;
+      background: #064e3b;
+      color: #34d399;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .badge-gov { background: #1e3a5f; color: #60a5fa; }
+    .badge-exp { background: #3b1f5c; color: #a78bfa; }
+    .badge-warn { background: #451a03; color: #fb923c; }
+    .badge-reject { background: #450a0a; color: #f87171; }
+    .next-step {
+      background: #0c1628;
+      border-left: 3px solid #3b82f6;
+      padding: 8px 12px;
+      margin-top: 10px;
+      font-size: 13px;
+      color: #93c5fd;
+      border-radius: 0 4px 4px 0;
+    }
+    .approval-card {
+      border: 1px solid #f59e0b;
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 12px;
+      background: #0f172a;
+    }
+    .approval-card .action-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #f59e0b;
+      font-weight: 700;
+    }
+    .risk-item { padding: 8px 0; border-bottom: 1px solid #1e293b; font-size: 13px; }
+    .risk-item:last-child { border-bottom: none; }
+    .risk-label { color: #f87171; font-weight: 600; font-size: 11px; text-transform: uppercase; }
+    .recommended-action {
+      background: linear-gradient(135deg, #0c2340, #0f172a);
+      border: 1px solid #3b82f6;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    .recommended-action .icon { font-size: 24px; margin-bottom: 8px; }
+    .recommended-action h3 { color: #60a5fa; font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; }
+    .recommended-action p { font-size: 15px; color: #f1f5f9; margin-top: 6px; font-weight: 500; }
+    .approve-btn {
+      display: inline-block;
+      background: #065f46;
+      color: #34d399;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-right: 8px;
+      cursor: pointer;
+    }
+    .reject-btn { background: #450a0a; color: #f87171; }
+    .changes-btn { background: #451a03; color: #fb923c; }
+    .footer {
+      text-align: center;
+      padding: 20px;
+      color: #475569;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📊 Today's Owner Brief</h1>
+  <div class="date">June 30, 2026 · Tender Export OS v4.1 · Generated 14:36 IST</div>
+</div>
+
+<!-- Stats Row -->
+<div class="stats-row">
+  <div class="stat-card">
+    <div class="number">7</div>
+    <div class="label">New GOV Tenders</div>
+  </div>
+  <div class="stat-card">
+    <div class="number">6</div>
+    <div class="label">New Export RFQs</div>
+  </div>
+  <div class="stat-card">
+    <div class="number" style="color: #f87171">1</div>
+    <div class="label">Auto-Rejected</div>
+  </div>
+</div>
+
+<!-- Section 2: Auto-Rejected -->
+<div class="section">
+  <div class="section-header">⚡ Auto-Rejected Today</div>
+  <div class="section-body">
+    <p style="font-size:13px; color:#94a3b8">Count: 1</p>
+    <div style="margin-top:10px">
+      <div class="risk-item"><span class="risk-label">DEADLINE_TOO_CLOSE, PAST_EXPERIENCE_NOT_MET</span>: 1 case(s)</div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Section 3: Best Opportunities -->
+<div class="section">
+  <div class="section-header">🎯 Best Opportunities</div>
+  <div class="section-body">
+
+    
+    <div class="case-card">
+      <div class="case-id">GOV-20260630-001 · <span class="score-badge">78/100</span>
+        <span class="badge-gov">GOV</span></div>
+      <div class="case-title">Supply of Office Stationery Q2 2026</div>
+      <div class="case-meta">
+        <span>Buyer: District Collectorate Pune</span>
+        <span>Value: ₹125000</span>
+        <span>Deadline: 2026-07-15 [15 days]</span>
+        <span>Status: SUPPLIER_SEARCH</span>
+      </div>
+      <div class="next-step">Next: Finish 5-3-2 supplier proof and create approval card before quote requests.</div>
+    </div>
+
+    <div class="case-card">
+      <div class="case-id">EXP-20260630-001 · <span class="score-badge">72/100</span>
+        <span class="badge-exp">EXPORT</span></div>
+      <div class="case-title">Organic Turmeric Powder - 5MT Monthly</div>
+      <div class="case-meta">
+        <span>Buyer: Gulf Naturals Trading LLC</span>
+        <span>Value: —</span>
+        <span>Deadline: 2026-07-10 [10 days]</span>
+        <span>Status: SUPPLIER_SEARCH</span>
+      </div>
+      <div class="next-step">Next: Finish 5-3-2 supplier proof and create approval card before quote requests.</div>
+    </div>
+
+    <div class="case-card">
+      <div class="case-id">EXP-20260630-002 · <span class="score-badge">—/100</span>
+        <span class="badge-exp">EXPORT</span></div>
+      <div class="case-title">Brass Decorative Items - Mixed Set</div>
+      <div class="case-meta">
+        <span>Buyer: Unknown UK buyer - see approval register</span>
+        <span>Value: $680</span>
+        <span>Deadline: N/A</span>
+        <span>Status: APPROVAL_REQUIRED</span>
+      </div>
+      <div class="next-step">Next: Owner decision required: Approve, Reject, or Ask Changes.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Section 4: Supplier Proof Pending -->
+<div class="section">
+  <div class="section-header">Verified Buyer Demand</div>
+  <div class="section-body">
+    
+    <div class="case-card">
+      <div class="case-id">EXP-20260630-005 · <span class="score-badge">76/100</span>
+        <span class="badge-exp">RFQ VERIFIED</span></div>
+      <div class="case-title">Food Kits / Humanitarian Supplies</div>
+      <div class="case-meta">
+        <span>Country: Tajikistan</span>
+        <span>Deadline: 2026-07-13</span>
+        <span>Source: UNDP Procurement Notices</span>
+      </div>
+      <div class="next-step">Next: supplier proof may begin only inside approval-gated workflow discipline.</div>
+    </div>
+
+    <div class="case-card">
+      <div class="case-id">EXP-20260630-006 · <span class="score-badge">76/100</span>
+        <span class="badge-exp">RFQ VERIFIED</span></div>
+      <div class="case-title">Hygiene Supplies</div>
+      <div class="case-meta">
+        <span>Country: Philippines</span>
+        <span>Deadline: 2026-07-21</span>
+        <span>Source: UNDP Procurement Notices</span>
+      </div>
+      <div class="next-step">Next: supplier proof may begin only inside approval-gated workflow discipline.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Section 5: Supplier Proof Pending -->
+<div class="section">
+  <div class="section-header">🔍 Pending Supplier Proof</div>
+  <div class="section-body">
+    <div class="risk-item"><span class="risk-label">GOV-20260630-001</span>: Office Stationery and Supplies — 5-3-2 proof pending.</div><div class="risk-item"><span class="risk-label">EXP-20260630-001</span>: Spices and Condiments — 5-3-2 proof pending.</div>
+  </div>
+</div>
+
+<!-- Section 6: Approval Required -->
+<div class="section">
+  <div class="section-header">⚠️ Approval Required</div>
+  <div class="section-body">
+    
+    <div class="approval-card">
+      <div class="action-label">Action Required</div>
+      <div class="case-title" style="margin: 6px 0">EXP-20260630-002 — send_export_quotation</div>
+      <div style="font-size:13px; color:#94a3b8; margin-bottom:12px">
+        <strong>Amount:</strong> $680 ·
+        <strong>Benefit:</strong> Awaiting owner review of brass handicraft quote to UK buyer. ·
+        <strong>Risk:</strong> Risk note missing; owner should ask changes before approving if this matters. ·
+        <strong>Recovery:</strong> Recovery path missing; owner should ask changes before approving if this matters.
+      </div>
+      <span class="approve-btn">Approve</span>
+      <span class="approve-btn reject-btn">Reject</span>
+      <span class="approve-btn changes-btn">Ask Changes</span>
+      <div style="font-size:11px; color:#64748b; margin-top:8px">Say: "approve case EXP-20260630-002" in Hermes</div>
+    </div>
+
+    <div class="approval-card">
+      <div class="action-label">Action Required</div>
+      <div class="case-title" style="margin: 6px 0">GOV-20260630-001 — send_supplier_quote_request</div>
+      <div style="font-size:13px; color:#94a3b8; margin-bottom:12px">
+        <strong>Amount:</strong> ₹125000 ·
+        <strong>Benefit:</strong> Awaiting owner approval to send RFQ to Ravi Stationery for stationery tender. ·
+        <strong>Risk:</strong> Risk note missing; owner should ask changes before approving if this matters. ·
+        <strong>Recovery:</strong> Recovery path missing; owner should ask changes before approving if this matters.
+      </div>
+      <span class="approve-btn">Approve</span>
+      <span class="approve-btn reject-btn">Reject</span>
+      <span class="approve-btn changes-btn">Ask Changes</span>
+      <div style="font-size:11px; color:#64748b; margin-top:8px">Say: "approve case GOV-20260630-001" in Hermes</div>
+    </div>
+
+    <div class="approval-card">
+      <div class="action-label">Action Required</div>
+      <div class="case-title" style="margin: 6px 0">EXP-20260630-001 — send_supplier_quote_requests</div>
+      <div style="font-size:13px; color:#94a3b8; margin-bottom:12px">
+        <strong>Amount:</strong> N/A ·
+        <strong>Benefit:</strong> Owner approval required before sending six supplier quote/clarification drafts for EXP-20260630-001. No draft has been sent. ·
+        <strong>Risk:</strong> Risk note missing; owner should ask changes before approving if this matters. ·
+        <strong>Recovery:</strong> Recovery path missing; owner should ask changes before approving if this matters.
+      </div>
+      <span class="approve-btn">Approve</span>
+      <span class="approve-btn reject-btn">Reject</span>
+      <span class="approve-btn changes-btn">Ask Changes</span>
+      <div style="font-size:11px; color:#64748b; margin-top:8px">Say: "approve case EXP-20260630-001" in Hermes</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Section 7: Risks & Blockers -->
+<div class="section">
+  <div class="section-header">🚨 Risks & Blockers</div>
+  <div class="section-body">
+    <div class="risk-item"><div class="risk-label">Source</div>Tender Tiger — Paywalled. Skipped by radar policy: paywalled/login-required source. Radar batch 20260630131554: created_cases=0.</div>
+<div class="risk-item"><div class="risk-label">Source</div>India Business Portal (DGFT) — Broken. 2026-06-30 export batch scan: DNS resolution failed during scan; no buyer RFQ page reached.</div>
+<div class="risk-item"><div class="risk-label">Source</div>Alibaba RFQ — Needs Login. 2026-06-30 export batch scan: Configured login/manual source; public landing page only, no buyer details extracted.</div>
+<div class="risk-item"><div class="risk-label">Source</div>FIEO Connect — Needs Login. 2026-06-30 export batch scan: Configured manual/login source; DNS resolution also failed during landing-page probe.</div>
+<div class="risk-item"><div class="risk-label">Source</div>APEDA AgriXchange — Needs Login. 2026-06-30 export batch scan: Home page reachable, but /Buyer/BuyLeads redirected to exporter login; no public buyer lead extracted.</div>
+<div class="risk-item"><div class="risk-label">Source</div>Made-in-China (Buying Leads) — Needs Login. 2026-06-30 export batch scan: Configured login/manual source; DNS resolution failed during landing-page probe.</div>
+<div class="risk-item"><div class="risk-label">Source</div>UN Global Marketplace (UNGM) — Needs Login. 2026-06-30 export batch scan: Configured login/manual source; public probe returned HTTP 403.</div>
+<div class="risk-item"><div class="risk-label">Source</div>IREPS — Indian Railways — Manual Check Required. Home reachable; public tender search is JavaScript-routed/manual. No login/CAPTCHA bypass attempted. Radar batch 20260630131554: created_cases=0.</div>
+<div class="risk-item"><div class="risk-label">Source</div>Tenders Info — Paywalled. Skipped by radar policy: paywalled/login-required source. Radar batch 20260630131554: created_cases=0.</div>
+<div class="risk-item"><div class="risk-label">Plugin</div>google_drive_external_sync — Working. gws emitted token-cache decrypt warning but command succeeded</div>
+<div class="risk-item"><div class="risk-label">Deadline</div>GOV-20260630-002 — Supply of Safety Helmets and PPE Kit: 5 days left.</div>
+<div class="risk-item"><div class="risk-label">Deadline</div>GOV-20260630-005 — GeM bid GEM/2026/B/7710556 — batteries,mine buzzer battery,soldering station,Flux,PPE kit: 6 days left.</div>
+  </div>
+</div>
+
+<!-- Section 8: Recommended Action -->
+<div class="recommended-action">
+  <div class="icon">⭐</div>
+  <h3>Recommended Action Today</h3>
+  <p>Review and decide on approval card for EXP-20260630-002 — action required.</p>
+</div>
+
+<div class="footer">
+  Tender Export OS v4.1 · Hermes-native control plane · June 30, 2026
+</div>
+
+</body>
+</html>

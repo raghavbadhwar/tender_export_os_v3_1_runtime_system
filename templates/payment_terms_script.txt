@@ -1,0 +1,40 @@
+PAYMENT TERMS DISCUSSION SCRIPT — {{CASE_ID}}
+
+Case: {{CASE_ID}}
+Counterparty: {{COUNTERPARTY_NAME}} ({{COUNTERPARTY_TYPE}}: Buyer / Supplier)
+Their Proposed Terms: {{THEIR_TERMS}}
+Our Preferred Terms: {{OUR_PREFERRED_TERMS}}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FOR EXPORT BUYER NEGOTIATION:
+
+Our Preferred Priority:
+1. LC at sight (Letter of Credit — safest)
+2. 100% TT in advance
+3. 50% advance + 50% against Bill of Lading copy
+4. TT at sight against documents (Documentary Collection)
+5. DP/DA — only with established relationship
+
+Key Points to Make:
+- Explain this is standard for Indian exporters
+- Offer to use an escrow service for first order
+- Reference: RBI and FEMA require transparent payment modes for export
+
+NEVER ACCEPT: Open account without credit insurance or without prior relationship history.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FOR GOVERNMENT TENDER:
+
+Note: Payment terms in government tenders are generally non-negotiable.
+Review the clause carefully. Our pricing model already includes payment delay buffer.
+
+If terms are 60-90 days post delivery:
+- Ensure working capital buffer is included in bid price
+- Consider whether we can arrange CC/OD facility if needed
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ NOTE: Owner must approve any final acceptance of payment terms.
+Do not commit to payment terms in any communication without approval.
+Reference: Case {{CASE_ID}} | approval_desk_agent

@@ -1,0 +1,39 @@
+{
+  "drive_root_name": "Tender Export OS - Knowledge Bus",
+  "mode": "execute",
+  "warning": "Review this manifest before any Drive upload. Secrets and restricted files are filtered locally.",
+  "groups": [
+    {
+      "drive_folder": "08_ChatGPT_Bridge/01_To_ChatGPT",
+      "files": [
+        "data/chatgpt_snapshot.md",
+        "outputs/chatgpt_bridge/to_chatgpt/20260630_041417_daily_boardroom_snapshot/CHATGPT_BOARDROOM.md",
+        "outputs/chatgpt_bridge/to_chatgpt/20260630_041417_daily_boardroom_snapshot/chatgpt_snapshot.md",
+        "outputs/chatgpt_bridge/to_chatgpt/20260630_041417_daily_boardroom_snapshot/packet_manifest.json",
+        "outputs/chatgpt_bridge/to_chatgpt/20260630_041417_daily_boardroom_snapshot/project_instructions.md"
+      ]
+    }
+  ],
+  "never_sync_patterns": [
+    "secrets",
+    ".env",
+    "credentials.json",
+    "token",
+    ".pem",
+    ".key",
+    "cookies",
+    "DSC",
+    "password",
+    "bank",
+    "private"
+  ],
+  "never_sync_extensions": [
+    ".asc",
+    ".enc",
+    ".gpg",
+    ".key",
+    ".p12",
+    ".pem",
+    ".pfx"
+  ]
+}

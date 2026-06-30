@@ -1,0 +1,15 @@
+{
+  "generated_at": "2026-06-30T13:11:58+05:30",
+  "task_id": "t_50fcbad9",
+  "status": "staged_only_owner_approval_required_before_write",
+  "proposals": [
+    {
+      "action": "replace",
+      "target": "memory",
+      "old_text": "Tender Export OS profile has owner Telegram gateway delivery working via `hermes send --to telegram:<dm>`; do not store or print the chat ID. Google Drive Knowledge Bus root exists and `gws` can upload non-sensitive artifacts to it.",
+      "content": "Tender Export OS profile has owner Telegram gateway and Telegram home cron delivery working; use redacted `hermes send --to telegram`/home targets and never store or print chat IDs. Google Drive Knowledge Bus root exists and `gws` can upload non-sensitive artifacts to it.",
+      "why": "Weekly review found verified Telegram cron delivery setup receipt and existing Drive sync receipt; this consolidates the durable environment fact without adding a duplicate memory."
+    }
+  ],
+  "not_applied": true
+}

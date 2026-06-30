@@ -1,0 +1,50 @@
+{
+  "file": "data/supplier_master.csv",
+  "primary_key": "supplier_id",
+  "required_columns": [
+    "supplier_id",
+    "supplier_name",
+    "source_type",
+    "source_platform",
+    "products_supplied",
+    "blacklisted",
+    "watchlisted",
+    "created_at",
+    "updated_at"
+  ],
+  "required_fields": ["supplier_id", "supplier_name"],
+  "enums": {
+    "blacklisted": ["", "TRUE", "FALSE"],
+    "watchlisted": ["", "TRUE", "FALSE"],
+    "export_experience": ["", "TRUE", "FALSE"],
+    "tender_experience": ["", "TRUE", "FALSE"],
+    "gem_registered": ["", "TRUE", "FALSE"],
+    "apeda_registered": ["", "TRUE", "FALSE"]
+  },
+  "date_fields": ["last_quote_date", "created_at", "updated_at"],
+  "numeric_fields": [
+    "min_order_qty",
+    "lead_time_days",
+    "last_quote_price",
+    "total_quotes_requested",
+    "total_quotes_received",
+    "avg_response_hrs",
+    "on_time_delivery_pct",
+    "defect_rate_pct",
+    "identity_score",
+    "product_fit_score",
+    "capacity_score",
+    "certificate_score",
+    "quote_clarity_score",
+    "response_speed_score",
+    "export_tender_exp_score",
+    "price_competitiveness_score",
+    "payment_terms_score",
+    "delivery_timeline_score",
+    "on_time_history_score",
+    "defect_history_score",
+    "communication_score",
+    "total_supplier_score"
+  ],
+  "url_fields": ["website"]
+}

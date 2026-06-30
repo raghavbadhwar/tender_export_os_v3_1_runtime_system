@@ -1,0 +1,217 @@
+{
+  "generated_at": "2026-06-30T13:02:06+0530",
+  "project_root": "/Users/raghav/Downloads/tender_export_os_v3_1_runtime_system",
+  "ready": {
+    "hermes_available": true,
+    "codex_available": true,
+    "codex_app_server_command_present": true,
+    "codex_plugin_inventory_json": true,
+    "hermes_kanban_command_present": true,
+    "hermes_cron_command_present": true,
+    "preferred_runtime_ready": true
+  },
+  "checks": {
+    "hermes_path": {
+      "available": true,
+      "path": "/Users/raghav/.local/bin/hermes",
+      "command": [
+        "hermes",
+        "--help"
+      ],
+      "returncode": 0,
+      "stdout": "usage: hermes [-h] [--version] [-z PROMPT] [-m MODEL] [--provider PROVIDER]\n              [-t TOOLSETS] [--resume SESSION] [--continue [SESSION_NAME]]\n              [--worktree] [--accept-hooks] [--skills SKILLS] [--yolo]\n              [--pass-session-id] [--ignore-user-config] [--ignore-rules]\n              [--safe-mode] [--tui] [--cli] [--dev]\n              {chat,model,moa,fallback,secrets,migrate,gateway,proxy,lsp,setup,postinstall,whatsapp,whatsapp-cloud,slack,send,login,logout,auth,status,cron,webhook,portal,kanban,project,hooks,doctor,security,dump,debug,backup,checkpoints,import,config,pairing,skills,bundles,plugins,curator,pets,memory,tools,computer-use,mcp,sessions,insights,claw,version,update,uninstall,acp,profile,completion,dashboard,serve,desktop,gui,logs,prompt-size}\n              ...\n\nHermes Agent - AI assistant with tool-calling capabilities\n\npositional arguments:\n  {chat,model,moa,fallback,secrets,migrate,gateway,proxy,lsp,setup,postinstall,whatsapp,whatsapp-cloud,slack,send,login,logout,auth,status,cron,webhook,portal,kanban,project,hooks,doctor,security,dump,debug,backup,checkpoints,import,config,pairing,skills,bundles,plugins,curator,pets,memory,tools,computer-use,mcp,sessions,insights,claw,version,update,uninstall,acp,profile,completion,dashboard,serve,desktop,gui,logs,prompt-size}\n                        Command to run\n    chat                Interactive chat with the agent\n    model               Select default model and provider\n    moa                 Configure Mixture of Agents provider/model slots\n    fallback            Manage fallback providers (tried when the primary\n                        model fails)\n    secrets             Manage external secret sources (Bitwarden Secrets\n                        Manager)\n    migrate             Migrate configuration for retired models or deprecated\n                        settings\n    gateway             Messaging gateway management\n    proxy               Local OpenAI-compatible proxy to OAuth providers\n    lsp                 Language Server Protocol management\n    setup               Interactive setup wizard\n    postinstall         Bootstrap non-Python deps for pip installs (node,\n                        browser, ripgrep, ffmpeg)\n    whatsapp            Set up WhatsApp integration\n    whatsapp-cloud      Set up WhatsApp Business Cloud API integration\n    slack               Slack integration helpers (manifest generation, etc.)\n    send                Send a message to a configured platform (scripts, cron\n                        jobs, CI).\n    logout              Clear authentication for an inference provider\n    auth                Manage pooled provider credentials\n    status              Show status of all components\n    cron                Cron job management\n    webhook             Manage dynamic webhook subscriptions\n    portal              Set up Nous Portal (login, model pick, Tool Gateway);\n                        see also `portal info`\n    kanban              Multi-profile collaboration board (tasks, links,\n                        comments)\n    project             Manage projects (named, multi-folder workspaces)\n    hooks               Inspect and manage shell-script hooks\n    doctor              Check configuration and dependencies\n    security            Supply-chain audit (OSV.dev) for venv, plugins, and\n                        MCP servers\n    dump                Dump setup summary for support/debugging\n    debug               Debug tools \u2014 upload logs and system info for support\n    backup              Back up Hermes home directory to a zip file\n    checkpoints         Inspect / prune / clear ~/.hermes/checkpoints/\n    import              Restore a Hermes backup from a zip file\n    config              View and edit configuration\n    pairing             Manage DM pairing codes for user authorization\n    skills              Search, install, configure, and manage skills\n    bundles             Create, list, and manage skill bundles (aliases for\n                        multiple skills)\n    plugins             Manage plugins \u2014 install, update, remove, list\n    curator             Background skill maintenance (curator) \u2014 status, run,\n                        pause, pin\n    pets                Browse, install, and select petdex animated pets\n    memory              Configure external memory provider\n    tools               Configure which tools are enabled per platform\n    computer-use        Manage the Computer Use (cua-driver) backend\n                        (macOS/Windows/Linux)\n    mcp                 Manage MCP servers and run Hermes as an MCP server\n    sessions            Manage session history (list, rename, export, prune,\n                        delete)\n    insights            Show usage insights and analytics\n    claw                OpenClaw migration tools\n    version             Show version information\n    update              Update Hermes Agent to the latest version\n    uninstall           Uninstall Hermes Agent\n    acp                 Run Hermes Agent as an ACP (Agent Client Protocol)\n                        server\n    profile             Manage profiles \u2014 multiple isolated Hermes instances\n    completion          Print shell completion script (bash, zsh, or fish)\n    dashboard           Start the web UI dashboard\n    serve               Start the Hermes backend server (headless; powers the\n                        desktop app and remote backends)\n    desktop (gui)       Build and launch the native desktop app\n    logs                View and filter Hermes log files\n    prompt-size         Show a byte breakdown of the system prompt + tool\n                        schemas\n\noptions:\n  -h, --help            show this help message and exit\n  --version, -V         Show version and exit\n  -z PROMPT, --oneshot PROMPT\n                        One-shot mode: send a single prompt and print ONLY the\n                        final response text to stdout. No banner, no spinner,\n                        no tool previews, no session_id line. Tools, memory,\n                        rules, and AGENTS.md in the CWD are loaded as normal;\n                        approvals are auto-bypassed. Intended for scripts /\n                        pipes.\n  -m MODEL, --model MODEL\n                        Model override for this invocation (e.g.\n                        anthropic/claude-sonnet-4.6). Applies to -z/--oneshot\n                        and --tui. Also settable via HERMES_INFERENCE_MODEL\n                        env var.\n  --provider PROVIDER   Provider override for this invocation (e.g.\n                        openrouter, anthropic). Applies to -z/--oneshot and\n                        --tui. The persistent provider lives in config.yaml\n                        under model.provider \u2014 use `hermes setup` or edit the\n                        file to change it.\n  -t TOOLSETS, --toolsets TOOLSETS\n                        Comma-separated toolsets to enable for this\n                        invocation. Applies to -z/--oneshot and --tui.\n  --resume SESSION, -r SESSION\n                        Resume a previous session by ID or title\n  --continue [SESSION_NAME], -c [SESSION_NAME]\n                        Resume a session by name, or the most recent if no\n                        name given\n  --worktree, -w        Run in an isolated git worktree (for parallel agents)\n  --accept-hooks        Auto-approve any unseen shell hooks declared in\n                        config.yaml without a TTY prompt. Equivalent to\n                        HERMES_ACCEPT_HOOKS=1 or hooks_auto_accept: true in\n                        config.yaml. Use on CI / headless runs that can't\n                        prompt.\n  --skills SKILLS, -s SKILLS\n                        Preload one or more skills for the session (repeat\n                        flag or comma-separate)\n  --yolo                Bypass all dangerous command approval prompts (use at\n                        your own risk)\n  --pass-session-id     Include the session ID in the agent's system prompt\n  --ignore-user-config  Ignore ~/.hermes/config.yaml and fall back to built-in\n                        defaults (credentials in .env are still loaded)\n  --ignore-rules        Skip auto-injection of AGENTS.md, SOUL.md,\n                        .cursorrules, memory, and preloaded skills\n  --safe-mode           Troubleshooting mode: disable ALL customizations \u2014\n                        user config, AGENTS.md/memory injection, plugins, and\n                        MCP servers (implies --ignore-user-config and\n                        --ignore-rules)\n  --tui                 Launch the modern TUI instead of the classic REPL\n  --cli                 Force the classic prompt_toolkit REPL (overrides\n                        display.interface=tui)\n  --dev                 With --tui: run TypeScript sources via tsx (skip dist\n                        build)\n\nExamples:\n    hermes                        Start interactive chat\n    hermes chat -q \"Hello\"        Single query mode\n    hermes --tui                  Launch the modern TUI (or set display.interface: tui)\n    hermes --cli                  Force the classic REPL (overrides display.interface: tui)\n    hermes -c                     Resume the most recent session\n    hermes -c \"my project\"        Resume a session by name (latest in lineage)\n    hermes --resume <session_id>  Resume a specific session by ID\n    hermes setup                  Run setup wizard\n    hermes logout                 Clear stored authentication\n    hermes auth add <provider>    Add a pooled credential\n    hermes auth list              List pooled credentials\n    hermes auth remove <p> <t>    Remove pooled credential by index, id, or label\n    hermes auth reset <provider>  Clear exhaustion status for a provider\n    hermes model                  Select default model\n    hermes fallback [list]        Show fallback provider chain\n    hermes fallback add           Add a fallback provider (same picker as `hermes model`)\n    hermes fallback remove        Remove a fallback provider from the chain\n    hermes config                 View configuration\n    hermes config edit            Edit config in $EDITOR\n    hermes config set model gpt-4 Set a config value\n    hermes gateway                Run messaging gateway\n    hermes -s hermes-agent-dev,github-auth\n    hermes -w                     Start in isolated git worktree\n    hermes gateway install        Install gateway background service\n    hermes sessions list          List past sessions\n    hermes sessions browse        Interactive session picker\n    hermes sessions rename ID T   Rename/title a session\n    hermes logs                   View agent.log (last 50 lines)\n    hermes logs -f                Follow agent.log in real time\n    hermes logs errors            View errors.log\n    hermes logs --since 1h        Lines from the last hour\n    hermes debug share             Upload debug report for support\n    hermes update                 Update to latest version\n    hermes dashboard              Start web UI dashboard (port 9119)\n    hermes dashboard --stop       Stop running dashboard processes\n    hermes dashboard --status     List running dashboard processes\n\nFor more help on a command:\n    hermes <command> --help\n",
+      "stderr": "",
+      "timed_out": false,
+      "keyword_presence": {
+        "cron": true,
+        "kanban": true,
+        "skills": true,
+        "memory": true,
+        "tools": true,
+        "mcp": true,
+        "gateway": true,
+        "sessions": true
+      }
+    },
+    "hermes_doctor": {
+      "available": true,
+      "path": "/Users/raghav/.local/bin/hermes",
+      "command": [
+        "hermes",
+        "doctor"
+      ],
+      "returncode": null,
+      "stdout": "",
+      "stderr": "",
+      "timed_out": true
+    },
+    "hermes_tools_help": {
+      "available": true,
+      "path": "/Users/raghav/.local/bin/hermes",
+      "command": [
+        "hermes",
+        "tools",
+        "--help"
+      ],
+      "returncode": 0,
+      "stdout": "usage: hermes tools [-h] [--summary] {list,disable,enable,post-setup} ...\n\nEnable, disable, or list tools for CLI, Telegram, Discord, etc. Built-in\ntoolsets use plain names (e.g. web, memory). MCP tools use server:tool\nnotation (e.g. github:create_issue). Run 'hermes tools' with no subcommand for\nthe interactive configuration UI.\n\npositional arguments:\n  {list,disable,enable,post-setup}\n    list                Show all tools and their enabled/disabled status\n    disable             Disable toolsets or MCP tools\n    enable              Enable toolsets or MCP tools\n    post-setup          Run a provider's post-setup install hook\n                        (npm/pip/binary)\n\noptions:\n  -h, --help            show this help message and exit\n  --summary             Print a summary of enabled tools per platform and exit\n",
+      "stderr": "",
+      "timed_out": false
+    },
+    "hermes_skills_help": {
+      "available": true,
+      "path": "/Users/raghav/.local/bin/hermes",
+      "command": [
+        "hermes",
+        "skills",
+        "--help"
+      ],
+      "returncode": 0,
+      "stdout": "usage: hermes skills [-h]\n                     {browse,search,install,inspect,list,check,update,audit,uninstall,reset,list-modified,diff,opt-out,opt-in,repair-official,publish,snapshot,tap,config}\n                     ...\n\nSearch, install, inspect, audit, configure, and manage skills from skills.sh,\nwell-known agent skill endpoints, GitHub, ClawHub, and other registries.\n\npositional arguments:\n  {browse,search,install,inspect,list,check,update,audit,uninstall,reset,list-modified,diff,opt-out,opt-in,repair-official,publish,snapshot,tap,config}\n    browse              Browse all available skills (paginated)\n    search              Search skill registries\n    install             Install a skill\n    inspect             Preview a skill without installing\n    list                List installed skills\n    check               Check installed hub skills for updates\n    update              Update installed hub skills\n    audit               Re-scan installed hub skills\n    uninstall           Remove a hub-installed skill\n    reset               Reset a bundled skill \u2014 clears 'user-modified'\n                        tracking so updates work again\n    list-modified       List bundled skills you've edited (which `hermes\n                        update` keeps)\n    diff                Show how your copy of a bundled skill differs from the\n                        stock version\n    opt-out             Stop bundled skills from being seeded into this\n                        profile\n    opt-in              Re-enable bundled-skill seeding (undo opt-out)\n    repair-official     Backfill or restore official optional skills from repo\n                        source\n    publish             Publish a skill to a registry\n    snapshot            Export/import skill configurations\n    tap                 Manage skill sources\n    config              Interactive skill configuration \u2014 enable/disable\n                        individual skills\n\noptions:\n  -h, --help            show this help message and exit\n",
+      "stderr": "",
+      "timed_out": false
+    },
+    "hermes_mcp_help": {
+      "available": true,
+      "path": "/Users/raghav/.local/bin/hermes",
+      "command": [
+        "hermes",
+        "mcp",
+        "--help"
+      ],
+      "returncode": 0,
+      "stdout": "usage: hermes mcp [-h] [--accept-hooks]\n                  {serve,add,remove,rm,list,ls,test,configure,config,login,reauth,picker,catalog,install}\n                  ...\n\nManage MCP server connections and run Hermes as an MCP server. MCP servers\nprovide additional tools via the Model Context Protocol. Use 'hermes mcp add'\nto connect to a new server, or 'hermes mcp serve' to expose Hermes\nconversations over MCP.\n\npositional arguments:\n  {serve,add,remove,rm,list,ls,test,configure,config,login,reauth,picker,catalog,install}\n    serve               Run Hermes as an MCP server (expose conversations to\n                        other agents)\n    add                 Add an MCP server (discovery-first install)\n    remove (rm)         Remove an MCP server\n    list (ls)           List configured MCP servers\n    test                Test MCP server connection\n    configure (config)  Toggle tool selection\n    login               Force re-authentication for an OAuth-based MCP server\n    reauth              Re-authenticate one OAuth MCP server, or all of them\n                        (--all)\n    picker              Interactive catalog picker (also the default for\n                        `hermes mcp`)\n    catalog             List Nous-approved MCPs available for one-click\n                        install\n    install             Install a catalog MCP by name (e.g. `hermes mcp\n                        install n8n`)\n\noptions:\n  -h, --help            show this help message and exit\n  --accept-hooks        Auto-approve unseen shell hooks without a TTY prompt\n                        (equivalent to HERMES_ACCEPT_HOOKS=1 /\n                        hooks_auto_accept: true).\n",
+      "stderr": "",
+      "timed_out": false
+    },
+    "hermes_kanban_help": {
+      "available": true,
+      "path": "/Users/raghav/.local/bin/hermes",
+      "command": [
+        "hermes",
+        "kanban",
+        "--help"
+      ],
+      "returncode": 0,
+      "stdout": "usage: hermes kanban [-h] [--board <slug>]\n                     {init,boards,create,swarm,list,ls,show,assign,reclaim,reassign,diagnostics,diag,link,unlink,claim,comment,complete,edit,block,schedule,unblock,promote,archive,tail,dispatch,daemon,watch,stats,notify-subscribe,notify-list,notify-unsubscribe,log,runs,heartbeat,assignees,context,specify,decompose,gc}\n                     ...\n\nDurable SQLite-backed task board shared across Hermes profiles. Tasks are\nclaimed atomically, can depend on other tasks, and are executed by a named\nprofile in an isolated workspace. See https://hermes-\nagent.nousresearch.com/docs/user-guide/features/kanban or docs/hermes-\nkanban-v1-spec.pdf for the full design.\n\npositional arguments:\n  {init,boards,create,swarm,list,ls,show,assign,reclaim,reassign,diagnostics,diag,link,unlink,claim,comment,complete,edit,block,schedule,unblock,promote,archive,tail,dispatch,daemon,watch,stats,notify-subscribe,notify-list,notify-unsubscribe,log,runs,heartbeat,assignees,context,specify,decompose,gc}\n    init                Create kanban.db if missing (idempotent)\n    boards              Manage kanban boards (one board per project /\n                        workstream)\n    create              Create a new task\n    swarm               Create a Kanban Swarm v1 graph (parallel workers \u2192\n                        verifier \u2192 synthesizer)\n    list (ls)           List tasks\n    show                Show a task with comments + events\n    assign              Assign or reassign a task\n    reclaim             Release an active worker claim on a running task\n    reassign            Reassign a task to a different profile, optionally\n                        reclaiming first\n    diagnostics (diag)  List active diagnostics on the current board\n    link                Add a parent->child dependency\n    unlink              Remove a parent->child dependency\n    claim               Atomically claim a ready task (prints resolved\n                        workspace path)\n    comment             Append a comment\n    complete            Mark one or more tasks done\n    edit                Edit recovery fields on an already-completed task\n    block               Mark one or more tasks blocked\n    schedule            Park one or more tasks in Scheduled (waiting on time,\n                        not human input)\n    unblock             Return one or more blocked/scheduled tasks to ready\n    promote             Manually move one or more todo/blocked tasks to ready\n                        (recovery path)\n    archive             Archive one or more tasks\n    tail                Follow a task's event stream\n    dispatch            One dispatcher pass: reclaim stale, promote ready,\n                        spawn workers\n    daemon              DEPRECATED \u2014 dispatcher now runs in the gateway. Use\n                        `hermes gateway start`.\n    watch               Live-stream task_events to the terminal (Ctrl+C to\n                        exit)\n    stats               Per-status + per-assignee counts + oldest-ready age\n    notify-subscribe    Subscribe a gateway source to a task's terminal events\n                        (used by /kanban subscribe in the gateway adapter)\n    notify-list         List notification subscriptions (optionally for a\n                        single task)\n    notify-unsubscribe  Remove a gateway subscription from a task\n    log                 Print the worker log for a task (from <kanban-\n                        root>/kanban/logs/)\n    runs                Show attempt history for a task (one row per run:\n                        profile, outcome, elapsed, summary)\n    heartbeat           Emit a heartbeat event for a running task (worker\n                        liveness signal)\n    assignees           List known profiles + per-profile task counts (union\n                        of ~/.hermes/profiles/ and current assignees on the\n                        board)\n    context             Print the full context a worker sees for a task (title\n                        + body + parent results + comments).\n    specify             Flesh out a triage-column task into a concrete spec\n                        (title + body) and promote it to todo. Uses the\n                        auxiliary LLM configured under\n                        auxiliary.triage_specifier.\n    decompose           Decompose a triage-column task into a graph of child\n                        tasks routed to specialist profiles by description.\n                        Falls back to specify-style single-task promotion when\n                        the task doesn't benefit from fan-out. Uses\n                        auxiliary.kanban_decomposer.\n    gc                  Garbage-collect archived-task workspaces, old events,\n                        and old logs\n\noptions:\n  -h, --help            show this help message and exit\n  --board <slug>        Board slug to operate on. Defaults to the current\n                        board (set via `hermes kanban boards switch <slug>` or\n                        the HERMES_KANBAN_BOARD env var). Use `hermes kanban\n                        boards list` to see all boards.\n",
+      "stderr": "",
+      "timed_out": false
+    },
+    "hermes_cron_help": {
+      "available": true,
+      "path": "/Users/raghav/.local/bin/hermes",
+      "command": [
+        "hermes",
+        "cron",
+        "--help"
+      ],
+      "returncode": 0,
+      "stdout": "usage: hermes cron [-h] [--accept-hooks]\n                   {list,create,add,edit,pause,resume,run,remove,rm,delete,status,tick}\n                   ...\n\nManage scheduled tasks\n\npositional arguments:\n  {list,create,add,edit,pause,resume,run,remove,rm,delete,status,tick}\n    list                List scheduled jobs\n    create (add)        Create a scheduled job\n    edit                Edit an existing scheduled job\n    pause               Pause a scheduled job\n    resume              Resume a paused job\n    run                 Run a job on the next scheduler tick\n    remove (rm, delete)\n                        Remove a scheduled job\n    status              Check if cron scheduler is running\n    tick                Run due jobs once and exit\n\noptions:\n  -h, --help            show this help message and exit\n  --accept-hooks        Auto-approve unseen shell hooks without a TTY prompt\n                        (equivalent to HERMES_ACCEPT_HOOKS=1 /\n                        hooks_auto_accept: true).\n",
+      "stderr": "",
+      "timed_out": false
+    },
+    "codex_version": {
+      "available": true,
+      "path": "/opt/homebrew/bin/codex",
+      "command": [
+        "codex",
+        "--version"
+      ],
+      "returncode": 0,
+      "stdout": "codex-cli 0.141.0\n",
+      "stderr": "",
+      "timed_out": false
+    },
+    "codex_help": {
+      "available": true,
+      "path": "/opt/homebrew/bin/codex",
+      "command": [
+        "codex",
+        "--help"
+      ],
+      "returncode": 0,
+      "stdout": "Codex CLI\n\nIf no subcommand is specified, options will be forwarded to the interactive CLI.\n\nUsage: codex [OPTIONS] [PROMPT]\n       codex [OPTIONS] <COMMAND> [ARGS]\n\nCommands:\n  exec            Run Codex non-interactively [aliases: e]\n  review          Run a code review non-interactively\n  login           Manage login\n  logout          Remove stored authentication credentials\n  mcp             Manage external MCP servers for Codex\n  plugin          Manage Codex plugins\n  mcp-server      Start Codex as an MCP server (stdio)\n  app-server      [experimental] Run the app server or related tooling\n  remote-control  [experimental] Manage the app-server daemon with remote control enabled\n  app             Launch the Codex desktop app (opens the app installer if missing)\n  completion      Generate shell completion scripts\n  update          Update Codex to the latest version\n  doctor          Diagnose local Codex installation, config, auth, and runtime health\n  sandbox         Run commands within a Codex-provided sandbox\n  debug           Debugging tools\n  apply           Apply the latest diff produced by Codex agent as a `git apply` to your local\n                  working tree [aliases: a]\n  resume          Resume a previous interactive session (picker by default; use --last to continue\n                  the most recent)\n  archive         Archive a saved session by id or session name\n  delete          Permanently delete a saved session by id or session name\n  unarchive       Unarchive a saved session by id or session name\n  fork            Fork a previous interactive session (picker by default; use --last to fork the\n                  most recent)\n  cloud           [EXPERIMENTAL] Browse tasks from Codex Cloud and apply changes locally\n  exec-server     [EXPERIMENTAL] Run the standalone exec-server service\n  features        Inspect feature flags\n  help            Print this message or the help of the given subcommand(s)\n\nArguments:\n  [PROMPT]\n          Optional user prompt to start the session\n\nOptions:\n  -c, --config <key=value>\n          Override a configuration value that would otherwise be loaded from `~/.codex/config.toml`.\n          Use a dotted path (`foo.bar.baz`) to override nested values. The `value` portion is parsed\n          as TOML. If it fails to parse as TOML, the raw string is used as a literal.\n          \n          Examples: - `-c model=\"o3\"` - `-c 'sandbox_permissions=[\"disk-full-read-access\"]'` - `-c\n          shell_environment_policy.inherit=all`\n\n      --enable <FEATURE>\n          Enable a feature (repeatable). Equivalent to `-c features.<name>=true`\n\n      --disable <FEATURE>\n          Disable a feature (repeatable). Equivalent to `-c features.<name>=false`\n\n      --remote <ADDR>\n          Connect the TUI to a remote app server endpoint.\n          \n          Accepted forms: `ws://host:port`, `wss://host:port`, `unix://`, or `unix://PATH`.\n\n      --remote-auth-token-env <ENV_VAR>\n          Name of the environment variable containing the bearer token to send to a remote app\n          server websocket\n\n      --strict-config\n          Error out when config.toml contains fields that are not recognized by this version of\n          Codex\n\n  -i, --image <FILE>...\n          Optional image(s) to attach to the initial prompt\n\n  -m, --model <MODEL>\n          Model the agent should use\n\n      --oss\n          Use open-source provider\n\n      --local-provider <OSS_PROVIDER>\n          Specify which local provider to use (lmstudio or ollama). If not specified with --oss,\n          will use config default or show selection\n\n  -p, --profile <CONFIG_PROFILE_V2>\n          Layer $CODEX_HOME/<name>.config.toml on top of the base user config\n\n  -s, --sandbox <SANDBOX_MODE>\n          Select the sandbox policy to use when executing model-generated shell commands\n          \n          [possible values: read-only, workspace-write, danger-full-access]\n\n      --dangerously-bypass-approvals-and-sandbox\n          Skip all confirmation prompts and execute commands without sandboxing. EXTREMELY\n          DANGEROUS. Intended solely for running in environments that are externally sandboxed\n\n      --dangerously-bypass-hook-trust\n          Run enabled hooks without requiring persisted hook trust for this invocation. DANGEROUS.\n          Intended only for automation that already vets hook sources\n\n  -C, --cd <DIR>\n          Tell the agent to use the specified directory as its working root\n\n      --add-dir <DIR>\n          Additional directories that should be writable alongside the primary workspace\n\n  -a, --ask-for-approval <APPROVAL_POLICY>\n          Configure when the model requires human approval before executing a command\n\n          Possible values:\n          - untrusted:  Only run \"trusted\" commands (e.g. ls, cat, sed) without asking for user\n            approval. Will escalate to the user if the model proposes a command that is not in the\n            \"trusted\" set\n          - on-failure: DEPRECATED: Run all commands without asking for user approval. Only asks for\n            approval if a command fails to execute, in which case it will escalate to the user to\n            ask for un-sandboxed execution. Prefer `on-request` for interactive runs or `never` for\n            non-interactive runs\n          - on-request: The model decides when to ask the user for approval\n          - never:      Never ask for user approval Execution failures are immediately returned to\n            the model\n\n      --search\n          Enable live web search. When enabled, the native Responses `web_search` tool is available\n          to the model (no per\u2011call approval)\n\n      --no-alt-screen\n          Disable alternate screen mode\n          \n          Runs the TUI in inline mode, preserving terminal scrollback history.\n\n  -h, --help\n          Print help (see a summary with '-h')\n\n  -V, --version\n          Print version\n",
+      "stderr": "",
+      "timed_out": false,
+      "keyword_presence": {
+        "app-server": true,
+        "plugin": true,
+        "doctor": true,
+        "mcp": true,
+        "exec": true
+      }
+    },
+    "codex_doctor": {
+      "available": true,
+      "path": "/opt/homebrew/bin/codex",
+      "command": [
+        "codex",
+        "doctor"
+      ],
+      "returncode": null,
+      "stdout": "",
+      "stderr": "",
+      "timed_out": true
+    },
+    "codex_plugin_inventory": {
+      "available": true,
+      "path": "/opt/homebrew/bin/codex",
+      "command": [
+        "codex",
+        "plugin",
+        "list",
+        "--available",
+        "--json"
+      ],
+      "returncode": 0,
+      "stdout": "<suppressed: plugin inventory summarized>",
+      "stderr": "",
+      "timed_out": false,
+      "summary": {
+        "valid_json": true,
+        "installed_count": 143,
+        "enabled_count": 124,
+        "available_count": 129,
+        "enabled_plugins_sample": [
+          "karimo@local-codex-plugins",
+          "copilot-sdk@local-codex-plugins",
+          "database-data-management@local-codex-plugins",
+          "frontend-web-dev@local-codex-plugins",
+          "gem-team@local-codex-plugins",
+          "polyglot-test-agent@local-codex-plugins",
+          "project-planning@local-codex-plugins",
+          "security-best-practices@local-codex-plugins",
+          "software-engineering-team@local-codex-plugins",
+          "structured-autonomy@local-codex-plugins",
+          "technical-spike@local-codex-plugins",
+          "testing-automation@local-codex-plugins",
+          "claude-for-legal@local-codex-plugins",
+          "cocounsel-legal@local-codex-plugins",
+          "ai-governance-legal@local-codex-plugins",
+          "commercial-legal@local-codex-plugins",
+          "corporate-legal@local-codex-plugins",
+          "employment-legal@local-codex-plugins",
+          "ip-legal@local-codex-plugins",
+          "law-student@local-codex-plugins"
+        ]
+      }
+    },
+    "codex_app_server_help": {
+      "available": true,
+      "path": "/opt/homebrew/bin/codex",
+      "command": [
+        "codex",
+        "app-server",
+        "--help"
+      ],
+      "returncode": 0,
+      "stdout": "[experimental] Run the app server or related tooling\n\nUsage: codex app-server [OPTIONS] [COMMAND]\n\nCommands:\n  daemon                Manage the local app-server daemon\n  proxy                 Proxy stdio bytes to the running app-server control socket\n  generate-ts           [experimental] Generate TypeScript bindings for the app server protocol\n  generate-json-schema  [experimental] Generate JSON Schema for the app server protocol\n  help                  Print this message or the help of the given subcommand(s)\n\nOptions:\n  -c, --config <key=value>\n          Override a configuration value that would otherwise be loaded from `~/.codex/config.toml`.\n          Use a dotted path (`foo.bar.baz`) to override nested values. The `value` portion is parsed\n          as TOML. If it fails to parse as TOML, the raw string is used as a literal.\n          \n          Examples: - `-c model=\"o3\"` - `-c 'sandbox_permissions=[\"disk-full-read-access\"]'` - `-c\n          shell_environment_policy.inherit=all`\n\n      --enable <FEATURE>\n          Enable a feature (repeatable). Equivalent to `-c features.<name>=true`\n\n      --disable <FEATURE>\n          Disable a feature (repeatable). Equivalent to `-c features.<name>=false`\n\n      --strict-config\n          Error out when config.toml contains fields that are not recognized by this version of\n          Codex\n\n      --listen <URL>\n          Transport endpoint URL. Supported values: `stdio://` (default), `unix://`, `unix://PATH`,\n          `ws://IP:PORT`, `off`\n          \n          [default: stdio://]\n\n      --stdio\n          Use stdio as the transport (equivalent to `--listen stdio://`)\n\n      --analytics-default-enabled\n          Controls whether analytics are enabled by default.\n          \n          Analytics are disabled by default for app-server. Users have to explicitly opt in via the\n          `analytics` section in the config.toml file.\n          \n          However, for first-party use cases like the VSCode IDE extension, we default analytics to\n          be enabled by default by setting this flag. Users can still opt out by setting this in\n          their config.toml:\n          \n          ```toml [analytics] enabled = false ```\n          \n          See https://developers.openai.com/codex/config-advanced/#metrics for more details.\n\n      --ws-auth <MODE>\n          Websocket auth mode for non-loopback listeners\n          \n          [possible values: capability-token, signed-bearer-token]\n\n      --ws-token-file <PATH>\n          Absolute path to the capability-token file\n\n      --ws-token-sha256 <HEX>\n          Hex-encoded SHA-256 digest of the capability token\n\n      --ws-shared-secret-file <PATH>\n          Absolute path to the shared secret file for signed JWT bearer tokens\n\n      --ws-issuer <ISSUER>\n          Expected issuer for signed JWT bearer tokens\n\n      --ws-audience <AUDIENCE>\n          Expected audience for signed JWT bearer tokens\n\n      --ws-max-clock-skew-seconds <SECONDS>\n          Maximum clock skew when validating signed JWT bearer tokens\n\n  -h, --help\n          Print help (see a summary with '-h')\n",
+      "stderr": "",
+      "timed_out": false,
+      "keyword_presence": {
+        "app-server": true
+      }
+    }
+  },
+  "next_action": "Use /codex-runtime codex_app_server if preferred_runtime_ready is true; otherwise inspect the failed checks."
+}

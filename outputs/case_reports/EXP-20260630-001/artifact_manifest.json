@@ -1,0 +1,68 @@
+{
+  "case_id": "EXP-20260630-001",
+  "workflow_type": "EXPORT",
+  "status": "SUPPLIER_SEARCH",
+  "generated_at": "2026-06-30T13:15:14",
+  "source": {
+    "source_name": "Alibaba RFQ",
+    "source_url": "https://rfq.alibaba.com",
+    "evidence_gap": false
+  },
+  "register_rows": {
+    "case": "data/master_cases.csv",
+    "approvals": [
+      "APR-003"
+    ],
+    "quotes": [
+      "Q-002",
+      "Q-005"
+    ],
+    "suppliers": [
+      "SUP-003",
+      "SUP-005"
+    ]
+  },
+  "artifacts": {
+    "case_reports": [
+      "outputs/case_reports/EXP-20260630-001/artifact_manifest.json",
+      "outputs/case_reports/EXP-20260630-001/audit_EXP-20260630-001.md",
+      "outputs/case_reports/EXP-20260630-001/compliance_draft_EXP-20260630-001.md",
+      "outputs/case_reports/EXP-20260630-001/supplier_quote_request_drafts/SUP-003_Spice_Valley_quote_clarification_draft.txt",
+      "outputs/case_reports/EXP-20260630-001/supplier_quote_request_drafts/SUP-005_Amar_Foodz_quote_request.txt",
+      "outputs/case_reports/EXP-20260630-001/supplier_quote_request_drafts/SUP-006_Ratnaraj_Foods_quote_request.txt",
+      "outputs/case_reports/EXP-20260630-001/supplier_quote_request_drafts/SUP-007_Navnath_Spices_quote_request.txt",
+      "outputs/case_reports/EXP-20260630-001/supplier_quote_request_drafts/SUP-008_Darideep_Agro_Foods_quote_request.txt",
+      "outputs/case_reports/EXP-20260630-001/supplier_quote_request_drafts/SUP-009_Globus_Global_Trade_quote_request.txt",
+      "outputs/case_reports/EXP-20260630-001/supplier_shortlist_EXP-20260630-001.md"
+    ],
+    "bid_packs": [],
+    "export_quote_packs": [],
+    "approval_cards": [
+      "receipts/approvals/EXP-20260630-001_approval_card.html"
+    ],
+    "receipts": [
+      "receipts/approvals/EXP-20260630-001_approval_card.html",
+      "receipts/approvals/EXP-20260630-001_approval_card.json"
+    ],
+    "daily_briefs": [
+      "outputs/daily_briefs/brief_20260630.html",
+      "outputs/daily_briefs/sample_daily_brief.html",
+      "outputs/daily_briefs/weekly_system_review_20260630.html"
+    ]
+  },
+  "open_gates": {
+    "approval_status": "PENDING",
+    "pending_approval_ids": [
+      "APR-003"
+    ],
+    "quote_proof_count": 2,
+    "compliance_draft_required": true,
+    "scomet_flag": "FALSE"
+  },
+  "sources_used": [
+    "data/master_cases.csv",
+    "data/approvals_receipts.csv",
+    "data/quote_master.csv",
+    "data/supplier_master.csv"
+  ]
+}

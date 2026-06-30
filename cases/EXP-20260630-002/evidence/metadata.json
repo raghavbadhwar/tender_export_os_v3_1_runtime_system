@@ -1,0 +1,17 @@
+{
+  "case_id": "EXP-20260630-002",
+  "workflow_type": "EXPORT",
+  "created_or_refreshed_at": "2026-06-30T07:31:42+00:00",
+  "source_name": "Recovered local registers",
+  "source_url": "",
+  "evidence_items": [
+    {
+      "path": "cases/EXP-20260630-002/evidence/extracted_text/rfq_evidence_intake_EXP-20260630-002.md",
+      "sha256": "204e6fed94420c30d70be498e84e9fcbc239723800bf26d4b93da9548acf9d8d"
+    }
+  ],
+  "hash_manifest": "cases/EXP-20260630-002/evidence/hashes/sha256sums.txt",
+  "notes": "Populate evidence_items when source pages, PDFs, screenshots, or extracted text are captured.",
+  "refreshed_at": "2026-06-30T07:38:12+00:00",
+  "evidence_item_count": 1
+}

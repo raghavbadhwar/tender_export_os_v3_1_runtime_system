@@ -1,0 +1,55 @@
+{
+  "score": 100,
+  "checks": [
+    {
+      "name": "Core schema/compile checks",
+      "weight": 20,
+      "passed": true
+    },
+    {
+      "name": "Mobile payload dry-run",
+      "weight": 10,
+      "passed": true
+    },
+    {
+      "name": "Drive manifest dry-run",
+      "weight": 10,
+      "passed": true
+    },
+    {
+      "name": "Source adapter tests",
+      "weight": 10,
+      "passed": true
+    },
+    {
+      "name": "Plugin receipt support",
+      "weight": 10,
+      "passed": true
+    },
+    {
+      "name": "Founder dashboard",
+      "weight": 10,
+      "passed": true
+    },
+    {
+      "name": "Agent prompt audit",
+      "weight": 10,
+      "passed": true
+    },
+    {
+      "name": "Agent regression",
+      "weight": 8,
+      "passed": true
+    },
+    {
+      "name": "Role standards/docs",
+      "weight": 7,
+      "passed": true
+    },
+    {
+      "name": "Approval safety retained",
+      "weight": 5,
+      "passed": true
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "case_id": "EXP-20260630-002",
+  "workflow_type": "EXPORT",
+  "status": "APPROVAL_REQUIRED",
+  "generated_at": "2026-06-30T13:08:12",
+  "source": {
+    "source_name": "Recovered local registers",
+    "source_url": "",
+    "evidence_gap": true
+  },
+  "register_rows": {
+    "case": "data/master_cases.csv",
+    "approvals": [
+      "APR-001"
+    ],
+    "quotes": [
+      "Q-003"
+    ],
+    "suppliers": [
+      "SUP-004"
+    ]
+  },
+  "artifacts": {
+    "case_reports": [
+      "outputs/case_reports/EXP-20260630-002/artifact_manifest.json",
+      "outputs/case_reports/EXP-20260630-002/rfq_evidence_intake_EXP-20260630-002.md"
+    ],
+    "bid_packs": [],
+    "export_quote_packs": [],
+    "approval_cards": [
+      "receipts/approvals/EXP-20260630-002_approval_card.html"
+    ],
+    "receipts": [
+      "receipts/approvals/EXP-20260630-002_approval_card.html",
+      "receipts/approvals/EXP-20260630-002_approval_card.json"
+    ],
+    "daily_briefs": [
+      "outputs/daily_briefs/brief_20260630.html",
+      "outputs/daily_briefs/sample_daily_brief.html"
+    ]
+  },
+  "open_gates": {
+    "approval_status": "PENDING",
+    "pending_approval_ids": [
+      "APR-001"
+    ],
+    "quote_proof_count": 1,
+    "compliance_draft_required": true,
+    "scomet_flag": "FALSE"
+  },
+  "sources_used": [
+    "data/master_cases.csv",
+    "data/approvals_receipts.csv",
+    "data/quote_master.csv",
+    "data/supplier_master.csv"
+  ]
+}

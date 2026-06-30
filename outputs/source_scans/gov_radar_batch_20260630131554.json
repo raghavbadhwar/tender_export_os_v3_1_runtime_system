@@ -1,0 +1,159 @@
+{
+  "run_id": "RUN-20260630131554",
+  "kanban_task_id": "t_26ca3cf8",
+  "generated_at": "2026-06-30T13:15:54+05:30",
+  "sources_config": "config/sources.gov.yaml",
+  "sources_checked": 12,
+  "sources_failed_or_limited": 3,
+  "created_case_ids": [
+    "GOV-20260630-003",
+    "GOV-20260630-004",
+    "GOV-20260630-005",
+    "GOV-20260630-006",
+    "GOV-20260630-007"
+  ],
+  "skipped_duplicate_count": 0,
+  "gem_scan": {
+    "landing_status": 200,
+    "landing_url": "https://bidplus.gem.gov.in/all-bids",
+    "api_url": "https://bidplus.gem.gov.in/all-bids-data",
+    "selected_bid_ids": [
+      "9284873",
+      "9513041",
+      "9519946",
+      "9535449"
+    ],
+    "terms": [
+      "stationery",
+      "housekeeping",
+      "PPE kit",
+      "furniture"
+    ],
+    "warnings": [],
+    "api_statuses": {
+      "stationery": 200,
+      "housekeeping": 200,
+      "PPE kit": 200,
+      "furniture": 200
+    },
+    "candidates_found": 4
+  },
+  "maharashtra_scan": {
+    "url": "https://mahatenders.gov.in/nicgep/app?page=FrontEndListTendersbyDate&service=page",
+    "status": 200,
+    "rows_seen": 5,
+    "candidates_found": 1
+  },
+  "other_source_checks": [
+    {
+      "source": "GeM — Government e-Marketplace",
+      "status": 200,
+      "url": "https://bidplus.gem.gov.in/all-bids",
+      "notes": []
+    },
+    {
+      "source": "e-Tender Maharashtra",
+      "status": 200,
+      "url": "https://mahatenders.gov.in/nicgep/app?page=FrontEndListTendersbyDate&service=page",
+      "rows_seen": 5,
+      "notes": []
+    },
+    {
+      "source": "CPPP — Central Public Procurement Portal",
+      "url": "https://eprocure.gov.in/eprocure/app?page=FrontEndListTendersbyDate&service=page",
+      "status": 200,
+      "final_url": "https://eprocure.gov.in/eprocure/app?page=FrontEndListTendersbyDate&service=page",
+      "title": "eProcurement System Government of India",
+      "notes": []
+    },
+    {
+      "source": "eProcure NIC",
+      "url": "https://eprocure.gov.in/eprocure/app?page=FrontEndListTendersbyDate&service=page",
+      "status": 200,
+      "final_url": "https://eprocure.gov.in/eprocure/app?page=FrontEndListTendersbyDate&service=page",
+      "title": "eProcurement System Government of India",
+      "notes": []
+    },
+    {
+      "source": "Tender Tiger",
+      "url": "https://www.tendertiger.com",
+      "status": "skipped_paywalled",
+      "notes": [
+        "paywalled/login-required source skipped by policy"
+      ]
+    },
+    {
+      "source": "e-Tender Punjab",
+      "url": "https://eproc.punjab.gov.in/nicgep/app?page=FrontEndListTendersbyDate&service=page",
+      "status": 200,
+      "final_url": "https://eproc.punjab.gov.in/nicgep/app?page=FrontEndListTendersbyDate&service=page",
+      "title": "eProcurement System Government of Punjab",
+      "notes": []
+    },
+    {
+      "source": "IREPS — Indian Railways",
+      "url": "https://www.ireps.gov.in",
+      "status": 200,
+      "final_url": "https://www.ireps.gov.in/",
+      "title": "Indian Railways E-Procurement System (IREPS)",
+      "notes": [
+        "home page reachable; anonymous tender search is JavaScript routed and was not form-submitted/deep-read"
+      ]
+    },
+    {
+      "source": "ONGC Tenders",
+      "url": "https://tenders.ongc.co.in/",
+      "status": 200,
+      "final_url": "https://tenders.ongc.co.in/",
+      "title": "ONGC Tender",
+      "notes": []
+    },
+    {
+      "source": "BHEL Tenders",
+      "url": "https://www.bhel.com/en/tender",
+      "status": 404,
+      "final_url": "https://www.bhel.com/en/tender",
+      "title": "Page not found | Official Website of Bharat Heavy Electricals Limited, New Delhi, India",
+      "notes": [
+        "configured URL returned 404; alternate public URL used"
+      ],
+      "alternate": {
+        "url": "https://www.bhel.com/tenders",
+        "status": 200,
+        "final_url": "https://www.bhel.com/tenders",
+        "title": "Tenders | Official Website of Bharat Heavy Electricals Limited, New Delhi, India"
+      }
+    },
+    {
+      "source": "Tenders Info",
+      "url": "https://www.tendersinfo.com",
+      "status": "skipped_paywalled",
+      "notes": [
+        "paywalled/login-required source skipped by policy"
+      ]
+    },
+    {
+      "source": "Defence Procurement Portal (MoD)",
+      "url": "https://defproc.gov.in/nicgep/app?page=FrontEndListTendersbyDate&service=page",
+      "status": 200,
+      "final_url": "https://defproc.gov.in/nicgep/app?page=FrontEndListTendersbyDate&service=page",
+      "title": "eProcurement System for Organisations  under MoD",
+      "notes": []
+    },
+    {
+      "source": "NSIC Portal",
+      "url": "https://www.nsic.co.in/Tenders/Index",
+      "status": 200,
+      "final_url": "https://www.nsic.co.in/Tenders/Index",
+      "title": "Index - NSIC : National Small Industries Corporation Ltd. | www.nsic.co.in",
+      "notes": []
+    }
+  ],
+  "warnings": [
+    "Skipped paywalled GOV aggregators: Tender Tiger, Tenders Info",
+    "IREPS tender search marked Manual Check Required; no JS form submission/login/CAPTCHA bypass attempted",
+    "BHEL configured URL returned 404; alternate https://www.bhel.com/tenders used",
+    "No deep-read, eligibility claim, pricing, supplier contact, submission, payment, DSC, or external send performed"
+  ],
+  "safety": "Internal public-source scan only; no deep-read, login, CAPTCHA bypass, form submission, supplier/buyer communication, bid submission, payment, DSC, price, classification, or origin claim."
+}

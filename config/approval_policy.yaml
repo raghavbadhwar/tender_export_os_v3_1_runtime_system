@@ -1,0 +1,220 @@
+# approval_policy.yaml
+# Approval Policy — defines what requires owner approval before any action is taken
+# Usage: Approval Desk Agent checks this before routing any action card
+# Principle: Agents prepare, draft, score, source. Humans approve external/money/legal actions.
+
+# ══════════════════════════════════
+# MODE A — Autopilot Research (No Approval Needed)
+# ══════════════════════════════════
+
+mode_a_autopilot:
+  description: "These actions can run without owner approval"
+  allowed_actions:
+    - scan_sources
+    - extract_fields_from_pdf
+    - read_tender_documents
+    - score_opportunities
+    - create_case_ids
+    - fast_kill_scoring
+    - deep_read_extraction
+    - identify_candidate_suppliers
+    - prepare_draft_pricing
+    - prepare_draft_compliance_notes
+    - prepare_draft_approval_cards
+    - generate_daily_brief
+    - update_master_cases_internal
+    - update_agent_run_log
+    - generate_case_reports
+    - generate_supplier_shortlist
+    - archive_rejected_cases
+    - update_source_health
+    - generate_pack_builder_draft
+    - source_suppliers_research_only
+    - generate_plugin_health_notes
+    - generate_chatgpt_snapshot
+    - generate_drive_sync_manifest
+    - create_kanban_tasks_internal
+    - produce_internal_artifact_drafts
+
+# ══════════════════════════════════
+# MODE B — Approval-Gated Actions (Requires Owner Approval)
+# ══════════════════════════════════
+
+mode_b_approval_gated:
+  description: "These actions MUST NOT proceed without explicit owner approval"
+  gate_enforcement: strict  # Never bypass, even under time pressure
+
+  approval_required_for:
+
+    - action: "send_supplier_quote_request"
+      reason: "Initiates external communication with supplier; creates business relationship"
+      approval_type: per_case
+      card_required: true
+
+    - action: "send_buyer_rfq_reply"
+      reason: "External reply to buyer — creates business impression and potential obligation"
+      approval_type: per_case
+      card_required: true
+
+    - action: "send_export_quotation"
+      reason: "Price commitment to foreign buyer — legal and financial obligation"
+      approval_type: per_case
+      card_required: true
+
+    - action: "submit_tender_bid"
+      reason: "Irreversible action; requires DSC; creates binding legal obligation"
+      approval_type: per_case
+      card_required: true
+      dsc_required: true
+
+    - action: "upload_tender_documents"
+      reason: "External portal action; may trigger bid acceptance"
+      approval_type: per_case
+      card_required: true
+
+    - action: "commit_final_price"
+      reason: "Price commitment — once sent, difficult to retract"
+      approval_type: per_case
+      card_required: true
+
+    - action: "commit_delivery_timeline"
+      reason: "Delivery promise — missed delivery = penalty"
+      approval_type: per_case
+      card_required: true
+
+    - action: "accept_payment_terms"
+      reason: "Legal and financial commitment"
+      approval_type: per_case
+      card_required: true
+
+    - action: "confirm_hsn_itchs_classification"
+      reason: "Wrong classification = customs penalty; requires export expert review"
+      approval_type: per_case
+      card_required: true
+      expert_review_required: true
+
+    - action: "claim_country_of_origin"
+      reason: "Fraudulent origin claim = serious legal liability"
+      approval_type: per_case
+      card_required: true
+      expert_review_required: true
+
+    - action: "pay_emd_or_bid_security"
+      reason: "Cash outflow; forfeitable if bid not properly submitted"
+      approval_type: per_case
+      card_required: true
+
+    - action: "pay_security_deposit"
+      reason: "Cash outflow; forfeitable on breach"
+      approval_type: per_case
+      card_required: true
+
+    - action: "pay_advance_to_supplier"
+      reason: "Cash outflow; risk of supplier non-performance"
+      approval_type: per_case
+      card_required: true
+
+    - action: "place_supplier_purchase_order"
+      reason: "Legal commitment to buy; creates payment obligation"
+      approval_type: per_case
+      card_required: true
+
+    - action: "use_dsc"
+      reason: "DSC is a legal signature; use is irreversible"
+      approval_type: per_action
+      card_required: true
+
+    - action: "send_invoice_externally"
+      reason: "External invoice can create payment, tax, and commercial consequences"
+      approval_type: per_case
+      card_required: true
+
+    - action: "blacklist_supplier_permanently"
+      reason: "Permanent supplier blacklist can affect future sourcing and should be owner-reviewed"
+      approval_type: per_supplier
+      card_required: true
+
+    - action: "patch_pricing_or_compliance_skill"
+      reason: "Reusable pricing/compliance rules affect future commercial and legal risk"
+      approval_type: per_change
+      card_required: true
+
+    - action: "enable_network_or_credential_heavy_plugin"
+      reason: "Plugin may access external systems or credentials"
+      approval_type: per_plugin
+      card_required: true
+
+    - action: "expose_hermes_or_codex_service_publicly"
+      reason: "Public service exposure creates security and data leakage risk"
+      approval_type: per_action
+      card_required: true
+
+# ══════════════════════════════════
+# MODE C — Execution Tracker (Post-Approval Actions)
+# ══════════════════════════════════
+
+mode_c_execution_tracker:
+  description: "After approval, these tracking actions run automatically"
+  allowed_actions:
+    - track_supplier_response
+    - track_bid_submission_status
+    - track_buyer_follow_up
+    - track_quote_validity_window
+    - track_delivery_deadline
+    - track_payment_status
+    - record_receipt
+    - update_case_status
+    - send_internal_reminder
+    - update_kanban_internal_status
+    - sync_approved_artifacts_to_drive
+
+  escalation_triggers:
+    - "Supplier no response in 48 hours → flag in brief"
+    - "Quote validity expiring in 24 hours → alert owner"
+    - "Delivery deadline within 7 days → daily alert"
+    - "Payment overdue by 3 days → escalate to owner"
+
+# ══════════════════════════════════
+# APPROVAL CARD REQUIREMENTS
+# ══════════════════════════════════
+
+approval_card:
+  required_fields:
+    - case_id
+    - workflow_type          # GOV or EXPORT
+    - proposed_action
+    - business_object        # What will happen externally
+    - amount_or_price        # If applicable
+    - expected_benefit
+    - concrete_risk
+    - recovery_rollback_path
+    - documents_sources_used
+    - confidence_score       # 0-100
+    - missing_information    # Explicit list of unknowns
+    - approval_options       # [Approve, Reject, Ask Changes]
+
+  output_format: HTML
+  output_path: "receipts/approvals/{case_id}_approval_card.html"
+  notify_hermes: true
+
+# ══════════════════════════════════
+# RECEIPT REQUIREMENTS
+# ══════════════════════════════════
+
+receipt:
+  required_fields:
+    - receipt_id
+    - case_id
+    - action
+    - actor                  # Which agent or human performed action
+    - timestamp
+    - approval_reference     # Links to approval card
+    - input_summary
+    - output_summary
+    - evidence_or_proof
+    - external_effect        # What changed in the outside world
+    - next_action
+    - verification_status
+
+  output_path: "receipts/{type}/{receipt_id}.json"
+  types: [approvals, submissions, supplier_quotes, owner_decisions]

@@ -1,0 +1,36 @@
+Subject: Regarding Your Inquiry — {{PRODUCT_NAME}}
+
+Dear {{BUYER_CONTACT_NAME}},
+
+Thank you for your inquiry/RFQ for {{PRODUCT_NAME}} (Reference: {{BUYER_RFQ_REF}}).
+
+We have reviewed your requirements and would like to respond as follows:
+
+PRELIMINARY INTEREST: YES — We can source and supply this product.
+
+BASIC CONFIRMATION OF REQUIREMENTS UNDERSTOOD:
+- Product: {{PRODUCT_NAME}}
+- Quantity: {{QUANTITY}} {{UNIT}}
+- Destination: {{DESTINATION}}
+- Incoterms (your request): {{BUYER_INCOTERMS}}
+- Payment (your request): {{BUYER_PAYMENT_TERMS}}
+
+We are currently completing our supplier verification and final pricing for this inquiry.
+
+We will send you our formal Proforma Invoice / Export Quotation within {{QUOTE_TURNAROUND_DAYS}} business days.
+
+Before we proceed to formal quotation, could you please confirm:
+1. {{CLARIFICATION_QUESTION_1}}
+2. {{CLARIFICATION_QUESTION_2}}
+
+We look forward to the opportunity to serve you.
+
+With regards,
+{{OWNER_NAME}}
+{{COMPANY_NAME}}
+{{PHONE}} | {{EMAIL}}
+
+---
+⚠️ INTERNAL NOTE: DO NOT SEND WITHOUT OWNER APPROVAL
+This is a preliminary acknowledgement only. Formal quote requires full pricing and compliance review.
+Reference: Case {{CASE_ID}}

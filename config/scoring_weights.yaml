@@ -1,0 +1,205 @@
+# scoring_weights.yaml
+# Opportunity scoring weights for both workflows
+# Usage: Fast Kill Agent and Deep Read Agent compute opportunity scores
+# Total = 100 points. Threshold for proceeding to Deep Read: >= 60
+
+# ══════════════════════════════════
+# GOVERNMENT TENDER SCORING
+# ══════════════════════════════════
+
+gov_scoring:
+
+  total_points: 100
+  proceed_threshold: 60     # Score >= 60: proceed to Deep Read
+  watchlist_threshold: 45   # Score 45-59: Watchlist (owner decides)
+  reject_threshold: 44      # Score < 45: Reject
+
+  factors:
+
+    - name: "Eligibility Fit"
+      weight: 25
+      description: "How well do we meet the eligibility criteria?"
+      scoring_guide:
+        25: "Fully eligible — turnover, experience, certificates all met"
+        18: "Mostly eligible — one minor gap but manageable"
+        10: "Partially eligible — one significant gap"
+        0:  "Not eligible — hard requirement not met → trigger kill rule"
+
+    - name: "Capital Requirement"
+      weight: 15
+      description: "EMD, working capital, security deposit feasibility"
+      scoring_guide:
+        15: "EMD < 1L and payment within 30 days of delivery"
+        10: "EMD 1-5L or payment 30-60 days"
+        5:  "EMD 5-10L or payment 60-90 days"
+        0:  "EMD > 10L or payment > 90 days"
+
+    - name: "Supplier Availability"
+      weight: 15
+      description: "Can we find reliable suppliers quickly?"
+      scoring_guide:
+        15: "3+ known suppliers available with past quotes"
+        10: "Suppliers exist but need new RFQ — moderate search"
+        5:  "Limited supplier options — need wide search"
+        0:  "No supplier found → trigger kill rule"
+
+    - name: "Pricing Clarity"
+      weight: 15
+      description: "How well can we estimate costs and margin?"
+      scoring_guide:
+        15: "Clear market price, easy landed-cost calculation"
+        10: "Some variability — need 2 quotes to confirm"
+        5:  "Price uncertain — custom or complex"
+        0:  "Cannot estimate price without more data"
+
+    - name: "Execution Difficulty"
+      weight: 10
+      description: "Complexity of delivery, installation, after-sales"
+      scoring_guide:
+        10: "Simple supply — pack and ship"
+        7:  "Standard delivery with basic documentation"
+        4:  "Moderate — requires coordination or third-party"
+        0:  "High complexity — installation, service, multiple locations"
+
+    - name: "Competition Intensity"
+      weight: 10
+      description: "How competitive is this tender likely to be?"
+      scoring_guide:
+        10: "Niche — few qualified bidders"
+        7:  "Moderate competition"
+        4:  "High competition — many large players"
+        0:  "Commodity — extreme price pressure, near-zero margin"
+
+    - name: "Payment Risk"
+      weight: 5
+      description: "Safety of payment terms"
+      scoring_guide:
+        5: "Advance + milestone payments, or payment before delivery"
+        3: "Payment within 30 days of delivery"
+        1: "Payment 30-90 days post delivery"
+        0: "Performance-linked or >90 days"
+
+    - name: "Learning Value"
+      weight: 5
+      description: "Does this build strategic experience even if margin is thin?"
+      scoring_guide:
+        5: "Opens a new category, buyer relationship, or government portal experience"
+        3: "Builds supplier relationship or document experience"
+        1: "Routine — no new learning"
+        0: "Negative — risky or reputation-damaging category"
+
+# ══════════════════════════════════
+# EXPORT RFQ SCORING
+# ══════════════════════════════════
+
+export_scoring:
+
+  total_points: 100
+  proceed_threshold: 60
+  watchlist_threshold: 45
+  reject_threshold: 44
+
+  factors:
+
+    - name: "Buyer Credibility"
+      weight: 25
+      description: "Can we verify the buyer's legitimacy and ability to pay?"
+      scoring_guide:
+        25: "Verified company, LC payment, 3yr+ import history, public track record"
+        18: "Verified company, TT in advance, some import history"
+        10: "Company exists but limited verification — TT at sight"
+        0:  "Unverifiable buyer → trigger kill rule"
+
+    - name: "Supplier Availability"
+      weight: 20
+      description: "Can we source from India at competitive price?"
+      scoring_guide:
+        20: "3+ known India suppliers with recent quotes"
+        14: "Suppliers exist but need fresh quotes"
+        7:  "Limited India suppliers — may need global source"
+        0:  "No viable supplier → trigger kill rule"
+
+    - name: "Product Simplicity"
+      weight: 15
+      description: "How straightforward is the product to source, pack, and ship?"
+      scoring_guide:
+        15: "Standard commodity, clear spec, easy packing"
+        10: "Some customization or packaging requirement"
+        5:  "Custom spec or certification needed"
+        0:  "Highly customized or specialized — margin risk high"
+
+    - name: "Pricing Clarity"
+      weight: 15
+      description: "How well can we build a confident price waterfall?"
+      scoring_guide:
+        15: "Market price clear, freight easy to estimate, margin visible"
+        10: "Price range known, freight needs quote"
+        5:  "Price uncertain — waiting for 2+ supplier quotes"
+        0:  "Cannot price without more data"
+
+    - name: "Compliance Difficulty"
+      weight: 10
+      description: "How complex is the export compliance for this product?"
+      scoring_guide:
+        10: "Free export, no special certificates, standard HS code"
+        7:  "APEDA or FSSAI certification needed — manageable"
+        4:  "Multiple certificates needed — some effort"
+        0:  "Restricted export or SCOMET → trigger kill rule"
+
+    - name: "Order Size vs Risk"
+      weight: 10
+      description: "Is the order size worth the risk and effort?"
+      scoring_guide:
+        10: "Order > $10,000 with clear margin potential"
+        7:  "Order $2,000-$10,000 — viable"
+        4:  "Order $500-$2,000 — marginal, only if easy"
+        0:  "Order < $500 — not worth overhead"
+
+    - name: "Payment Safety"
+      weight: 5
+      description: "How safe is the proposed payment method?"
+      scoring_guide:
+        5: "LC at sight or 100% TT advance"
+        3: "50% advance + balance against BL"
+        1: "TT at sight against documents"
+        0: "Open account DA/DP or no payment terms stated"
+
+# ══════════════════════════════════
+# SUPPLIER SCORING
+# ══════════════════════════════════
+
+supplier_scoring:
+
+  total_points: 100
+
+  factors:
+    - name: "Identity Proof"
+      weight: 10
+    - name: "Product Fit"
+      weight: 15
+    - name: "Capacity"
+      weight: 10
+    - name: "Certificates"
+      weight: 10
+    - name: "Quote Clarity"
+      weight: 8
+    - name: "Response Speed"
+      weight: 5
+    - name: "Export/Tender Exp"
+      weight: 8
+    - name: "Price Competitiveness"
+      weight: 10
+    - name: "Payment Terms"
+      weight: 7
+    - name: "Delivery Timeline"
+      weight: 7
+    - name: "On-Time History"
+      weight: 5
+    - name: "Defect History"
+      weight: 3
+    - name: "Communication Quality"
+      weight: 2
+
+  preferred_threshold: 70
+  acceptable_threshold: 55
+  reject_threshold: 54

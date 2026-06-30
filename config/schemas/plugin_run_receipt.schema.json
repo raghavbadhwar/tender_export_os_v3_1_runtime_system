@@ -1,0 +1,4 @@
+{
+  "required_fields": ["receipt_id", "case_id", "agent_name", "capability_name", "capability_path", "input_artifacts", "output_artifacts", "validation_performed", "approval_boundary", "created_at", "sources_used"],
+  "note": "JSON receipt schema for receipts/plugin_runs/*.json; validated by dedicated scripts, not CSV schema validator."
+}

@@ -1,0 +1,69 @@
+SUPPLIER VERIFICATION FORM
+Tender + Export OS — Case {{CASE_ID}}
+Date: {{DATE}}
+
+Complete this form before adding a new supplier to the supplier master.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SECTION 1: IDENTITY VERIFICATION
+
+Supplier Legal Name: _________________________________
+Trade Name (if different): _________________________________
+GST Number: _________________________________
+GST Verification Status: [ ] Verified via GST portal  [ ] Not verified
+PAN Number: _________________________________
+Company Type: [ ] Proprietorship  [ ] Partnership  [ ] Pvt Ltd  [ ] LLP  [ ] Other
+
+Registered Address: _________________________________
+Manufacturing/Warehouse Address: _________________________________
+
+Contact Person: _________________________________
+Designation: _________________________________
+Phone: _________________________________
+Email: _________________________________
+Website (if any): _________________________________
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SECTION 2: REGISTRATIONS AND CERTIFICATIONS
+
+MSME/Udyam Number: _________________________________
+GeM Seller ID (if applicable): _________________________________
+IEC Number (for export suppliers): _________________________________
+APEDA Registration (for agri/food): _________________________________
+FSSAI License (for food): _________________________________
+ISO Certificate: _________________________________
+BIS/ISI License (if applicable): _________________________________
+Other relevant certs: _________________________________
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SECTION 3: CAPABILITY ASSESSMENT
+
+Products Supplied: _________________________________
+HSN/ITC-HS Codes (main): _________________________________
+Monthly Capacity: _________________________________
+Export Experience: [ ] Yes  [ ] No   If yes, markets: _________________________________
+Government Supply Experience: [ ] Yes  [ ] No
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SECTION 4: PAST PERFORMANCE
+
+Cases this supplier was used for: _________________________________
+Last quote date: _________________________________
+On-time delivery history: ___ out of ___ deliveries
+Defect/rejection incidents: _________________________________
+Overall supplier score: ___/100
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SECTION 5: VERIFICATION OUTCOME
+
+[ ] Approved — Add to supplier master
+[ ] Watchlist — Use with caution (reason: _________________________________)
+[ ] Reject — Do not use (reason: _________________________________)
+
+Verified by: _________________________________
+Verification date: _________________________________

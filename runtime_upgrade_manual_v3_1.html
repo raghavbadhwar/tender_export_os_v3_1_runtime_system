@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tender + Export OS v3.1 Runtime Upgrade</title>
+<style>
+:root{--bg:#f7f5f0;--ink:#171717;--muted:#66615b;--card:#fff;--line:#e3ded4;--navy:#1f3a5f;--gold:#b7791f;--green:#1f7a4d;--red:#a13d2d}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;line-height:1.6}
+.wrap{max-width:1120px;margin:auto;padding:28px}.hero{background:linear-gradient(135deg,#111827,#1f3a5f 65%,#7c4a12);color:#fff;border-radius:28px;padding:34px;box-shadow:0 18px 50px rgba(0,0,0,.1)}
+.eyebrow{color:#fbd38d;text-transform:uppercase;font-size:12px;font-weight:800;letter-spacing:.08em}h1{font-size:clamp(32px,5vw,58px);line-height:1.02;letter-spacing:-.05em;margin:10px 0 14px}.hero p{font-size:18px;color:rgba(255,255,255,.82);max-width:820px}
+.grid{display:grid;gap:14px}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:repeat(2,1fr)}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 10px 30px rgba(20,20,20,.04)}h2{font-size:30px;letter-spacing:-.035em;margin:30px 0 12px}.pill{display:inline-block;background:#fff4d6;color:#7c4a12;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:800;margin-bottom:8px}.flow{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}.step{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;text-align:center;font-weight:800;font-size:13px}.step small{display:block;color:var(--muted);font-weight:500;margin-top:4px}.table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden}.table th,.table td{padding:12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}.table th{background:#f1eee7;color:#38332e;font-size:12px;text-transform:uppercase;letter-spacing:.05em}.callout{background:#fff8e8;border:1px solid #f1d79f;border-radius:18px;padding:18px}.red{background:#fae9e6;color:#a13d2d}.green{background:#e9f8ef;color:#1f7a4d}@media(max-width:900px){.g3,.g2,.flow{grid-template-columns:1fr}.wrap{padding:16px}}
+</style></head>
+<body><div class="wrap">
+<header class="hero"><div class="eyebrow">v3.1 Runtime Upgrade · Codex + Hermes + ChatGPT Project</div><h1>Lean outside, autonomous inside.</h1><p>This upgrade turns the v3 manuals into a runtime system: one control workbook, one case register, one approval queue, one daily brief, and a clean Codex/Hermes operating structure.</p></header>
+
+<h2>Operating principle</h2>
+<div class="flow">
+<div class="step">Find<small>scan sources</small></div><div class="step">Fast Kill<small>reject quickly</small></div><div class="step">Deep Read<small>extract proof</small></div><div class="step">Supplier Proof<small>5-3-2 rule</small></div><div class="step">Pricing Proof<small>landed cost</small></div><div class="step">Approval<small>owner gate</small></div><div class="step">Receipt<small>evidence log</small></div>
+</div>
+
+<h2>What changed from v3</h2>
+<div class="grid g2">
+<div class="card"><span class="pill">Control Center</span><h3>One master workbook</h3><p>All government tender cases, export RFQs, suppliers, quotes, approvals, source health, run logs and receipts now connect through one case-ID system.</p></div>
+<div class="card"><span class="pill">Hermes-ready</span><h3>Mobile owner actions</h3><p>Hermes should show only approvals, top cases, risks and the next action — not raw portal data.</p></div>
+<div class="card"><span class="pill">Automation modes</span><h3>Autopilot + approval gates</h3><p>Agents can scan, read, source, price and draft automatically. External/money/legal actions require approval.</p></div>
+<div class="card"><span class="pill">Source health</span><h3>Portals are monitored</h3><p>Every source is marked Working, Needs Login, Paywalled, Low Relevance, Broken, or Manual Check Required.</p></div>
+</div>
+
+<h2>Runtime roles</h2>
+<table class="table"><thead><tr><th>Layer</th><th>Role</th><th>Does not do</th></tr></thead><tbody>
+<tr><td>Codex</td><td>Runs scans, parses documents, updates records, creates packs and reports.</td><td>Does not submit bids, use DSC, send final quotes or commit money.</td></tr>
+<tr><td>Hermes</td><td>Daily mobile brief, approvals, follow-up reminders, owner decisions.</td><td>Does not dump raw sheets or hide uncertainty.</td></tr>
+<tr><td>ChatGPT Project</td><td>Strategy room, reports, dashboard review, research synthesis.</td><td>Does not replace the data records.</td></tr>
+<tr><td>Human Owner</td><td>Approves/rejects final external actions and high-risk decisions.</td><td>Should not manually dig through every portal.</td></tr>
+</tbody></table>
+
+<h2>Approval gates</h2>
+<div class="callout"><strong>AI prepares. Human approves.</strong> Approval is required for bid submission, DSC use, final buyer quote, payment terms, supplier delivery commitment, HSN/ITC-HS classification, origin/FTA claim, document upload, EMD/security/advance, or any external message with commercial/legal effect.</div>
+
+<h2>Files to use</h2>
+<div class="grid g3">
+<div class="card"><h3>Control workbook</h3><p><code>data/tender_export_os_v3_1_control_center.xlsx</code></p></div>
+<div class="card"><h3>Config</h3><p><code>config/*.yaml</code> controls sources, kill rules, scoring and approvals.</p></div>
+<div class="card"><h3>Templates</h3><p><code>templates/*</code> contains supplier, buyer, quote, approval and no-go templates.</p></div>
+</div>
+</div></body></html>

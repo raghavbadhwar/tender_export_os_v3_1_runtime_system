@@ -1,0 +1,29 @@
+{
+  "file": "data/approvals_receipts.csv",
+  "primary_key": "approval_id",
+  "required_columns": [
+    "approval_id",
+    "case_id",
+    "workflow_type",
+    "action_approved",
+    "proposed_by_agent",
+    "approval_card_path",
+    "amount_inr",
+    "amount_usd",
+    "approved_by",
+    "approved_at",
+    "approval_status",
+    "receipt_id",
+    "receipt_path",
+    "external_effect",
+    "notes"
+  ],
+  "required_fields": ["approval_id", "case_id", "workflow_type", "action_approved", "approval_status"],
+  "enums": {
+    "workflow_type": ["GOV", "EXPORT"],
+    "approval_status": ["PENDING", "APPROVED", "REJECTED", "CHANGES_REQUESTED", "SUPERSEDED"],
+    "external_effect": ["", "NONE_DECISION_ONLY", "PENDING_APPROVED_EXECUTION", "EXECUTED_AFTER_APPROVAL"]
+  },
+  "date_fields": ["approved_at"],
+  "numeric_fields": ["amount_inr", "amount_usd"]
+}

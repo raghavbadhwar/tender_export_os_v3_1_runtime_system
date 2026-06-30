@@ -1,0 +1,17 @@
+{
+  "generated_at": "2026-06-30T13:14:38",
+  "safe_mode": true,
+  "summary": {
+    "adapters_checked": 1,
+    "passes": 1,
+    "failures": 0
+  },
+  "results": [
+    {
+      "adapter": "mock",
+      "status": "PASS",
+      "items": 2,
+      "missing_fields": []
+    }
+  ]
+}

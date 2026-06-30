@@ -1,0 +1,144 @@
+# sources.gov.yaml
+# Government tender and public procurement sources for India
+# workflow: GOV
+# Usage: Radar Agent reads this file daily to determine which portals to check
+
+sources:
+
+  - name: "GeM — Government e-Marketplace"
+    url: "https://gem.gov.in"
+    type: "primary"
+    workflow: GOV
+    login_required: false
+    paywalled: false
+    api_available: true
+    api_url: "https://bidplus.gem.gov.in/all-bids"
+    scrape_type: "api_or_web"
+    frequency: daily
+    categories_supported: all
+    notes: "Best source for small orders. Buyer verification built-in. L1 bidding."
+    health_status: Working
+
+  - name: "CPPP — Central Public Procurement Portal"
+    url: "https://eprocure.gov.in/cppp/"
+    type: "primary"
+    workflow: GOV
+    login_required: false
+    paywalled: false
+    api_available: false
+    scrape_type: "web"
+    frequency: daily
+    notes: "Central Govt ministries and PSUs. Check corrigenda regularly."
+    health_status: Working
+
+  - name: "eProcure NIC"
+    url: "https://eprocure.gov.in"
+    type: "primary"
+    workflow: GOV
+    login_required: false
+    paywalled: false
+    api_available: false
+    scrape_type: "web"
+    frequency: daily
+    notes: "Wide coverage of central and state tenders. Check bid documents carefully."
+    health_status: Working
+
+  - name: "Tender Tiger"
+    url: "https://www.tendertiger.com"
+    type: "aggregator"
+    workflow: GOV
+    login_required: true
+    paywalled: true
+    api_available: false
+    scrape_type: "manual_check"
+    frequency: weekly
+    notes: "Paid aggregator. Use only if GeM/CPPP miss niche categories."
+    health_status: Paywalled
+
+  - name: "e-Tender Punjab"
+    url: "https://eproc.punjab.gov.in"
+    type: "state"
+    workflow: GOV
+    login_required: false
+    paywalled: false
+    scrape_type: "web"
+    frequency: daily
+    notes: "Punjab state tenders. Strong for supply/infra/equipment categories."
+    health_status: Working
+
+  - name: "e-Tender Maharashtra"
+    url: "https://mahatenders.gov.in"
+    type: "state"
+    workflow: GOV
+    login_required: false
+    paywalled: false
+    scrape_type: "web"
+    frequency: daily
+    notes: "Maharashtra state procurement."
+    health_status: Working
+
+  - name: "IREPS — Indian Railways"
+    url: "https://www.ireps.gov.in"
+    type: "psu"
+    workflow: GOV
+    login_required: false
+    paywalled: false
+    scrape_type: "web"
+    frequency: weekly
+    notes: "Railway material tenders. High volume, specialized. Needs IREPS registration."
+    health_status: Working
+
+  - name: "ONGC Tenders"
+    url: "https://www.ongcindia.com/wps/wcm/connect/en/tender/"
+    type: "psu"
+    workflow: GOV
+    login_required: false
+    paywalled: false
+    scrape_type: "web"
+    frequency: weekly
+    notes: "ONGC procurement. O&G sector."
+    health_status: Working
+
+  - name: "BHEL Tenders"
+    url: "https://www.bhel.com/en/tender"
+    type: "psu"
+    workflow: GOV
+    login_required: false
+    paywalled: false
+    scrape_type: "web"
+    frequency: weekly
+    notes: "Heavy engineering. Requires technical experience."
+    health_status: Working
+
+  - name: "Tenders Info"
+    url: "https://www.tendersinfo.com"
+    type: "aggregator"
+    workflow: GOV
+    login_required: true
+    paywalled: true
+    scrape_type: "manual_check"
+    frequency: monthly
+    notes: "Free tier limited. Use sparingly."
+    health_status: Paywalled
+
+  - name: "Defence Procurement Portal (MoD)"
+    url: "https://defproc.gov.in"
+    type: "defence"
+    workflow: GOV
+    login_required: false
+    paywalled: false
+    scrape_type: "web"
+    frequency: weekly
+    notes: "Defence tenders. IDDM/Make in India often required. High compliance burden."
+    health_status: Working
+
+  - name: "NSIC Portal"
+    url: "https://www.nsic.co.in"
+    type: "sme_specific"
+    workflow: GOV
+    login_required: false
+    paywalled: false
+    scrape_type: "web"
+    frequency: weekly
+    notes: "MSME-reserved tenders. Priority source if MSME registered."
+    health_status: Working

@@ -1,0 +1,63 @@
+{
+  "generated_at": "2026-06-30T13:01:41",
+  "mode": "plan_only",
+  "safety_note": "This plan does not write to Hermes Kanban. Review before executing with any future connector.",
+  "actions": [
+    {
+      "action": "create_task",
+      "case_id": "GOV-20260630-001",
+      "desired": {
+        "case_id": "GOV-20260630-001",
+        "title": "Supply of Office Stationery Q2 2026",
+        "workflow_type": "GOV",
+        "board_status": "running",
+        "case_status": "SUPPLIER_SEARCH",
+        "deadline": "2026-07-15",
+        "owner_approval_needed": true,
+        "next_action": "Complete supplier proof; do not price until two quote proofs exist."
+      }
+    },
+    {
+      "action": "create_task",
+      "case_id": "GOV-20260630-002",
+      "desired": {
+        "case_id": "GOV-20260630-002",
+        "title": "Supply of Safety Helmets and PPE Kit",
+        "workflow_type": "GOV",
+        "board_status": "archived",
+        "case_status": "REJECTED",
+        "deadline": "2026-07-05",
+        "owner_approval_needed": false,
+        "next_action": "Archive or keep for weekly learning review."
+      }
+    },
+    {
+      "action": "create_task",
+      "case_id": "EXP-20260630-001",
+      "desired": {
+        "case_id": "EXP-20260630-001",
+        "title": "Organic Turmeric Powder - 5MT Monthly",
+        "workflow_type": "EXPORT",
+        "board_status": "running",
+        "case_status": "SUPPLIER_SEARCH",
+        "deadline": "2026-07-10",
+        "owner_approval_needed": true,
+        "next_action": "Complete supplier proof; do not price until two quote proofs exist."
+      }
+    },
+    {
+      "action": "create_task",
+      "case_id": "EXP-20260630-002",
+      "desired": {
+        "case_id": "EXP-20260630-002",
+        "title": "Brass Decorative Items - Mixed Set",
+        "workflow_type": "EXPORT",
+        "board_status": "blocked",
+        "case_status": "APPROVAL_REQUIRED",
+        "deadline": "",
+        "owner_approval_needed": true,
+        "next_action": "Owner must approve, reject, or ask changes from the approval card."
+      }
+    }
+  ]
+}

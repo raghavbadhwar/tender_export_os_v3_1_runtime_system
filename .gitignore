@@ -1,0 +1,25 @@
+.DS_Store
+
+# Python/local tooling
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+
+# Dependency and build outputs
+node_modules/
+dist/
+build/
+.venv/
+venv/
+
+# Local secrets and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.pfx
+id_rsa
+id_ed25519

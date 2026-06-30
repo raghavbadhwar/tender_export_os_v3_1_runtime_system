@@ -1,0 +1,105 @@
+{
+  "drive_root_name": "Tender Export OS - Knowledge Bus",
+  "mode": "dry_run",
+  "warning": "Review this manifest before any Drive upload. Secrets and restricted files are filtered locally.",
+  "groups": [
+    {
+      "drive_folder": "00_Control_Center",
+      "files": [
+        "data/agent_run_log.csv",
+        "data/approvals_receipts.csv",
+        "data/events.jsonl",
+        "data/master_cases.csv",
+        "data/plugin_health.csv",
+        "data/quote_master.csv",
+        "data/source_health.csv",
+        "data/supplier_master.csv"
+      ]
+    },
+    {
+      "drive_folder": "00_Schemas",
+      "files": [
+        "config/schemas/approvals_receipts.schema.json",
+        "config/schemas/event.schema.json",
+        "config/schemas/master_cases.schema.json",
+        "config/schemas/quote_master.schema.json",
+        "config/schemas/supplier_master.schema.json"
+      ]
+    },
+    {
+      "drive_folder": "01_Daily_Briefs",
+      "files": [
+        "outputs/daily_briefs/brief_20260630.html",
+        "outputs/daily_briefs/sample_daily_brief.html"
+      ]
+    },
+    {
+      "drive_folder": "02_Case_Reports",
+      "files": [
+        "outputs/case_reports/EXP-20260630-001/artifact_manifest.json",
+        "outputs/case_reports/EXP-20260630-002/artifact_manifest.json",
+        "outputs/case_reports/GOV-20260630-001/artifact_manifest.json",
+        "outputs/case_reports/GOV-20260630-002/artifact_manifest.json"
+      ]
+    },
+    {
+      "drive_folder": "03_Bid_Packs",
+      "files": []
+    },
+    {
+      "drive_folder": "04_Export_Quote_Packs",
+      "files": []
+    },
+    {
+      "drive_folder": "06_Receipts",
+      "files": [
+        "receipts/approvals/EXP-20260630-002_approval_card.html",
+        "receipts/approvals/GOV-20260630-001_approval_card.html",
+        "receipts/plugin_runs/hermes_kanban_setup_plan.txt"
+      ]
+    },
+    {
+      "drive_folder": "07_Config_Snapshots",
+      "files": [
+        "config/approval_policy.yaml",
+        "config/hermes_cron.yaml",
+        "config/kanban_board.yaml",
+        "config/kill_rules.yaml",
+        "config/memory_policy.yaml",
+        "config/scoring_weights.yaml",
+        "config/sources.export.yaml",
+        "config/sources.gov.yaml",
+        "config/sources.supplier.yaml",
+        "config/sync_policy.yaml"
+      ]
+    },
+    {
+      "drive_folder": "08_ChatGPT_Snapshots",
+      "files": [
+        "data/chatgpt_snapshot.md"
+      ]
+    }
+  ],
+  "never_sync_patterns": [
+    "secrets",
+    ".env",
+    "credentials.json",
+    "token",
+    ".pem",
+    ".key",
+    "cookies",
+    "DSC",
+    "password",
+    "bank",
+    "private"
+  ],
+  "never_sync_extensions": [
+    ".asc",
+    ".enc",
+    ".gpg",
+    ".key",
+    ".p12",
+    ".pem",
+    ".pfx"
+  ]
+}

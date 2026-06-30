@@ -1,0 +1,37 @@
+{
+  "file": "data/rfq_master.csv",
+  "primary_key": "rfq_id",
+  "required_columns": [
+    "rfq_id",
+    "case_id",
+    "buyer_id",
+    "source_name",
+    "source_url",
+    "rfq_reference",
+    "product_or_service",
+    "quantity",
+    "unit",
+    "buyer_country",
+    "deadline_date",
+    "payment_terms",
+    "incoterms",
+    "evidence_status",
+    "rfq_stage",
+    "rfq_score",
+    "market_fit_score",
+    "source_reliability_score",
+    "missing_evidence",
+    "evidence_links",
+    "notes",
+    "created_at",
+    "updated_at"
+  ],
+  "required_fields": ["rfq_id", "case_id", "buyer_id", "product_or_service", "evidence_status", "rfq_stage", "created_at"],
+  "enums": {
+    "evidence_status": ["", "MISSING", "PARTIAL", "MARKETPLACE_MASKED", "PUBLIC_NOTICE", "RFQ_VERIFIED"],
+    "rfq_stage": ["", "RAW_LEAD", "BUYER_VISIBLE", "BUYER_VERIFIED", "RFQ_VERIFIED", "READY_FOR_SUPPLIER_PROOF", "BLOCKED"]
+  },
+  "date_fields": ["deadline_date", "created_at", "updated_at"],
+  "numeric_fields": ["quantity", "rfq_score", "market_fit_score", "source_reliability_score"],
+  "url_fields": ["source_url"]
+}

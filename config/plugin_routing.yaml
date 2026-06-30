@@ -1,0 +1,149 @@
+version: 4
+default_router: hermes-chief-operator
+
+groups:
+  primary_artifact_runtime:
+    plugins:
+      - documents
+      - pdf
+      - presentations
+      - spreadsheets
+      - template-creator
+    routes:
+      - case_reports
+      - bid_packs
+      - export_quote_packs
+      - pricing_workbooks
+      - supplier_scorecards
+      - approval_cards
+      - dashboards
+  business_and_sales:
+    plugins:
+      - sales
+      - small-business
+      - marketing
+      - operations
+      - finance
+      - google-drive
+      - gmail
+      - apollo
+    routes:
+      - supplier_outreach_drafts
+      - buyer_rfq_reply_drafts
+      - followup_sequences
+      - invoices
+      - pipeline_tracking
+  procurement_export_supplier:
+    plugins:
+      - product-supplier-sourcing
+      - supplier-performance-manager
+      - profit-margin-analyzer
+      - b2b-payment-terms-optimizer
+      - invoice-generator
+      - 1688-sourcing
+      - browser
+      - chrome
+    routes:
+      - supplier_sourcing
+      - supplier_comparison
+      - margin_checks
+      - portal_inspection
+  legal_compliance:
+    plugins:
+      - legal
+      - commercial-legal
+      - regulatory-legal
+      - privacy-legal
+      - product-legal
+      - ai-governance-legal
+    routes:
+      - first_pass_contract_risk
+      - compliance_checklist_drafts
+      - terms_review
+      - approval_risk_notes
+    boundary: "Draft only. Not final legal, classification, origin, or compliance advice."
+  development_runtime:
+    plugins:
+      - browser
+      - chrome
+      - computer-use
+      - record-and-replay
+      - build-web-data-visualization
+      - data
+      - database-data-management
+      - codex-security
+      - superpowers
+      - testing-automation
+    routes:
+      - dashboards
+      - parser_repair
+      - source_adapter_tests
+      - reusable_tooling
+
+approval_required_before:
+  - sending_supplier_or_buyer_messages
+  - sending_final_quotes_or_invoices
+  - enabling_new_network_or_credential_heavy_plugins
+  - exposing_hermes_or_codex_services_publicly
+  - recording_sensitive_browser_workflows
+
+record_and_replay:
+  allowed_only_for_non_sensitive_repeatable_workflows: true
+  never_record:
+    - passwords
+    - bank_or_upi
+    - DSC
+    - email_sending
+    - bid_submission
+    - payment_pages
+    - private_tokens
+    - sensitive_buyer_or_supplier_data
+
+agent_capability_overlay:
+  routing_file: config/agent_capability_routing.yaml
+  local_claude_plugins: "/Volumes/RAGHAV2/aios the final/claude-plugin-files"
+  local_accio_skills: "/Volumes/RAGHAV2/aios the final/accio_skills"
+  use_policy: "Reference and route for internal draft quality; never bypass approval gates."
+  high_value_skill_families:
+    - product-supplier-sourcing
+    - supplier-performance-manager
+    - profit-margin-analyzer
+    - international-shipping-customs
+    - tariff-search
+    - company-research
+    - sales-negotiator
+    - gmail-assistant
+    - docx
+    - pdf
+    - xlsx
+    - pptx
+    - invoice-generator
+    - 1688-sourcing
+    - self-improvement
+    - skill-vetter
+    - skill-creator
+  high_value_plugin_families:
+    - operations
+    - small-business
+    - finance
+    - sales
+    - data
+    - legal
+    - enterprise-search
+    - productivity
+    - playwright
+    - chrome-control
+    - apify-mcp-server
+    - telegram
+    - imessage
+    - claude-code-setup
+    - claude-md-management
+    - github
+    - context7
+    - pdf-server-mcp
+    - pdf-filler-simple
+    - ms_office_word
+    - ms_office_powerpoint
+    - corporate-legal
+    - regulatory-legal
+    - commercial-legal

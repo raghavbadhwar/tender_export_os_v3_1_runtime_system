@@ -1,0 +1,21 @@
+{
+  "case_id": "GOV-20260630-001",
+  "workflow_type": "GOV",
+  "created_or_refreshed_at": "2026-06-30T07:31:42+00:00",
+  "source_name": "GeM",
+  "source_url": "https://gem.gov.in",
+  "evidence_items": [
+    {
+      "path": "cases/GOV-20260630-001/evidence/gem_bid_search_20260630T073856Z.json",
+      "sha256": "6e2ea92f6583aefa3a32946bebd30256cd431b2d98d3c3938026aff50dda37fd"
+    },
+    {
+      "path": "cases/GOV-20260630-001/evidence/source_intake_20260630T073856Z.md",
+      "sha256": "f12631764543a54335dfacd535ce8991b9929d702770fe7cac2be3ecdaeff35d"
+    }
+  ],
+  "hash_manifest": "cases/GOV-20260630-001/evidence/hashes/sha256sums.txt",
+  "notes": "Populate evidence_items when source pages, PDFs, screenshots, or extracted text are captured.",
+  "refreshed_at": "2026-06-30T07:39:12+00:00",
+  "evidence_item_count": 2
+}

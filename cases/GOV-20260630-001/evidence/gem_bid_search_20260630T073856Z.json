@@ -1,0 +1,462 @@
+{
+  "case_id": "GOV-20260630-001",
+  "captured_at_utc": "2026-06-30T07:39:00+00:00",
+  "source": {
+    "name": "GeM Bid Listing",
+    "url": "https://bidplus.gem.gov.in/all-bids",
+    "landing_page_url": "https://bidplus.gem.gov.in/all-bids",
+    "landing_page_http_status": 200,
+    "landing_page_fetch_error": "",
+    "csrf_token_observed": true
+  },
+  "queries": [
+    {
+      "query": {
+        "term": "Supply of Office Stationery Q2 2026",
+        "searchType": "exact"
+      },
+      "request_payload": {
+        "param": {
+          "searchBid": "Supply of Office Stationery Q2 2026",
+          "searchType": "exact"
+        },
+        "filter": {
+          "bidStatusType": "ongoing_bids",
+          "byType": "all",
+          "highBidValue": "",
+          "byEndDate": {
+            "from": "",
+            "to": ""
+          },
+          "sort": "Bid-End-Date-Oldest"
+        }
+      },
+      "http_status": 404,
+      "body_prefix": "{\"status\":0,\"code\":404,\"message\":\"No data found\"}",
+      "code": 404,
+      "numFound": null,
+      "docs_first_10": []
+    },
+    {
+      "query": {
+        "term": "Supply of Office Stationery",
+        "searchType": "exact"
+      },
+      "request_payload": {
+        "param": {
+          "searchBid": "Supply of Office Stationery",
+          "searchType": "exact"
+        },
+        "filter": {
+          "bidStatusType": "ongoing_bids",
+          "byType": "all",
+          "highBidValue": "",
+          "byEndDate": {
+            "from": "",
+            "to": ""
+          },
+          "sort": "Bid-End-Date-Oldest"
+        }
+      },
+      "http_status": 404,
+      "body_prefix": "{\"status\":0,\"code\":404,\"message\":\"No data found\"}",
+      "code": 404,
+      "numFound": null,
+      "docs_first_10": []
+    },
+    {
+      "query": {
+        "term": "Office Stationery",
+        "searchType": "exact"
+      },
+      "request_payload": {
+        "param": {
+          "searchBid": "Office Stationery",
+          "searchType": "exact"
+        },
+        "filter": {
+          "bidStatusType": "ongoing_bids",
+          "byType": "all",
+          "highBidValue": "",
+          "byEndDate": {
+            "from": "",
+            "to": ""
+          },
+          "sort": "Bid-End-Date-Oldest"
+        }
+      },
+      "http_status": 404,
+      "body_prefix": "{\"status\":0,\"code\":404,\"message\":\"No data found\"}",
+      "code": 404,
+      "numFound": null,
+      "docs_first_10": []
+    },
+    {
+      "query": {
+        "term": "Office Stationery",
+        "searchType": "fullText"
+      },
+      "request_payload": {
+        "param": {
+          "searchBid": "Office Stationery",
+          "searchType": "fullText"
+        },
+        "filter": {
+          "bidStatusType": "ongoing_bids",
+          "byType": "all",
+          "highBidValue": "",
+          "byEndDate": {
+            "from": "",
+            "to": ""
+          },
+          "sort": "Bid-End-Date-Oldest"
+        }
+      },
+      "http_status": 200,
+      "body_prefix": "{\"status\":1,\"code\":200,\"message\":\"Bid result\",\"response\":{\"response\":{\"numFound\":927,\"start\":0,\"numFoundExact\":true,\"docs\":[{\"id\":\"9487273\",\"b_id\":[9487273],\"b_bid_number\":[\"GEM\\/2026\\/B\\/7681391\"],\"b_category_name\":[\"MIcrosoft Office 2024 Professional Plus\"],\"b_total_quantity\":[29],\"b_status\":[1],\"b_bid_type\":[1],\"b_is_bunch\":[1],\"b_type\":[0],\"b_bid_to_ra\":[0],\"b_buyer_status\":[0],\"b_eval_type\":[0],\"final_start_date_sort\":[\"2026-06-19T13:18:21Z\"],\"final_end_date_sort\":[\"2026-06-30T14:00:00Z\"],\"",
+      "code": 200,
+      "numFound": 927,
+      "docs_first_10": [
+        {
+          "b_id": [
+            9487273
+          ],
+          "bid_number": [
+            "GEM/2026/B/7681391"
+          ],
+          "category_name": [
+            "MIcrosoft Office 2024 Professional Plus"
+          ],
+          "quantity": [
+            29
+          ],
+          "ministry": [
+            "Ministry of Defence"
+          ],
+          "department": [
+            "Department of Military Affairs"
+          ],
+          "start": [
+            "2026-06-19T13:18:21Z"
+          ],
+          "end": [
+            "2026-06-30T14:00:00Z"
+          ],
+          "bid_type": [
+            1
+          ]
+        },
+        {
+          "b_id": [
+            9497950
+          ],
+          "bid_number": [
+            "GEM/2026/B/7690951"
+          ],
+          "category_name": [
+            "Loading Cycle Rickshaw,Smart TV 65inch,Physiotrex 4 channel Electric Machine,Irrigation pipe bundel"
+          ],
+          "quantity": [
+            58
+          ],
+          "ministry": [
+            "Ministry of Defence"
+          ],
+          "department": [
+            "Department of Military Affairs"
+          ],
+          "start": [
+            "2026-06-20T13:55:59Z"
+          ],
+          "end": [
+            "2026-06-30T14:00:00Z"
+          ],
+          "bid_type": [
+            1
+          ]
+        },
+        {
+          "b_id": [
+            9493193
+          ],
+          "bid_number": [
+            "GEM/2026/B/7686705"
+          ],
+          "category_name": [
+            "Main Table with ERU,Medium Back Unit,Tall Back Unit,Compact Storage,Side Table,High Back Chair,Sofa"
+          ],
+          "quantity": [
+            8
+          ],
+          "ministry": [
+            "Ministry of Defence"
+          ],
+          "department": [
+            "Department of Defence Production"
+          ],
+          "start": [
+            "2026-06-20T10:21:45Z"
+          ],
+          "end": [
+            "2026-06-30T14:00:00Z"
+          ],
+          "bid_type": [
+            1
+          ]
+        },
+        {
+          "b_id": [
+            9440958
+          ],
+          "bid_number": [
+            "GEM/2026/B/7639831"
+          ],
+          "category_name": [
+            "Security Manpower Service (Version 2.0) - Office/Commercial/Institutions/ Residential; Unarmed Secu"
+          ],
+          "quantity": [
+            3
+          ],
+          "ministry": null,
+          "department": [
+            "Labour and Employment Department Gujarat"
+          ],
+          "start": [
+            "2026-06-09T14:57:03Z"
+          ],
+          "end": [
+            "2026-06-30T14:00:00Z"
+          ],
+          "bid_type": [
+            1
+          ]
+        },
+        {
+          "b_id": [
+            9446944
+          ],
+          "bid_number": [
+            "GEM/2026/B/7645260"
+          ],
+          "category_name": [
+            "Security Manpower Service (Version 2.0) - Office/Commercial/Institutions/ Residential; Unarmed Secu"
+          ],
+          "quantity": [
+            3
+          ],
+          "ministry": [
+            "Ministry of Textiles"
+          ],
+          "department": [
+            "NA"
+          ],
+          "start": [
+            "2026-06-10T11:39:05Z"
+          ],
+          "end": [
+            "2026-06-30T14:00:00Z"
+          ],
+          "bid_type": [
+            1
+          ]
+        },
+        {
+          "b_id": [
+            9446461
+          ],
+          "bid_number": [
+            "GEM/2026/B/7644815"
+          ],
+          "category_name": [
+            "Facility Management Services - LumpSum Based - Office; Assistance for Record Management and Digital"
+          ],
+          "quantity": [
+            1
+          ],
+          "ministry": [
+            "PMO"
+          ],
+          "department": [
+            "Department of Atomic Energy"
+          ],
+          "start": [
+            "2026-06-17T17:24:31Z"
+          ],
+          "end": [
+            "2026-06-30T14:00:00Z"
+          ],
+          "bid_type": [
+            1
+          ]
+        },
+        {
+          "b_id": [
+            9464946
+          ],
+          "bid_number": [
+            "GEM/2026/B/7661540"
+          ],
+          "category_name": [
+            "Cleaning, Sanitation and Disinfection Service - Outcome Based - Office/Commercial/Institutions/Resi"
+          ],
+          "quantity": [
+            1693
+          ],
+          "ministry": null,
+          "department": [
+            "Home Department Odisha"
+          ],
+          "start": [
+            "2026-06-20T13:08:33Z"
+          ],
+          "end": [
+            "2026-06-30T14:00:00Z"
+          ],
+          "bid_type": [
+            1
+          ]
+        },
+        {
+          "b_id": [
+            9463917
+          ],
+          "bid_number": [
+            "GEM/2026/B/7660628"
+          ],
+          "category_name": [
+            "Facility Management Services - LumpSum Based - Office; Housekeeping; Consumables to be provided by "
+          ],
+          "quantity": [
+            1
+          ],
+          "ministry": [
+            "PMO"
+          ],
+          "department": [
+            "Department of Atomic Energy"
+          ],
+          "start": [
+            "2026-06-17T17:49:21Z"
+          ],
+          "end": [
+            "2026-06-30T14:00:00Z"
+          ],
+          "bid_type": [
+            1
+          ]
+        },
+        {
+          "b_id": [
+            9463772
+          ],
+          "bid_number": [
+            "GEM/2026/B/7660510"
+          ],
+          "category_name": [
+            "Facility Management Services - LumpSum Based - Office; Providing non consultancy services for loadi"
+          ],
+          "quantity": [
+            1
+          ],
+          "ministry": [
+            "PMO"
+          ],
+          "department": [
+            "Department of Atomic Energy"
+          ],
+          "start": [
+            "2026-06-17T17:17:27Z"
+          ],
+          "end": [
+            "2026-06-30T14:00:00Z"
+          ],
+          "bid_type": [
+            1
+          ]
+        },
+        {
+          "b_id": [
+            9433829
+          ],
+          "bid_number": [
+            "GEM/2026/B/7633615"
+          ],
+          "category_name": [
+            "Manpower Outsourcing Services - Fixed Remuneration - Admin; Computer Operator; Secondary School,Man"
+          ],
+          "quantity": [
+            54
+          ],
+          "ministry": null,
+          "department": [
+            "Energy Department Uttar Pradesh"
+          ],
+          "start": [
+            "2026-06-07T16:34:00Z"
+          ],
+          "end": [
+            "2026-06-30T14:00:00Z"
+          ],
+          "bid_type": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "query": {
+        "term": "District Collectorate Pune",
+        "searchType": "exact"
+      },
+      "request_payload": {
+        "param": {
+          "searchBid": "District Collectorate Pune",
+          "searchType": "exact"
+        },
+        "filter": {
+          "bidStatusType": "ongoing_bids",
+          "byType": "all",
+          "highBidValue": "",
+          "byEndDate": {
+            "from": "",
+            "to": ""
+          },
+          "sort": "Bid-End-Date-Oldest"
+        }
+      },
+      "http_status": 404,
+      "body_prefix": "{\"status\":0,\"code\":404,\"message\":\"No data found\"}",
+      "code": 404,
+      "numFound": null,
+      "docs_first_10": []
+    },
+    {
+      "query": {
+        "term": "Pune Collectorate",
+        "searchType": "exact"
+      },
+      "request_payload": {
+        "param": {
+          "searchBid": "Pune Collectorate",
+          "searchType": "exact"
+        },
+        "filter": {
+          "bidStatusType": "ongoing_bids",
+          "byType": "all",
+          "highBidValue": "",
+          "byEndDate": {
+            "from": "",
+            "to": ""
+          },
+          "sort": "Bid-End-Date-Oldest"
+        }
+      },
+      "http_status": 404,
+      "body_prefix": "{\"status\":0,\"code\":404,\"message\":\"No data found\"}",
+      "code": 404,
+      "numFound": null,
+      "docs_first_10": []
+    }
+  ],
+  "operator_note": "Searches were evidence-intake checks only. No bid submission, supplier message, price commitment, DSC use, payment, or external upload was performed."
+}

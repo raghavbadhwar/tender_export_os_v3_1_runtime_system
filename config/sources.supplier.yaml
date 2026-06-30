@@ -1,0 +1,192 @@
+# sources.supplier.yaml
+# Supplier sourcing channels for both GOV tender and EXPORT RFQ workflows
+# Usage: Supplier Engine Agent uses this to run the 5-3-2 sourcing rule
+# 5-3-2 Rule: minimum 5 candidate suppliers, across 3 source types, 2 quote proofs
+
+source_types:
+  - india_b2b
+  - global_b2b
+  - local_cluster
+  - past_history
+  - gem_seller
+  - epc_directory
+  - google_maps
+
+sources:
+
+  # --- India B2B Platforms ---
+
+  - name: "IndiaMART"
+    url: "https://www.indiamart.com"
+    type: india_b2b
+    workflow: [GOV, EXPORT]
+    login_required: false
+    paywalled: false
+    scrape_type: "web"
+    frequency: per_case
+    supplier_types: [manufacturer, trader, service]
+    notes: "Largest Indian B2B. Check verified badge, GST listed, and at least 3 years on platform."
+    quality_signal: "IndiaTrust badge + GST + 3yr+ listing"
+
+  - name: "TradeIndia"
+    url: "https://www.tradeindia.com"
+    type: india_b2b
+    workflow: [GOV, EXPORT]
+    login_required: false
+    paywalled: false
+    scrape_type: "web"
+    frequency: per_case
+    notes: "Secondary B2B. Use to cross-check IndiaMART results."
+    quality_signal: "Response rate + verified supplier badge"
+
+  - name: "JustDial (B2B)"
+    url: "https://www.justdial.com"
+    type: local_cluster
+    workflow: [GOV, EXPORT]
+    login_required: false
+    paywalled: false
+    scrape_type: "web"
+    frequency: per_case
+    notes: "Useful for finding local suppliers and distributors by city/area. Cross-verify."
+    quality_signal: "Rating 4+ with 50+ reviews"
+
+  - name: "GeM Seller Directory"
+    url: "https://mkp.gem.gov.in"
+    type: gem_seller
+    workflow: [GOV]
+    login_required: false
+    paywalled: false
+    scrape_type: "web"
+    frequency: per_case
+    notes: "GeM-registered sellers. Pre-verified for government supply. Strong for GOV workflow."
+    quality_signal: "GeM registration + past orders on GeM"
+
+  - name: "NSIC Supplier Database"
+    url: "https://www.nsicspms.com"
+    type: india_b2b
+    workflow: [GOV]
+    login_required: false
+    paywalled: false
+    scrape_type: "web"
+    frequency: per_case
+    notes: "MSME-registered suppliers. Good for reserved categories."
+    quality_signal: "NSIC registration + MSME certificate"
+
+  # --- Global B2B Platforms ---
+
+  - name: "Alibaba"
+    url: "https://www.alibaba.com"
+    type: global_b2b
+    workflow: [EXPORT, GOV]
+    login_required: false
+    paywalled: false
+    scrape_type: "web"
+    frequency: per_case
+    notes: "Use for price benchmarking and global supply options. Verify Gold Supplier + Trade Assurance."
+    quality_signal: "Gold Supplier 3yr+ + Trade Assurance + verified factory"
+
+  - name: "Made-in-China"
+    url: "https://www.made-in-china.com"
+    type: global_b2b
+    workflow: [EXPORT]
+    login_required: false
+    paywalled: false
+    scrape_type: "web"
+    frequency: per_case
+    notes: "Alternative to Alibaba. Stronger for industrial and manufacturing categories."
+    quality_signal: "Audited supplier badge + response rate"
+
+  - name: "Global Sources"
+    url: "https://www.globalsources.com/suppliers"
+    type: global_b2b
+    workflow: [EXPORT]
+    login_required: false
+    paywalled: false
+    scrape_type: "web"
+    frequency: per_case
+    notes: "Higher quality vetting than Alibaba. Electronics, hardware, gifts."
+    quality_signal: "Verified supplier + audited factory"
+
+  - name: "1688.com (Alibaba B2B China)"
+    url: "https://www.1688.com"
+    type: global_b2b
+    workflow: [EXPORT]
+    login_required: false
+    paywalled: false
+    scrape_type: "web"
+    frequency: per_case
+    language: "Chinese"
+    notes: "Domestic China B2B. Lower price, no export vetting. Use agent if direct is difficult."
+    quality_signal: "Company verification + 诚信通 badge"
+
+  # --- EPC Directories ---
+
+  - name: "APEDA Export Directory"
+    url: "https://agriexchange.apeda.gov.in/prodlist/ProdList.aspx"
+    type: epc_directory
+    workflow: [EXPORT]
+    login_required: false
+    paywalled: false
+    scrape_type: "web"
+    frequency: per_case
+    categories: [agricultural, food, spices, horticulture]
+    notes: "APEDA-registered exporters. Reliable for food/agri."
+    quality_signal: "APEDA registration + export track record"
+
+  - name: "FIEO Member Directory"
+    url: "https://www.fieo.org/view_detail.php?lang=0&id=0b0c04"
+    type: epc_directory
+    workflow: [EXPORT]
+    login_required: false
+    paywalled: false
+    scrape_type: "web"
+    frequency: per_case
+    notes: "FIEO-registered members. Check for export experience."
+    quality_signal: "FIEO registration + IEC + export history"
+
+  # --- Local Cluster and Google Maps ---
+
+  - name: "Google Maps — Industrial Areas"
+    url: "https://maps.google.com"
+    type: local_cluster
+    workflow: [GOV, EXPORT]
+    login_required: false
+    paywalled: false
+    scrape_type: "manual"
+    frequency: per_case
+    notes: "Search '[product] manufacturer [city] industrial area'. Cross-verify GST and MSME."
+    quality_signal: "4+ stars, 20+ reviews, in-person visit recommended for large orders"
+
+  - name: "Past Awardees (Tender Results)"
+    url: "https://eprocure.gov.in/cppp/"
+    type: past_history
+    workflow: [GOV]
+    login_required: false
+    paywalled: false
+    scrape_type: "web"
+    frequency: per_case
+    notes: "Check who won similar tenders in past. Approach them as suppliers."
+    quality_signal: "Past L1 winner + available capacity"
+
+  - name: "Supplier Master (Internal)"
+    url: "data/supplier_master.csv"
+    type: past_history
+    workflow: [GOV, EXPORT]
+    login_required: false
+    paywalled: false
+    scrape_type: "internal"
+    frequency: per_case
+    notes: "Always check internal supplier master first before external search."
+    quality_signal: "Internal track record + past performance score"
+
+# Sourcing rules
+sourcing_rules:
+  minimum_candidates: 5
+  minimum_source_types: 3
+  minimum_quote_proofs: 2
+  specialized_category_exception: true
+  specialized_exception_requires: "Owner explicit approval in case record"
+  blacklist_check: required
+  watchlist_check: required
+  certificate_check_for_gov: [MSME, GST, ISO_if_required, OEM_if_required]
+  certificate_check_for_export: [IEC, GST, export_history, APEDA_if_applicable]

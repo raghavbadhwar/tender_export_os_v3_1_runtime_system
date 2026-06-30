@@ -1,0 +1,195 @@
+# categories.yaml
+# Active product and service categories for both GOV and EXPORT workflows
+# Usage: Radar Agent filters opportunities; Fast Kill uses to check category fit
+
+# Categories marked active: true will be actively scanned and pursued
+# Categories marked active: false will be logged but fast-killed automatically
+
+categories:
+
+  # ══════════════════════════════════
+  # GOVERNMENT TENDER CATEGORIES
+  # ══════════════════════════════════
+
+  gov_categories:
+
+    - name: "Office Stationery and Supplies"
+      code: "GOV-OFF-001"
+      active: true
+      priority: high
+      workflow: GOV
+      hsn_range: ["4817", "4820", "4816", "9608"]
+      typical_emd_range_inr: [5000, 50000]
+      typical_order_size: "Small to Medium"
+      supplier_availability: High
+      experience_required: false
+      msme_reserved: sometimes
+      notes: "Good beginner category. Low EMD. Supplier easily available."
+
+    - name: "IT Hardware and Peripherals"
+      code: "GOV-IT-001"
+      active: true
+      priority: high
+      workflow: GOV
+      hsn_range: ["8471", "8473", "8528", "8443"]
+      typical_emd_range_inr: [10000, 200000]
+      typical_order_size: "Small to Large"
+      supplier_availability: High
+      experience_required: false
+      msme_reserved: sometimes
+      notes: "High competition on GeM. Price-sensitive. Check OEM empanelment need."
+
+    - name: "Cleaning and Housekeeping Supplies"
+      code: "GOV-CLEAN-001"
+      active: true
+      priority: medium
+      workflow: GOV
+      hsn_range: ["3401", "3402", "6302", "9603"]
+      typical_emd_range_inr: [5000, 30000]
+      typical_order_size: "Small to Medium"
+      supplier_availability: High
+      experience_required: false
+      msme_reserved: often
+      notes: "Easy sourcing. MSME reserved often. Check ISI marks where required."
+
+    - name: "Safety Equipment and PPE"
+      code: "GOV-SAFE-001"
+      active: true
+      priority: high
+      workflow: GOV
+      hsn_range: ["6211", "6114", "3926", "9004", "6217"]
+      typical_emd_range_inr: [10000, 100000]
+      typical_order_size: "Medium"
+      supplier_availability: High
+      experience_required: false
+      msme_reserved: sometimes
+      notes: "Post-COVID demand steady. Check BIS/ISI requirements."
+
+    - name: "Furniture and Fixtures"
+      code: "GOV-FURN-001"
+      active: true
+      priority: medium
+      workflow: GOV
+      hsn_range: ["9401", "9403", "9402"]
+      typical_emd_range_inr: [10000, 150000]
+      typical_order_size: "Medium"
+      supplier_availability: Medium
+      experience_required: false
+      msme_reserved: sometimes
+      notes: "Check delivery site for transport feasibility."
+
+    - name: "Electrical Materials"
+      code: "GOV-ELEC-001"
+      active: false
+      priority: low
+      workflow: GOV
+      notes: "High technical compliance. MSME alone not enough. Skip unless certified electricals."
+
+    - name: "Civil Works and Construction"
+      code: "GOV-CIVIL-001"
+      active: false
+      priority: low
+      workflow: GOV
+      notes: "Requires contractor registration, PWD enlistment, performance track record. Skip."
+
+    - name: "Medicines and Medical Devices"
+      code: "GOV-MED-001"
+      active: false
+      priority: low
+      workflow: GOV
+      notes: "CDSCO license, drug license, cold chain. Skip unless licensed."
+
+  # ══════════════════════════════════
+  # EXPORT RFQ CATEGORIES
+  # ══════════════════════════════════
+
+  export_categories:
+
+    - name: "Spices and Condiments"
+      code: "EXP-SPICE-001"
+      active: true
+      priority: high
+      workflow: EXPORT
+      itchs_range: ["0904", "0905", "0906", "0907", "0908", "0909", "0910"]
+      export_policy: Free
+      scomet: false
+      apeda_regulated: true
+      fssai_required: true
+      destination_markets: ["UAE", "USA", "UK", "Saudi Arabia", "Malaysia"]
+      typical_moq_kg: 500
+      notes: "India dominant exporter. Easy sourcing. FSSAI + APEDA reg needed."
+
+    - name: "Handicrafts and Artisan Products"
+      code: "EXP-CRAFT-001"
+      active: true
+      priority: high
+      workflow: EXPORT
+      itchs_range: ["6913", "4420", "7117", "5701", "9601"]
+      export_policy: Free
+      scomet: false
+      apeda_regulated: false
+      destination_markets: ["USA", "UK", "Germany", "Australia", "Canada"]
+      typical_moq_usd: 500
+      notes: "Low MOQ possible. High margin. Handicraft Board certification useful."
+
+    - name: "Textiles and Garments"
+      code: "EXP-TEX-001"
+      active: true
+      priority: medium
+      workflow: EXPORT
+      itchs_range: ["5208", "6104", "6201", "6302", "6305"]
+      export_policy: Free
+      scomet: false
+      apeda_regulated: false
+      destination_markets: ["UAE", "USA", "Bangladesh", "UK"]
+      typical_moq_usd: 2000
+      notes: "Competitive. Check buyer spec carefully — size charts, labelling, composition."
+
+    - name: "Agricultural Commodities"
+      code: "EXP-AGRI-001"
+      active: true
+      priority: medium
+      workflow: EXPORT
+      itchs_range: ["1006", "1001", "0803", "0901", "2101"]
+      export_policy: "Check per item — some restricted (wheat, rice at times)"
+      scomet: false
+      apeda_regulated: true
+      destination_markets: ["UAE", "Southeast Asia", "Africa"]
+      notes: "Export policy changes frequently for agri. Must verify DGFT notifications."
+
+    - name: "Engineering Goods (Simple)"
+      code: "EXP-ENG-001"
+      active: true
+      priority: medium
+      workflow: EXPORT
+      itchs_range: ["7318", "7320", "8302", "8481", "8484"]
+      export_policy: Free
+      scomet: false
+      destination_markets: ["USA", "Germany", "UAE", "Australia"]
+      typical_moq_usd: 5000
+      notes: "Fasteners, springs, fittings. Precision required. BIS/CE marks sometimes needed."
+
+    - name: "Chemicals (Hazardous)"
+      code: "EXP-CHEM-HAZ-001"
+      active: false
+      priority: low
+      workflow: EXPORT
+      notes: "MSDS required, hazardous goods regulations, destination import permits. Skip unless specialist."
+
+    - name: "Arms, Ammunition, SCOMET"
+      code: "EXP-SCOMET-001"
+      active: false
+      priority: none
+      workflow: EXPORT
+      scomet: true
+      notes: "NEVER PURSUE. SCOMET license mandatory. Immediate flag and escalate."
+
+  # ══════════════════════════════════
+  # GLOBAL SETTINGS
+  # ══════════════════════════════════
+
+settings:
+  auto_reject_inactive: true
+  auto_reject_scomet: true
+  watchlist_borderline_categories: ["EXP-AGRI-001"]  # Export policy changes frequently
+  review_frequency_days: 30

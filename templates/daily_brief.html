@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daily Owner Brief — {{DATE}}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      padding: 24px;
+      max-width: 900px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+    .header {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .header h1 { font-size: 22px; color: #f8fafc; font-weight: 700; }
+    .header .date { color: #94a3b8; font-size: 14px; margin-top: 4px; }
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+    }
+    .stat-card .number { font-size: 28px; font-weight: 700; color: #60a5fa; }
+    .stat-card .label { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+    .section {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    .section-header {
+      background: #0f172a;
+      padding: 12px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #94a3b8;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-bottom: 1px solid #334155;
+    }
+    .section-body { padding: 16px 20px; }
+    .case-card {
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 12px;
+      background: #0f172a;
+    }
+    .case-card:last-child { margin-bottom: 0; }
+    .case-id {
+      font-size: 11px;
+      font-weight: 700;
+      color: #60a5fa;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .case-title { font-size: 15px; font-weight: 600; color: #f1f5f9; margin: 4px 0; }
+    .case-meta { font-size: 12px; color: #64748b; display: flex; gap: 16px; flex-wrap: wrap; }
+    .score-badge {
+      display: inline-block;
+      background: #064e3b;
+      color: #34d399;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .badge-gov { background: #1e3a5f; color: #60a5fa; }
+    .badge-exp { background: #3b1f5c; color: #a78bfa; }
+    .badge-warn { background: #451a03; color: #fb923c; }
+    .badge-reject { background: #450a0a; color: #f87171; }
+    .next-step {
+      background: #0c1628;
+      border-left: 3px solid #3b82f6;
+      padding: 8px 12px;
+      margin-top: 10px;
+      font-size: 13px;
+      color: #93c5fd;
+      border-radius: 0 4px 4px 0;
+    }
+    .approval-card {
+      border: 1px solid #f59e0b;
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 12px;
+      background: #0f172a;
+    }
+    .approval-card .action-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #f59e0b;
+      font-weight: 700;
+    }
+    .risk-item { padding: 8px 0; border-bottom: 1px solid #1e293b; font-size: 13px; }
+    .risk-item:last-child { border-bottom: none; }
+    .risk-label { color: #f87171; font-weight: 600; font-size: 11px; text-transform: uppercase; }
+    .recommended-action {
+      background: linear-gradient(135deg, #0c2340, #0f172a);
+      border: 1px solid #3b82f6;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    .recommended-action .icon { font-size: 24px; margin-bottom: 8px; }
+    .recommended-action h3 { color: #60a5fa; font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; }
+    .recommended-action p { font-size: 15px; color: #f1f5f9; margin-top: 6px; font-weight: 500; }
+    .approve-btn {
+      display: inline-block;
+      background: #065f46;
+      color: #34d399;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-right: 8px;
+      cursor: pointer;
+    }
+    .reject-btn { background: #450a0a; color: #f87171; }
+    .changes-btn { background: #451a03; color: #fb923c; }
+    .footer {
+      text-align: center;
+      padding: 20px;
+      color: #475569;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📊 Today's Owner Brief</h1>
+  <div class="date">{{DATE}} · Tender Export OS v4.1 · Generated {{TIME}}</div>
+</div>
+
+<!-- Stats Row -->
+<div class="stats-row">
+  <div class="stat-card">
+    <div class="number">{{GOV_NEW}}</div>
+    <div class="label">New GOV Tenders</div>
+  </div>
+  <div class="stat-card">
+    <div class="number">{{EXPORT_NEW}}</div>
+    <div class="label">New Export RFQs</div>
+  </div>
+  <div class="stat-card">
+    <div class="number" style="color: #f87171">{{REJECTED_COUNT}}</div>
+    <div class="label">Auto-Rejected</div>
+  </div>
+</div>
+
+<!-- Section 2: Auto-Rejected -->
+<div class="section">
+  <div class="section-header">⚡ Auto-Rejected Today</div>
+  <div class="section-body">
+    <p style="font-size:13px; color:#94a3b8">Count: {{REJECTED_COUNT}}</p>
+    <div style="margin-top:10px">
+      {{REJECTION_REASONS}}
+    </div>
+  </div>
+</div>
+
+<!-- Section 3: Best Opportunities -->
+<div class="section">
+  <div class="section-header">🎯 Best Opportunities</div>
+  <div class="section-body">
+
+    {{BEST_OPPORTUNITIES}}
+  </div>
+</div>
+
+<!-- Section 4: Supplier Proof Pending -->
+<div class="section">
+  <div class="section-header">Verified Buyer Demand</div>
+  <div class="section-body">
+    {{VERIFIED_BUYER_DEMAND}}
+  </div>
+</div>
+
+<!-- Section 5: Supplier Proof Pending -->
+<div class="section">
+  <div class="section-header">🔍 Pending Supplier Proof</div>
+  <div class="section-body">
+    {{PENDING_SUPPLIER_PROOF}}
+  </div>
+</div>
+
+<!-- Section 6: Approval Required -->
+<div class="section">
+  <div class="section-header">⚠️ Approval Required</div>
+  <div class="section-body">
+    {{APPROVAL_REQUIRED}}
+
+  </div>
+</div>
+
+<!-- Section 7: Risks & Blockers -->
+<div class="section">
+  <div class="section-header">🚨 Risks & Blockers</div>
+  <div class="section-body">
+    {{RISKS_BLOCKERS}}
+  </div>
+</div>
+
+<!-- Section 8: Recommended Action -->
+<div class="recommended-action">
+  <div class="icon">⭐</div>
+  <h3>Recommended Action Today</h3>
+  <p>{{RECOMMENDED_ACTION}}</p>
+</div>
+
+<div class="footer">
+  Tender Export OS v4.1 · Hermes-native control plane · {{DATE}}
+</div>
+
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>APR-003 - EXP-20260630-001 Approval Card</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif; max-width: 960px; margin: 32px auto; color: #17212b; line-height: 1.45; }
+    h1 { font-size: 28px; margin-bottom: 4px; }
+    h2 { margin-top: 28px; font-size: 18px; border-bottom: 1px solid #d8dee4; padding-bottom: 6px; }
+    .meta { display: grid; grid-template-columns: 220px 1fr; gap: 8px 16px; margin-top: 18px; }
+    .label { font-weight: 700; color: #44505c; }
+    .status { display: inline-block; padding: 4px 8px; border-radius: 6px; background: #fff4cc; color: #624b00; font-weight: 700; }
+    ul { padding-left: 22px; }
+    code { background: #f5f7f9; padding: 2px 5px; border-radius: 4px; }
+    .decision { display: flex; gap: 12px; margin: 16px 0; }
+    .decision div { border: 1px solid #cbd5df; border-radius: 6px; padding: 10px 14px; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <h1>Approval Card APR-003</h1>
+  <div class="status">PENDING OWNER DECISION</div>
+  <div class="meta">
+    <div class="label">Case ID</div><div>EXP-20260630-001</div>
+    <div class="label">Workflow</div><div>EXPORT</div>
+    <div class="label">Proposed action</div><div>Send supplier quote/clarification requests</div>
+    <div class="label">Business object</div><div>Six supplier quote/clarification requests for organic turmeric powder export RFQ</div>
+    <div class="label">Amount/price</div><div>N/A - information-gathering supplier RFQs only</div>
+    <div class="label">External parties</div><div>Spice Valley Exports; Amar Foodz; Ratnaraj Foods Private Limited; Navnath Spices Private Limited; Darideep Agro Foods Private Limited; Globus Global Trade Import And Export</div>
+    <div class="label">Confidence</div><div>78/100</div>
+  </div>
+  <h2>Expected Benefit</h2>
+  <p>Obtain the missing second quote proof and clarify whether the offered item is plain turmeric powder or curcumin extract before pricing.</p>
+  <h2>Concrete Risk</h2>
+  <p>Supplier outreach creates external commercial contact and could disclose demand context; product/spec ambiguity may cause wrong classification or misleading organic/curcumin claims if not clarified.</p>
+  <h2>Recovery Path</h2>
+  <p>If approved in error, do not send follow-ups; mark APR-003 superseded/rejected, preserve draft files, and require revised supplier list before any contact.</p>
+  <h2>Missing Information</h2>
+  <ul><li>At least one additional quote proof is still missing.</li><li>Supplier clarification is required for the 95% curcumin wording in Q-002.</li><li>Final HSN/ITC-HS and export policy require human/export-expert approval.</li><li>Buyer RFQ attachment and buyer import/food registration proof are not in local evidence.</li></ul>
+  <h2>Drafts Covered</h2>
+  <ul><li><code>outputs/case_reports/EXP-20260630-001/supplier_quote_request_drafts/SUP-003_Spice_Valley_quote_clarification_draft.txt</code></li><li><code>outputs/case_reports/EXP-20260630-001/supplier_quote_request_drafts/SUP-005_Amar_Foodz_quote_request.txt</code></li><li><code>outputs/case_reports/EXP-20260630-001/supplier_quote_request_drafts/SUP-006_Ratnaraj_Foods_quote_request.txt</code></li><li><code>outputs/case_reports/EXP-20260630-001/supplier_quote_request_drafts/SUP-007_Navnath_Spices_quote_request.txt</code></li><li><code>outputs/case_reports/EXP-20260630-001/supplier_quote_request_drafts/SUP-008_Darideep_Agro_Foods_quote_request.txt</code></li><li><code>outputs/case_reports/EXP-20260630-001/supplier_quote_request_drafts/SUP-009_Globus_Global_Trade_quote_request.txt</code></li></ul>
+  <h2>Documents and Sources Used</h2>
+  <ul><li>data/master_cases.csv</li><li>data/quote_master.csv</li><li>data/supplier_master.csv</li><li>data/agent_run_log.csv</li><li>config/sources.supplier.yaml</li><li>outputs/case_reports/EXP-20260630-001/audit_EXP-20260630-001.md</li><li>outputs/case_reports/EXP-20260630-001/supplier_shortlist_EXP-20260630-001.md</li><li>outputs/case_reports/EXP-20260630-001/compliance_draft_EXP-20260630-001.md</li><li>outputs/case_reports/EXP-20260630-001/supplier_quote_request_drafts/SUP-003_Spice_Valley_quote_clarification_draft.txt</li><li>outputs/case_reports/EXP-20260630-001/supplier_quote_request_drafts/SUP-005_Amar_Foodz_quote_request.txt</li><li>outputs/case_reports/EXP-20260630-001/supplier_quote_request_drafts/SUP-006_Ratnaraj_Foods_quote_request.txt</li><li>outputs/case_reports/EXP-20260630-001/supplier_quote_request_drafts/SUP-007_Navnath_Spices_quote_request.txt</li><li>outputs/case_reports/EXP-20260630-001/supplier_quote_request_drafts/SUP-008_Darideep_Agro_Foods_quote_request.txt</li><li>outputs/case_reports/EXP-20260630-001/supplier_quote_request_drafts/SUP-009_Globus_Global_Trade_quote_request.txt</li><li>https://www.tradeindia.com/manufacturers/organic-turmeric-powder.html</li><li>https://www.exportersindia.com/indian-suppliers/organic-turmeric-powder.htm</li><li>https://www.amarfoodz.in/organic-turmeric-powder.htm</li></ul>
+  <h2>Decision Options</h2>
+  <div class="decision"><div>Approve</div><div>Reject</div><div>Ask Changes</div></div>
+  <p>No supplier message has been sent. This card only authorizes a future external action if the owner explicitly approves.</p>
+</body>
+</html>

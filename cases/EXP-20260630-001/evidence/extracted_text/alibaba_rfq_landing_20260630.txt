@@ -1,0 +1,22 @@
+case_id: EXP-20260630-001
+source_url: https://rfq.alibaba.com/
+captured_at_utc: 2026-06-30T07:35:09Z
+capture_method: curl HTTP fetch plus browser visual check
+http_status: 200
+content_type: text/html;charset=UTF-8
+source_title: Request for Quotation
+
+Extracted visible / HTML text highlights:
+- Request for Quotation
+- Get quotes for your custom request
+- Accurate supplier matching, fast price comparison
+- Tell us what you need
+- Upload an image, file, or enter keywords. For example, "100 bear toys, refer to the uploaded design."
+- Write RFQ details
+- Post an RFQ for selected products and receive quotes in seconds
+
+Browser visual check:
+The captured Alibaba RFQ page is a generic RFQ landing/posting page. It is not a buyer-specific RFQ detail page for Organic Turmeric Powder, does not show Gulf Naturals Trading LLC, and does not expose an RFQ attachment or RFQ ID for EXP-20260630-001.
+
+External lookup note:
+A follow-up Alibaba search for the exact case phrase triggered Alibaba unusual-traffic/captcha instead of a usable result page, so no additional buyer-specific external evidence was captured from that search.

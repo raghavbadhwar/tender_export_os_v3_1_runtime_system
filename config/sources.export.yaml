@@ -1,0 +1,190 @@
+# sources.export.yaml
+# Export buyer and RFQ sources
+# workflow: EXPORT
+# Usage: Radar Agent reads this file to find export RFQ opportunities
+
+sources:
+
+  # --- Indian Export Portals ---
+
+  - name: "India Business Portal (DGFT)"
+    url: "https://www.indiabusinessportal.gov.in"
+    type: "indian_government"
+    workflow: EXPORT
+    login_required: false
+    paywalled: false
+    scrape_type: "web"
+    frequency: daily
+    notes: "DGFT-backed buyer-seller match. Genuine foreign buyer RFQs."
+    health_status: Working
+
+  - name: "Indian Trade Portal (ITP)"
+    url: "https://www.indiantradeportal.in"
+    type: "indian_government"
+    workflow: EXPORT
+    login_required: false
+    paywalled: false
+    scrape_type: "web"
+    frequency: daily
+    notes: "Market reports, HS codes, tariff data, buyer directories."
+    health_status: Working
+
+  - name: "FIEO Connect"
+    url: "https://connect.fieo.org"
+    type: "epc"
+    workflow: EXPORT
+    login_required: true
+    paywalled: false
+    scrape_type: "manual_check"
+    frequency: weekly
+    notes: "FIEO member RFQs and buyer leads. Registration required."
+    health_status: Needs Login
+
+  - name: "APEDA AgriXchange"
+    url: "https://agriexchange.apeda.gov.in"
+    type: "sector_specific"
+    workflow: EXPORT
+    login_required: false
+    paywalled: false
+    scrape_type: "web"
+    frequency: weekly
+    notes: "Agricultural exports — buyer RFQs, price data, regulations."
+    health_status: Working
+
+  - name: "Spices Board India"
+    url: "https://www.indianspices.com"
+    type: "sector_specific"
+    workflow: EXPORT
+    login_required: false
+    paywalled: false
+    scrape_type: "web"
+    frequency: weekly
+    notes: "Spice export leads and buyer inquiries."
+    health_status: Working
+
+  # --- International B2B Platforms ---
+
+  - name: "Alibaba — Buyer RFQs"
+    url: "https://rfq.alibaba.com"
+    type: "b2b_platform"
+    workflow: EXPORT
+    login_required: true
+    paywalled: false
+    scrape_type: "manual_check"
+    frequency: daily
+    notes: "High volume of buyer RFQs. Verify buyer carefully. Prefer Trade Assurance buyers."
+    health_status: Needs Login
+
+  - name: "Global Sources"
+    url: "https://www.globalsources.com"
+    type: "b2b_platform"
+    workflow: EXPORT
+    login_required: true
+    paywalled: false
+    scrape_type: "manual_check"
+    frequency: weekly
+    notes: "Vetted buyers — electronics, hardware, gifts, industrial."
+    health_status: Needs Login
+
+  - name: "EC21"
+    url: "https://www.ec21.com"
+    type: "b2b_platform"
+    workflow: EXPORT
+    login_required: false
+    paywalled: false
+    scrape_type: "web"
+    frequency: weekly
+    notes: "Korean origin, global RFQs. Often from SME importers."
+    health_status: Working
+
+  - name: "TradeKey"
+    url: "https://www.tradekey.com"
+    type: "b2b_platform"
+    workflow: EXPORT
+    login_required: false
+    paywalled: false
+    scrape_type: "web"
+    frequency: weekly
+    notes: "Middle East and Africa strong. Useful for FMCG, chemicals, textiles."
+    health_status: Working
+
+  - name: "Made-in-China (Buying Leads)"
+    url: "https://inquiry.made-in-china.com"
+    type: "b2b_platform"
+    workflow: EXPORT
+    login_required: true
+    paywalled: false
+    scrape_type: "manual_check"
+    frequency: weekly
+    notes: "Chinese platform with global buyers. Good for competitive intelligence."
+    health_status: Needs Login
+
+  # --- Multilateral and Foreign Government Procurement ---
+
+  - name: "UN Global Marketplace (UNGM)"
+    url: "https://www.ungm.org"
+    type: "multilateral"
+    workflow: EXPORT
+    login_required: true
+    paywalled: false
+    scrape_type: "manual_check"
+    frequency: weekly
+    notes: "UN agencies procurement. Registration needed. High trust, high compliance burden."
+    health_status: Needs Login
+
+  - name: "World Bank Procurement Notices"
+    url: "https://www.worldbank.org/en/projects-and-operations/procurement"
+    type: "multilateral"
+    workflow: EXPORT
+    login_required: false
+    paywalled: false
+    scrape_type: "web"
+    frequency: weekly
+    notes: "World Bank funded project tenders. Country-specific. Complex compliance."
+    health_status: Working
+
+  - name: "UNDP Procurement Notices"
+    url: "https://procurement-notices.undp.org"
+    type: "multilateral"
+    workflow: EXPORT
+    login_required: false
+    paywalled: false
+    scrape_type: "web"
+    frequency: weekly
+    notes: "UNDP tenders — humanitarian, development supplies. High trust buyers."
+    health_status: Working
+
+  - name: "African Development Bank Tenders"
+    url: "https://www.afdb.org/en/projects-and-operations/procurement"
+    type: "multilateral"
+    workflow: EXPORT
+    login_required: false
+    paywalled: false
+    scrape_type: "web"
+    frequency: monthly
+    notes: "Infrastructure, agriculture, health tenders for Africa region."
+    health_status: Working
+
+  # --- Export Industry Forums ---
+
+  - name: "ExportersIndia"
+    url: "https://www.exportersindia.com"
+    type: "directory"
+    workflow: EXPORT
+    login_required: false
+    paywalled: false
+    scrape_type: "web"
+    frequency: weekly
+    notes: "Buyer inquiry leads. Cross-reference with company verification."
+    health_status: Working
+
+  - name: "IndiaMart — Buyer Leads"
+    url: "https://www.indiamart.com/buy-leads/"
+    type: "b2b_platform"
+    workflow: EXPORT
+    login_required: false
+    paywalled: false
+    scrape_type: "web"
+    frequency: daily
+    notes: "Domestic + some export buyer leads. Quick volume source."
+    health_status: Working

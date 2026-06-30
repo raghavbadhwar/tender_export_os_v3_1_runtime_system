@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Approval Card — GOV-20260630-001</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      padding: 24px;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    .header {
+      background: linear-gradient(135deg, #3b1f00, #1a0e00);
+      border: 1px solid #f59e0b;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .header .badge {
+      display: inline-block;
+      background: #f59e0b;
+      color: #0f1117;
+      padding: 3px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .header h1 { font-size: 20px; color: #fef3c7; font-weight: 700; }
+    .header .case-id { color: #f59e0b; font-size: 14px; margin-top: 4px; font-weight: 600; }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .meta-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .meta-card .meta-label { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em; }
+    .meta-card .meta-value { font-size: 14px; color: #f1f5f9; font-weight: 600; margin-top: 3px; }
+    .section {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+    .section-header {
+      background: #0f172a;
+      padding: 10px 16px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #64748b;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .section-body { padding: 14px 16px; font-size: 14px; color: #cbd5e1; }
+    .confidence-bar {
+      background: #0f172a;
+      border-radius: 4px;
+      height: 8px;
+      margin-top: 6px;
+      overflow: hidden;
+    }
+    .confidence-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #f59e0b, #10b981);
+      border-radius: 4px;
+      width: 60%;
+    }
+    .missing-item {
+      background: #1a0e00;
+      border-left: 3px solid #f59e0b;
+      padding: 6px 10px;
+      margin: 4px 0;
+      border-radius: 0 4px 4px 0;
+      font-size: 13px;
+    }
+    .decision-section {
+      background: #0f172a;
+      border: 2px solid #3b82f6;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 14px;
+      text-align: center;
+    }
+    .decision-section h3 { color: #60a5fa; font-size: 15px; margin-bottom: 16px; }
+    .btn-group { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+    }
+    .btn-approve { background: #065f46; color: #34d399; }
+    .btn-reject { background: #450a0a; color: #f87171; }
+    .btn-changes { background: #451a03; color: #fb923c; }
+    .hermes-cmd {
+      background: #0c1628;
+      border: 1px solid #1e3a5f;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 12px;
+      text-align: left;
+    }
+    .hermes-cmd .label { font-size: 11px; color: #475569; margin-bottom: 6px; }
+    .hermes-cmd code { font-size: 12px; color: #60a5fa; display: block; margin: 2px 0; }
+    .risk-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+    .risk-card {
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .risk-card.benefit { background: #042f1f; border: 1px solid #065f46; }
+    .risk-card.risk { background: #2a0000; border: 1px solid #7f1d1d; }
+    .risk-card .label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+    .risk-card.benefit .label { color: #34d399; }
+    .risk-card.risk .label { color: #f87171; }
+    .risk-card p { font-size: 13px; color: #cbd5e1; }
+    .footer { text-align: center; color: #334155; font-size: 11px; padding: 16px 0; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="badge">⚠️ Approval Required</div>
+  <h1>send_supplier_quote_request</h1>
+  <div class="case-id">GOV-20260630-001 · GOV · 2026-06-30</div>
+</div>
+
+<!-- Meta Grid -->
+<div class="meta-grid">
+  <div class="meta-card">
+    <div class="meta-label">Proposed Action</div>
+    <div class="meta-value">send supplier quote request</div>
+  </div>
+  <div class="meta-card">
+    <div class="meta-label">Business Object</div>
+    <div class="meta-value">District Collectorate Pune</div>
+  </div>
+  <div class="meta-card">
+    <div class="meta-label">Amount</div>
+    <div class="meta-value">₹125000</div>
+  </div>
+  <div class="meta-card">
+    <div class="meta-label">Deadline to Decide</div>
+    <div class="meta-value">2026-07-15 [15 days]</div>
+  </div>
+</div>
+
+<!-- Benefit and Risk -->
+<div class="risk-row">
+  <div class="risk-card benefit">
+    <div class="label">✅ Expected Benefit</div>
+    <p>Awaiting owner approval to send RFQ to Ravi Stationery for stationery tender.</p>
+  </div>
+  <div class="risk-card risk">
+    <div class="label">⚠️ Concrete Risk</div>
+    <p>Risk note missing; ask changes before approving if this matters.</p>
+  </div>
+</div>
+
+<!-- Recovery Path -->
+<div class="section">
+  <div class="section-header">🔄 Recovery / Rollback Path</div>
+  <div class="section-body">Recovery path missing; ask changes before approving if this matters.</div>
+</div>
+
+<!-- Confidence -->
+<div class="section">
+  <div class="section-header">📊 Confidence Score</div>
+  <div class="section-body">
+    <div>60/100</div>
+    <div class="confidence-bar">
+      <div class="confidence-fill"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Missing Information -->
+<div class="section">
+  <div class="section-header">⚠️ Missing Information</div>
+  <div class="section-body">
+    <div class="missing-item">Expected benefit not fully quantified in approval register.</div>
+<div class="missing-item">Concrete risk not fully specified in approval register.</div>
+  </div>
+</div>
+
+<!-- Documents Used -->
+<div class="section">
+  <div class="section-header">📁 Documents and Sources Used</div>
+  <div class="section-body" style="font-size:13px;">
+    data/approvals_receipts.csv<br>
+data/master_cases.csv<br>
+config/approval_policy.yaml<br>
+receipts/approvals/GOV-20260630-001_approval_card.html<br>
+https://gem.gov.in
+  </div>
+</div>
+
+<!-- Decision -->
+<div class="decision-section">
+  <h3>Owner Decision Required</h3>
+  <div class="btn-group">
+    <button class="btn btn-approve">✅ APPROVE</button>
+    <button class="btn btn-reject">❌ REJECT</button>
+    <button class="btn btn-changes">🔄 ASK CHANGES</button>
+  </div>
+  <div class="hermes-cmd">
+    <div class="label">Or say in Hermes:</div>
+    <code>approve case GOV-20260630-001</code>
+    <code>reject case GOV-20260630-001</code>
+    <code>ask changes GOV-20260630-001</code>
+  </div>
+</div>
+
+<div class="footer">
+  Approval Card · Tender Export OS v4.1 · 2026-06-30 · Prepared by approval_desk_agent
+</div>
+
+</body>
+</html>

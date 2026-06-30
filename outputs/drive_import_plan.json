@@ -1,0 +1,107 @@
+{
+  "drive_root_name": "Tender Export OS - Knowledge Bus",
+  "mode": "dry_run",
+  "warning": "Dry-run is offline and does not search or download from Drive. Review before any --execute import.",
+  "local_review_required_before_overwrite": true,
+  "groups": [
+    {
+      "drive_folder": "00_Control_Center",
+      "files": [
+        {
+          "drive_name": "events.jsonl",
+          "local_path": "data/events.jsonl",
+          "exists_locally": true
+        },
+        {
+          "drive_name": "master_cases.csv",
+          "local_path": "data/master_cases.csv",
+          "exists_locally": true
+        },
+        {
+          "drive_name": "supplier_master.csv",
+          "local_path": "data/supplier_master.csv",
+          "exists_locally": true
+        },
+        {
+          "drive_name": "approvals_receipts.csv",
+          "local_path": "data/approvals_receipts.csv",
+          "exists_locally": true
+        },
+        {
+          "drive_name": "source_health.csv",
+          "local_path": "data/source_health.csv",
+          "exists_locally": true
+        },
+        {
+          "drive_name": "plugin_health.csv",
+          "local_path": "data/plugin_health.csv",
+          "exists_locally": true
+        },
+        {
+          "drive_name": "quote_master.csv",
+          "local_path": "data/quote_master.csv",
+          "exists_locally": true
+        },
+        {
+          "drive_name": "agent_run_log.csv",
+          "local_path": "data/agent_run_log.csv",
+          "exists_locally": true
+        }
+      ]
+    },
+    {
+      "drive_folder": "00_Schemas",
+      "files": [
+        {
+          "drive_name": "master_cases.schema.json",
+          "local_path": "config/schemas/master_cases.schema.json",
+          "exists_locally": true
+        },
+        {
+          "drive_name": "approvals_receipts.schema.json",
+          "local_path": "config/schemas/approvals_receipts.schema.json",
+          "exists_locally": true
+        },
+        {
+          "drive_name": "quote_master.schema.json",
+          "local_path": "config/schemas/quote_master.schema.json",
+          "exists_locally": true
+        },
+        {
+          "drive_name": "supplier_master.schema.json",
+          "local_path": "config/schemas/supplier_master.schema.json",
+          "exists_locally": true
+        },
+        {
+          "drive_name": "event.schema.json",
+          "local_path": "config/schemas/event.schema.json",
+          "exists_locally": true
+        }
+      ]
+    },
+    {
+      "drive_folder": "08_ChatGPT_Snapshots",
+      "files": [
+        {
+          "drive_name": "chatgpt_snapshot.md",
+          "local_path": "data/chatgpt_snapshot.md",
+          "exists_locally": true
+        }
+      ]
+    }
+  ],
+  "never_import_patterns": [
+    "secret",
+    "token",
+    "credential",
+    "password",
+    "cookie",
+    "dsc",
+    "bank",
+    "private",
+    ".enc",
+    ".pem",
+    ".p12",
+    ".key"
+  ]
+}

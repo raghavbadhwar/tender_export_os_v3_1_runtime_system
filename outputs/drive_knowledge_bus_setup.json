@@ -1,0 +1,235 @@
+{
+  "drive_root_name": "Tender Export OS - Knowledge Bus",
+  "mode": "execute",
+  "created_at": "2026-06-30T04:17:57",
+  "root_folder_id": "1hIFyPCHVjrLRi6ohvg4FLm0H-G6AD9sh",
+  "root_action": "created",
+  "last_updated_at": "2026-06-30T14:34:45+05:30",
+  "folders": [
+    {
+      "path": "00_Project_Context",
+      "id": "1jAxbgUzSWzBe9OWlBOPlE8Mh2w73sfiV",
+      "action": "created"
+    },
+    {
+      "path": "00_Project_Context/01_Instructions",
+      "id": "10jNqHSja1CLfZ35PP_iG-6525zUnb8it",
+      "action": "created"
+    },
+    {
+      "path": "00_Project_Context/02_State_Snapshots",
+      "id": "1TF8KoWS-mD9ekJrsl6S3nb2kazMZMhQj",
+      "action": "created"
+    },
+    {
+      "path": "00_Project_Context/03_Context_Receipts",
+      "id": "131XSieQXZ4ZUZVjCpaB1ZmSe7ET0ACDA",
+      "action": "created"
+    },
+    {
+      "path": "00_Control_Center",
+      "id": "18hw8-FyckFTt-sU-mo69rsfoyh-egwzU",
+      "action": "created"
+    },
+    {
+      "path": "00_Schemas",
+      "id": "1gCUn0aTl1B6EBgcGrdIn5UsX2WAj5bQ6",
+      "action": "created"
+    },
+    {
+      "path": "01_Daily_Briefs",
+      "id": "1NWm8Y7qPCK8oQT1kjF_RyxNdjOYgwWyx",
+      "action": "created"
+    },
+    {
+      "path": "02_Case_Reports",
+      "id": "1GFXzDuaklLl2rC2hBtEW-rm76MvgBzKU",
+      "action": "created"
+    },
+    {
+      "path": "03_Bid_Packs",
+      "id": "1eI72XL7cEsd0w93GheRiHNXtN6v-RIBc",
+      "action": "created"
+    },
+    {
+      "path": "04_Export_Quote_Packs",
+      "id": "1EwTmde2gm2SWpMLvOLawLuFCAkHnqJPs",
+      "action": "created"
+    },
+    {
+      "path": "05_Supplier_Proof",
+      "id": "1uoNKnsd8V6lC-ct89v_gSPip1HmR1M3e",
+      "action": "created"
+    },
+    {
+      "path": "06_Receipts",
+      "id": "1fs3Xdwj0aiila-kckWjneuC5cn082Vx3",
+      "action": "created"
+    },
+    {
+      "path": "06_Receipts/approvals",
+      "id": "1EAw9V0ffSmE-y_Sf_TBlEC2riQKVspSF",
+      "action": "created"
+    },
+    {
+      "path": "06_Receipts",
+      "id": "1fs3Xdwj0aiila-kckWjneuC5cn082Vx3",
+      "action": "existing"
+    },
+    {
+      "path": "06_Receipts/owner_decisions",
+      "id": "1w2wQ4lDFtsFJzKl6i-0kWh1eSoUET6hJ",
+      "action": "created"
+    },
+    {
+      "path": "06_Receipts",
+      "id": "1fs3Xdwj0aiila-kckWjneuC5cn082Vx3",
+      "action": "existing"
+    },
+    {
+      "path": "06_Receipts/supplier_quotes",
+      "id": "1CsmmZ4UhVboUI3ajZtM3uit_FBDR3LCa",
+      "action": "created"
+    },
+    {
+      "path": "06_Receipts",
+      "id": "1fs3Xdwj0aiila-kckWjneuC5cn082Vx3",
+      "action": "existing"
+    },
+    {
+      "path": "06_Receipts/submissions",
+      "id": "14Sr8Nv-Hj6OnQF19ZU22c27ZOyKh6Mbr",
+      "action": "created"
+    },
+    {
+      "path": "06_Receipts",
+      "id": "1fs3Xdwj0aiila-kckWjneuC5cn082Vx3",
+      "action": "existing"
+    },
+    {
+      "path": "06_Receipts/plugin_runs",
+      "id": "19cgg_xTWnpBqW_3pfMGXXUrlEMnppkMt",
+      "action": "created"
+    },
+    {
+      "path": "07_Config_Snapshots",
+      "id": "10p1jW0Pb4ARNTbLcejgTsbJc8YrJRFhT",
+      "action": "created"
+    },
+    {
+      "path": "08_ChatGPT_Bridge",
+      "id": "1Ff-k0oIyFhjwUFwnm0HSBHrmEtGpt644",
+      "action": "created"
+    },
+    {
+      "path": "08_ChatGPT_Bridge/01_To_ChatGPT",
+      "id": "1b60PmPIYHdtUcIGb9kQkK_Hn6m1kPbZI",
+      "action": "created"
+    },
+    {
+      "path": "08_ChatGPT_Bridge",
+      "id": "1Ff-k0oIyFhjwUFwnm0HSBHrmEtGpt644",
+      "action": "existing"
+    },
+    {
+      "path": "08_ChatGPT_Bridge/02_From_ChatGPT",
+      "id": "1EmUb8bdYtV2hQV82P_ym2XPhBONEfqQ0",
+      "action": "created"
+    },
+    {
+      "path": "08_ChatGPT_Bridge",
+      "id": "1Ff-k0oIyFhjwUFwnm0HSBHrmEtGpt644",
+      "action": "existing"
+    },
+    {
+      "path": "08_ChatGPT_Bridge/03_Reviewed_For_Codex_Hermes",
+      "id": "1PYbkFS_0YZ8cEvaY-85L35IuBjssnlCt",
+      "action": "created"
+    },
+    {
+      "path": "09_Plugin_Produced_Artifacts",
+      "id": "1xTANxsDBua10g3GYeOjNYO5dr5poSox7",
+      "action": "created"
+    },
+    {
+      "path": "09_Plugin_Produced_Artifacts/Excel_Models",
+      "id": "1KTPOAtquxZ4agxmT0ddIegPhC8cvQggA",
+      "action": "created"
+    },
+    {
+      "path": "09_Plugin_Produced_Artifacts",
+      "id": "1xTANxsDBua10g3GYeOjNYO5dr5poSox7",
+      "action": "existing"
+    },
+    {
+      "path": "09_Plugin_Produced_Artifacts/PDF_Packs",
+      "id": "1SPvcdV2ebTlAXXtBT6KJqDq516yUbi4I",
+      "action": "created"
+    },
+    {
+      "path": "09_Plugin_Produced_Artifacts",
+      "id": "1xTANxsDBua10g3GYeOjNYO5dr5poSox7",
+      "action": "existing"
+    },
+    {
+      "path": "09_Plugin_Produced_Artifacts/DOCX_Proposals",
+      "id": "1TyZyZYsrxKOukh3G8yhzTQVR2kWg2VSk",
+      "action": "created"
+    },
+    {
+      "path": "09_Plugin_Produced_Artifacts",
+      "id": "1xTANxsDBua10g3GYeOjNYO5dr5poSox7",
+      "action": "existing"
+    },
+    {
+      "path": "09_Plugin_Produced_Artifacts/PPTX_Decks",
+      "id": "1c2h6T-zl8M45NsgyiQdsfKzI084VLYMa",
+      "action": "created"
+    },
+    {
+      "path": "09_Plugin_Produced_Artifacts",
+      "id": "1xTANxsDBua10g3GYeOjNYO5dr5poSox7",
+      "action": "existing"
+    },
+    {
+      "path": "09_Plugin_Produced_Artifacts/Invoices",
+      "id": "12Z1-UgXT045-OiDELyc3DWAbgusCd0hn",
+      "action": "created"
+    },
+    {
+      "path": "09_Plugin_Produced_Artifacts",
+      "id": "1xTANxsDBua10g3GYeOjNYO5dr5poSox7",
+      "action": "existing"
+    },
+    {
+      "path": "09_Plugin_Produced_Artifacts/Email_Sequences",
+      "id": "1FSeEVkJsSzwpHETdL--H4iSGhB2Tq68f",
+      "action": "created"
+    },
+    {
+      "path": "09_Plugin_Produced_Artifacts",
+      "id": "1xTANxsDBua10g3GYeOjNYO5dr5poSox7",
+      "action": "existing"
+    },
+    {
+      "path": "09_Plugin_Produced_Artifacts/Dashboards",
+      "id": "16PP3edCwPQIMFvXY2n_8v6leY9hi_p5w",
+      "action": "created"
+    },
+    {
+      "path": "10_Archive",
+      "id": "196reisOZ2_sZrTdsN9_yeJeOTkw43A8r",
+      "action": "created"
+    }
+  ],
+  "communication_bridge": "08_ChatGPT_Bridge",
+  "project_context_folder": "00_Project_Context",
+  "project_context_folder_id": "1jAxbgUzSWzBe9OWlBOPlE8Mh2w73sfiV",
+  "project_context_folder_url": "https://drive.google.com/drive/folders/1jAxbgUzSWzBe9OWlBOPlE8Mh2w73sfiV",
+  "chatgpt_to_codex_hermes": "08_ChatGPT_Bridge/02_From_ChatGPT",
+  "codex_hermes_to_chatgpt": "08_ChatGPT_Bridge/01_To_ChatGPT",
+  "safety_note": "Folder setup only. No bids, quotes, supplier messages, payments, or compliance claims are executed.",
+  "root_action_last_test": "existing",
+  "last_external_sync_test_receipt": "receipts/drive_sync/SYSTEM-90PLUS-DELIVERY-TEST_20260630124313_google_drive_sync.json",
+  "last_external_sync_test_at": "2026-06-30T12:43:13"
+}

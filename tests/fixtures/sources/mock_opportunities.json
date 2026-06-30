@@ -1,0 +1,38 @@
+[
+  {
+    "source_name": "Mock GOV Tender Feed",
+    "source_type": "fixture",
+    "workflow_type": "GOV",
+    "source_url": "https://example.test/tenders/mock-gov-001",
+    "external_reference": "MOCK-GOV-001",
+    "opportunity_title": "Fixture Tender for Office Consumables",
+    "buyer_name": "Fixture District Office",
+    "product_or_service": "Office Consumables",
+    "quantity": "100",
+    "unit": "Set",
+    "deadline_date": "2026-07-31",
+    "estimated_value_inr": "50000",
+    "estimated_value_usd": "",
+    "blocker_status": "",
+    "citations": ["tests/fixtures/sources/mock_opportunities.json"],
+    "notes": "Fixture only. Do not treat as a real tender."
+  },
+  {
+    "source_name": "Mock Export RFQ Feed",
+    "source_type": "fixture",
+    "workflow_type": "EXPORT",
+    "source_url": "https://example.test/rfqs/mock-exp-001",
+    "external_reference": "MOCK-EXP-001",
+    "opportunity_title": "Fixture RFQ for Spice Samples",
+    "buyer_name": "Fixture Importer LLC",
+    "product_or_service": "Spice Samples",
+    "quantity": "25",
+    "unit": "KG",
+    "deadline_date": "2026-08-05",
+    "estimated_value_inr": "",
+    "estimated_value_usd": "750",
+    "blocker_status": "",
+    "citations": ["tests/fixtures/sources/mock_opportunities.json"],
+    "notes": "Fixture only. Do not treat as a real RFQ."
+  }
+]

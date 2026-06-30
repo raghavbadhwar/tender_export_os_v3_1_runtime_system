@@ -1,0 +1,110 @@
+version: 4.1
+timezone: Asia/Kolkata
+owner_gateway: telegram
+default_delivery_fallback: telegram_then_local_file
+
+rules:
+  use_hermes_cron_first: true
+  no_external_money_legal_or_dsc_actions_without_approval: true
+  no_recursive_cron_creation: true
+  use_skill_backed_cron_jobs: true
+  save_local_report_if_gateway_missing: true
+  deliver_scheduled_briefs_to_telegram: true
+
+jobs:
+  - id: morning_operator_brief
+    cadence: "30 8 * * *"
+    local_time: "08:30 IST daily"
+    runtime: hermes_default
+    max_runtime_minutes: 20
+    purpose: "Run safe external task/source intake, then read Knowledge Bus, Kanban, memory, and approvals. Produce owner brief and one recommended action."
+    stop_condition: "Public read-only intake and owner Telegram delivery only; no external business action without approval."
+    external_intake:
+      command: "python3 scripts/run_external_task_intake.py --limit 8 --timeout 12 --record-event"
+      mode: "public_read_only_plus_local_external_task_inbox"
+    outputs:
+      - outputs/external_intake/external_intake_report_YYYYMMDD_HHMMSS.md
+      - outputs/demand_signals/demand_signal_digest_YYYYMMDD_HHMMSS.md
+      - outputs/daily_briefs/brief_YYYYMMDD.html
+      - data/external_task_inbox.csv
+      - data/agent_run_log.csv
+    command_hint: "hermes cron create --name tender-export-morning-operator-brief --workdir <project> --deliver telegram '30 8 * * *' '<prompt>'"
+  - id: midday_opportunity_radar
+    cadence: "0 13 * * *"
+    local_time: "13:00 IST daily"
+    runtime: hermes_plus_codex_when_needed
+    max_runtime_minutes: 60
+    purpose: "Run safe public external source/task intake, test source adapters, scan GOV and EXPORT sources, create/recommend cases only with strong citations, fast-kill, deep-read top cases."
+    stop_condition: "Stop on CAPTCHA, paywall, login wall, duplicate case, unreadable evidence, weak citations, or approval gate."
+    external_intake:
+      command: "python3 scripts/run_external_task_intake.py --limit 12 --timeout 12 --record-event"
+      mode: "public_read_only_plus_local_external_task_inbox"
+    outputs:
+      - outputs/external_intake/external_intake_report_YYYYMMDD_HHMMSS.md
+      - outputs/demand_signals/demand_signal_digest_YYYYMMDD_HHMMSS.md
+      - outputs/source_adapter_tests/source_adapter_test_report.json
+      - data/external_task_inbox.csv
+      - data/master_cases.csv
+      - data/source_health.csv
+      - outputs/case_reports/
+      - data/agent_run_log.csv
+  - id: supplier_followup_review
+    cadence: "0 17 * * *"
+    local_time: "17:00 IST daily"
+    runtime: hermes_default
+    max_runtime_minutes: 30
+    purpose: "Check pending supplier quotes, external task inbox items, supplier risk, and blocked cases. Do not send reminders without approval."
+    stop_condition: "No supplier reminder, quote request, buyer reply, or external follow-up without owner approval."
+    external_intake:
+      command: "python3 scripts/run_external_task_intake.py --limit 6 --timeout 12 --record-event"
+      mode: "public_read_only_plus_local_external_task_inbox"
+    outputs:
+      - outputs/external_intake/external_intake_report_YYYYMMDD_HHMMSS.md
+      - data/external_task_inbox.csv
+      - data/quote_master.csv
+      - receipts/supplier_quotes/
+      - data/agent_run_log.csv
+  - id: evening_execution_close
+    cadence: "30 20 * * *"
+    local_time: "20:30 IST daily"
+    runtime: hermes_default
+    max_runtime_minutes: 30
+    purpose: "Close the day, reconcile external intake, update Kanban, list blockers, approvals, and tomorrow first action."
+    stop_condition: "No new external business action; unresolved gates roll into the next owner brief."
+    external_intake:
+      command: "python3 scripts/run_external_task_intake.py --limit 6 --timeout 12 --record-event"
+      mode: "public_read_only_plus_local_external_task_inbox"
+    outputs:
+      - outputs/external_intake/external_intake_report_YYYYMMDD_HHMMSS.md
+      - outputs/demand_signals/demand_signal_digest_YYYYMMDD_HHMMSS.md
+      - data/external_task_inbox.csv
+      - outputs/daily_briefs/brief_YYYYMMDD.html
+      - data/agent_run_log.csv
+  - id: weekly_learning_review
+    cadence: "0 18 * * 5"
+    local_time: "Friday 18:00 IST"
+    runtime: hermes_plus_chatgpt_snapshot
+    max_runtime_minutes: 60
+    purpose: "Review wins, losses, rejections, external source quality, external task intake quality, supplier quality, pricing errors, and owner corrections. Propose memory, skill, source-adapter, and rule updates."
+    approval_required: true
+    stop_condition: "Stage proposed changes only; skill, memory, pricing, compliance, schedule, and source-adapter patches require approval unless purely safe validation/reporting."
+    external_intake:
+      command: "python3 scripts/run_external_task_intake.py --limit 10 --timeout 12 --record-event"
+      mode: "public_read_only_plus_local_external_task_inbox"
+    outputs:
+      - outputs/external_intake/external_intake_report_YYYYMMDD_HHMMSS.md
+      - outputs/weekly_reviews/
+      - data/external_task_inbox.csv
+      - outputs/daily_briefs/brief_YYYYMMDD.html
+      - data/agent_run_log.csv
+  - id: monthly_strategy_deep_research
+    cadence: "owner-approved"
+    local_time: "Manual/monthly"
+    runtime: chatgpt_project
+    max_runtime_minutes: 180
+    purpose: "Deep research on export categories, procurement categories, foreign procurement sources, and business model changes."
+    approval_required: true
+    stop_condition: "Research only; no operational execution or final compliance authority."
+    outputs:
+      - outputs/chatgpt_bridge/
+      - data/agent_run_log.csv

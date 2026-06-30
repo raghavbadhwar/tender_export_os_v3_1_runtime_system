@@ -1,0 +1,42 @@
+{
+  "drive_root_name": "Tender Export OS - Knowledge Bus",
+  "mode": "dry_run",
+  "warning": "Dry-run is offline and does not search or download from Drive. Review before any --execute import.",
+  "local_review_required_before_overwrite": true,
+  "groups": [
+    {
+      "drive_folder": "08_ChatGPT_Bridge/02_From_ChatGPT",
+      "files": [
+        {
+          "drive_name": "chatgpt_return.md",
+          "local_path": "outputs/chatgpt_bridge/from_chatgpt/chatgpt_return.md",
+          "exists_locally": false
+        }
+      ]
+    },
+    {
+      "drive_folder": "08_ChatGPT_Bridge/03_Reviewed_For_Codex_Hermes",
+      "files": [
+        {
+          "drive_name": "review_plan.json",
+          "local_path": "outputs/chatgpt_bridge/reviewed/review_plan.json",
+          "exists_locally": false
+        }
+      ]
+    }
+  ],
+  "never_import_patterns": [
+    "secret",
+    "token",
+    "credential",
+    "password",
+    "cookie",
+    "dsc",
+    "bank",
+    "private",
+    ".enc",
+    ".pem",
+    ".p12",
+    ".key"
+  ]
+}

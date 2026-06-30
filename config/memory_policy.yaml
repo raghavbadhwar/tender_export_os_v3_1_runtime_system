@@ -1,0 +1,47 @@
+version: 4
+memory:
+  memory_enabled: true
+  user_profile_enabled: true
+  write_approval: true
+
+skills:
+  write_approval: true
+
+display:
+  memory_notifications: verbose
+
+save_to_memory:
+  - durable founder preferences
+  - repeated corrections
+  - workflow rules that affect future runs
+  - source quirks
+  - supplier lessons summarized compactly
+  - category preferences
+  - important tool/runtime quirks
+  - approval preferences
+
+do_not_save_to_memory:
+  - raw tenders
+  - raw RFQs
+  - long supplier tables
+  - full documents
+  - passwords
+  - credentials
+  - DSC files
+  - bank details
+  - sensitive contract details
+  - temporary paths
+  - one-off facts
+
+skill_update_triggers:
+  - workflow repeated 3+ times
+  - founder correction changes future behavior
+  - source parser fix becomes reusable
+  - pricing rule improves
+  - supplier verification rule improves
+  - compliance check improves
+  - daily or weekly loop changes
+
+skill_update_policy:
+  stage_for_approval: true
+  never_patch_pricing_or_compliance_skills_without_owner_approval: true

@@ -1,0 +1,9 @@
+{
+  "file": "data/drive_manifest.csv",
+  "primary_key": "local_path",
+  "required_columns": ["case_id", "local_path", "drive_file_id", "drive_url", "sha256", "synced_at", "sync_status", "receipt_path"],
+  "required_fields": ["case_id", "local_path", "sha256", "synced_at", "sync_status"],
+  "enums": {"sync_status": ["DRY_RUN", "APPROVAL_REQUIRED_NO_UPLOAD", "SYNCED", "FAILED", "SKIPPED"]},
+  "datetime_fields": ["synced_at"],
+  "url_fields": ["drive_url"]
+}

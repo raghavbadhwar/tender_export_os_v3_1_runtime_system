@@ -1,0 +1,60 @@
+version: 4
+principle: "Respect portal terms. Do not bypass CAPTCHA, login restrictions, paywalls, payment gates, or DSC/bid controls."
+
+health_states:
+  - Working
+  - Needs Login
+  - Paywalled
+  - Low Relevance
+  - Broken
+  - Manual Check Required
+  - Blocked by CAPTCHA
+  - Restricted / Do Not Scrape
+
+gov_sources:
+  - GeM
+  - CPPP/eProcure
+  - ePublishing
+  - state tender portals
+  - PSU portals
+  - university procurement pages
+  - hospital procurement pages
+  - municipal procurement pages
+  - relevant department websites
+  - past awards and past winners where available
+
+export_sources:
+  - Indian Trade Portal
+  - Indian Business Portal
+  - FIEO buyer queries if accessible
+  - EPCs
+  - APEDA and commodity boards
+  - UNGM
+  - World Bank
+  - ADB and multilateral portals
+  - foreign government procurement portals
+  - embassy trade pages
+  - trade forums
+  - global B2B RFQ portals
+
+supplier_sources:
+  - IndiaMART
+  - TradeIndia
+  - Indian Business Portal supplier lists
+  - EPC/APEDA directories
+  - Alibaba
+  - Made-in-China
+  - Global Sources
+  - 1688 where possible
+  - Google Maps/local clusters
+  - GeM sellers
+  - past awardees
+  - local industrial markets
+  - existing supplier master
+
+radar_rules:
+  dedupe_by_case_id_and_source_url: true
+  do_not_deep_read_every_lead: true
+  hand_off_to_fast_kill_first: true
+  log_paywall_or_login_required: true
+  cite_source_links_in_outputs: true

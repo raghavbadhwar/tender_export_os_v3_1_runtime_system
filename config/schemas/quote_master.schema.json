@@ -1,0 +1,45 @@
+{
+  "file": "data/quote_master.csv",
+  "primary_key": "quote_id",
+  "required_columns": [
+    "quote_id",
+    "case_id",
+    "supplier_id",
+    "supplier_name",
+    "quote_request_sent_at",
+    "quote_received_at",
+    "product_description",
+    "quantity",
+    "unit",
+    "currency",
+    "selected_for_pricing",
+    "created_at",
+    "updated_at"
+  ],
+  "required_fields": ["quote_id", "case_id", "supplier_id", "supplier_name"],
+  "enums": {
+    "selected_for_pricing": ["", "TRUE", "FALSE"],
+    "certificate_included": ["", "TRUE", "FALSE"],
+    "sample_available": ["", "TRUE", "FALSE"]
+  },
+  "date_fields": ["created_at", "updated_at"],
+  "datetime_fields": ["quote_request_sent_at", "quote_received_at"],
+  "numeric_fields": [
+    "response_hrs",
+    "quantity",
+    "unit_price_inr",
+    "unit_price_usd",
+    "total_price_inr",
+    "total_price_usd",
+    "gst_rate_pct",
+    "gst_amount_inr",
+    "price_incl_gst_inr",
+    "lead_time_days",
+    "validity_days",
+    "sample_cost_inr",
+    "fob_price_usd",
+    "cif_price_usd",
+    "quote_clarity_score",
+    "price_rank"
+  ]
+}

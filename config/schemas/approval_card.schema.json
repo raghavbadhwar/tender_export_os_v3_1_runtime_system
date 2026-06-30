@@ -1,0 +1,42 @@
+{
+  "title": "Tender Export OS Approval Card",
+  "type": "object",
+  "required": [
+    "approval_id",
+    "case_id",
+    "workflow_type",
+    "proposed_action",
+    "business_object",
+    "amount_or_price",
+    "expected_benefit",
+    "concrete_risk",
+    "recovery_path",
+    "documents_sources_used",
+    "confidence_score",
+    "missing_information",
+    "allowed_decisions",
+    "created_at",
+    "created_by"
+  ],
+  "properties": {
+    "approval_id": {"type": "string"},
+    "case_id": {"type": "string"},
+    "workflow_type": {"type": "string", "enum": ["GOV", "EXPORT", "UNKNOWN"]},
+    "proposed_action": {"type": "string"},
+    "business_object": {"type": "string"},
+    "amount_or_price": {"type": "string"},
+    "external_party": {"type": "string"},
+    "expected_benefit": {"type": "string"},
+    "concrete_risk": {"type": "string"},
+    "recovery_path": {"type": "string"},
+    "documents_sources_used": {"type": "array", "items": {"type": "string"}},
+    "confidence_score": {"type": "integer", "minimum": 0, "maximum": 100},
+    "missing_information": {"type": "array", "items": {"type": "string"}},
+    "allowed_decisions": {"type": "array", "items": {"type": "string"}},
+    "approval_status": {"type": "string"},
+    "created_at": {"type": "string"},
+    "created_by": {"type": "string"},
+    "html_path": {"type": "string"},
+    "json_path": {"type": "string"}
+  }
+}
