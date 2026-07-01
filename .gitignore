@@ -53,6 +53,11 @@ Local Storage/
 Session Storage/
 downloads/
 artifacts/private/
+cases/**/HERMES.md
+cases/**/case.md
+cases/**/evidence/**
 cases/*/HERMES.md
 cases/*/case.md
 cases/*/evidence/**
+!cases/examples/
+!cases/examples/**

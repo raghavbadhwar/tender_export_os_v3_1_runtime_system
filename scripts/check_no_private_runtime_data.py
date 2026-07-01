@@ -35,6 +35,9 @@ PRIVATE_PATH_PATTERNS = [
     "data/*.test",
     "data/chatgpt_snapshot.md",
     "data/live/**",
+    "cases/**/HERMES.md",
+    "cases/**/case.md",
+    "cases/**/evidence/**",
     "cases/*/evidence/**",
     "artifacts/private/**",
 ]
@@ -73,12 +76,17 @@ TRACKED_PRIVATE_PATH_PATTERNS = [
     "data/**",
     "outputs/**",
     "receipts/**",
+    "cases/**/evidence/**",
+    "cases/*/evidence/**",
+    "cases/**/case.md",
+    "cases/**/HERMES.md",
 ]
 
 TRACKED_PUBLIC_EXCEPTIONS = [
     "data/examples/**",
     "outputs/examples/**",
     "receipts/examples/**",
+    "cases/examples/**",
 ]
 
 TEXT_SUFFIXES = {
@@ -163,7 +171,7 @@ def is_tracked_private_runtime_path(path: str) -> bool:
 def git_tracked_private_runtime_paths() -> list[str]:
     try:
         result = subprocess.run(
-            ["git", "ls-files", "data", "outputs", "receipts"],
+            ["git", "ls-files", "data", "outputs", "receipts", "cases"],
             cwd=PROJECT_ROOT,
             text=True,
             stdout=subprocess.PIPE,
