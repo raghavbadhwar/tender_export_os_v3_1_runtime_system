@@ -1,5 +1,7 @@
+import sys
 from pathlib import Path
 
+from scripts import check_no_private_runtime_data as private_data_scan
 from scripts.check_no_private_runtime_data import iter_scan_files, is_tracked_private_runtime_path, scan_line
 
 
@@ -36,3 +38,17 @@ def test_public_template_scan_uses_declared_public_surface_only() -> None:
     assert "cases/EXP-20260630-005/case.md" not in scanned
     assert ".hermes/plans/2026-07-01_142041-tender-export-os-hardening-sprint.md" not in scanned
     assert "data/master_cases.csv" not in scanned
+
+
+def test_public_template_mode_fails_when_runtime_files_are_tracked(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(
+        private_data_scan,
+        "git_tracked_private_runtime_paths",
+        lambda: ["data/master_cases.csv"],
+    )
+    monkeypatch.setattr(private_data_scan, "iter_scan_files", lambda public_template: [])
+    monkeypatch.setattr(sys, "argv", ["check_no_private_runtime_data.py", "--public-template"])
+
+    assert private_data_scan.main() == 1
+    output = capsys.readouterr().out
+    assert "git-tracked-private-runtime-path:data/master_cases.csv" in output

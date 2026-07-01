@@ -1,10 +1,13 @@
 from pathlib import Path
 
+import yaml
+
 from scripts.stage_deep_research_leads import load_schema, parse_input, validate_leads
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = PROJECT_ROOT / "tests" / "fixtures" / "deep_research_leads"
+ROUTING = PROJECT_ROOT / "config" / "research_capture_routing.yaml"
 
 
 def test_deep_research_lead_schema_contains_required_contract_fields() -> None:
@@ -22,6 +25,17 @@ def test_deep_research_lead_schema_contains_required_contract_fields() -> None:
     assert "PUBLIC_LISTING_ONLY" in schema["evidence_levels"]
     assert "CREATE_CASE_CANDIDATE_AFTER_EVIDENCE" in schema["allowed_recommended_repo_actions"]
     assert "SEND_QUOTE" in schema["forbidden_recommended_repo_actions"]
+
+
+def test_deep_research_case_candidate_levels_match_routing_contract() -> None:
+    schema = load_schema()
+    routing = yaml.safe_load(ROUTING.read_text(encoding="utf-8"))
+    routed_levels = set(routing["low_competition_orders"]["case_candidate_requires_any"])
+    schema_levels = set(schema["evidence_levels"])
+    case_candidate_levels = set(schema["case_candidate_evidence_levels"])
+
+    assert routed_levels <= schema_levels
+    assert routed_levels <= case_candidate_levels
 
 
 def test_good_deep_research_leads_validate() -> None:

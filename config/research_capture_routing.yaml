@@ -89,7 +89,7 @@ low_competition_orders:
   public_listing_only: "lead_not_bid_ready_case"
   case_candidate_requires_any:
     - DOCUMENTS_DOWNLOADED
-    - manually_uploaded_document
-    - source_detail_captured
-    - structured_evidence_bundle
-    - owner_approved_manual_source_check
+    - MANUALLY_UPLOADED_DOCUMENT
+    - SOURCE_DETAIL_CAPTURED
+    - STRUCTURED_EVIDENCE_BUNDLE
+    - OWNER_APPROVED_MANUAL_SOURCE_CHECK

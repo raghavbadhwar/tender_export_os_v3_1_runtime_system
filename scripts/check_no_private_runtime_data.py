@@ -245,15 +245,18 @@ def scan_line(path: Path, line_number: int, line: str, allowed_literals: list[st
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Scan public-template files for private runtime data")
-    parser.add_argument("--public-template", action="store_true", help="Skip declared private runtime paths")
+    parser.add_argument(
+        "--public-template",
+        action="store_true",
+        help="Scan only the declared public surface and fail if private runtime paths are tracked",
+    )
     parser.add_argument("--allowlist", default=str(ALLOWLIST), help="Allowlist YAML path")
     args = parser.parse_args()
 
     allowed_paths, allowed_literals = parse_allowlist(Path(args.allowlist))
     findings: list[str] = []
     tracked_private_paths = git_tracked_private_runtime_paths()
-    if not args.public_template:
-        findings.extend(f"git-tracked-private-runtime-path:{path}" for path in tracked_private_paths)
+    findings.extend(f"git-tracked-private-runtime-path:{path}" for path in tracked_private_paths)
     for path in iter_scan_files(args.public_template):
         relative = rel(path)
         allowed_by_path = matches(relative, allowed_paths)
