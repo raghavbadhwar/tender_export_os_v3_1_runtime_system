@@ -1,8 +1,0 @@
-{
-  "case_id": "GOV-20260630-001",
-  "status": "DRY_RUN",
-  "dry_run": true,
-  "files_considered": 8,
-  "manifest": "data/drive_manifest.csv",
-  "safety": "No Drive upload performed; manifest only."
-}

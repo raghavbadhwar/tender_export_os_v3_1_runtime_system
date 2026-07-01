@@ -1,8 +1,0 @@
-{
-  "case_id": "GOV-20260630-001",
-  "url": "https://example.com",
-  "captured_at": "2026-06-30T05:58:37",
-  "snippet": "<!doctype html><html lang=\"en\"><head><title>Example Domain</title><link rel=\"icon\" href=\"data:,\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><style>body{background:#eee;width:60vw;margin:15vh auto;font-family:system-ui,sans-serif}h1{font-size:1.5em}div{opacity:0.8}a:link,a:visited{color:#348}</style></head><body><div><h1>Example Domain</h1><p>This domain is for use in documentation examples without needing permission. Avoid use in operations.</p><p><a href=\"https://iana.org/domains/example\">Learn more</a></p></div></body></html>\n",
-  "dry_run": true,
-  "safety": "browser/source evidence only; no form submit/login/CAPTCHA bypass."
-}

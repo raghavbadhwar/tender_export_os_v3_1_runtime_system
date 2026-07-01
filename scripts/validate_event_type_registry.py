@@ -10,6 +10,10 @@ from pathlib import Path
 from typing import Any
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from scripts.event_ledger import parse_event_type_registry_minimal  # noqa: E402
+
 EVENT_SCHEMA = PROJECT_ROOT / "config" / "schemas" / "event.schema.json"
 REGISTRY = PROJECT_ROOT / "config" / "schemas" / "event_types.yaml"
 REQUIRED_KEYS = {
@@ -34,7 +38,7 @@ def load_yaml(path: Path) -> dict[str, Any]:
 
 
 def parse_minimal_yaml(path: Path) -> dict[str, Any]:
-    raise RuntimeError("PyYAML is required for event type registry validation")
+    return parse_event_type_registry_minimal(path)
 
 
 def effective(defaults: dict[str, Any], entry: dict[str, Any]) -> dict[str, Any]:

@@ -7,6 +7,7 @@ import argparse
 import fnmatch
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 from typing import Iterable
@@ -39,13 +40,21 @@ PRIVATE_PATH_PATTERNS = [
 ]
 
 PUBLIC_EXCEPTIONS = [
-    "outputs/.gitkeep",
     "outputs/examples/**",
-    "receipts/.gitkeep",
     "receipts/examples/**",
     "data/examples/**",
-    "data/*.example.csv",
-    "data/*.example.jsonl",
+]
+
+TRACKED_PRIVATE_PATH_PATTERNS = [
+    "data/**",
+    "outputs/**",
+    "receipts/**",
+]
+
+TRACKED_PUBLIC_EXCEPTIONS = [
+    "data/examples/**",
+    "outputs/examples/**",
+    "receipts/examples/**",
 ]
 
 TEXT_SUFFIXES = {
@@ -121,6 +130,30 @@ def is_private_runtime_path(path: Path) -> bool:
     return matches(relative, PRIVATE_PATH_PATTERNS)
 
 
+def is_tracked_private_runtime_path(path: str) -> bool:
+    if matches(path, TRACKED_PUBLIC_EXCEPTIONS):
+        return False
+    return matches(path, TRACKED_PRIVATE_PATH_PATTERNS)
+
+
+def git_tracked_private_runtime_paths() -> list[str]:
+    try:
+        result = subprocess.run(
+            ["git", "ls-files", "data", "outputs", "receipts"],
+            cwd=PROJECT_ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            timeout=15,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return []
+    if result.returncode != 0:
+        return []
+    return sorted(path for path in result.stdout.splitlines() if is_tracked_private_runtime_path(path))
+
+
 def iter_scan_files(public_template: bool) -> Iterable[Path]:
     for root, dirs, files in os.walk(PROJECT_ROOT):
         root_path = Path(root)
@@ -178,6 +211,8 @@ def main() -> int:
 
     allowed_paths, allowed_literals = parse_allowlist(Path(args.allowlist))
     findings: list[str] = []
+    tracked_private_paths = git_tracked_private_runtime_paths()
+    findings.extend(f"git-tracked-private-runtime-path:{path}" for path in tracked_private_paths)
     for path in iter_scan_files(args.public_template):
         relative = rel(path)
         allowed_by_path = matches(relative, allowed_paths)

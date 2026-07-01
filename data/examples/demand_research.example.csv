@@ -1,0 +1,2 @@
+research_id,category_code,category_name,country,buyer_type,source_tier,source_name,source_url,market_fit_score,source_reliability_score,evidence_density_score,recommended_next_action,approval_required,notes,created_at,updated_at
+DEM-EXAMPLE-001,EXP-EXAMPLE-001,Example Category,Exampleland,Institutional buyer,TIER_1_INSTITUTIONAL,Example Demand Board,https://example.com/demand/fixture-001,75,80,70,Review sanitized public example demand before creating any case.,FALSE,Sanitized public example demand research only.,2099-01-01,2099-01-01

@@ -167,7 +167,7 @@ def main() -> int:
         append_event(
             "supplier.match_candidates_created",
             "supplier_matcher_from_tender",
-            object_type="supplier",
+            object_type="supplier_match",
             object_id=path.name,
             source=result.get("shallow", {}).get("source_name", "deep_source_runtime"),
             payload={"candidate_count": len(matches), "report": str(path.relative_to(PROJECT_ROOT))},

@@ -1,0 +1,2 @@
+approval_id,case_id,workflow_type,action_approved,proposed_by_agent,approval_card_path,amount_inr,amount_usd,approved_by,approved_at,approval_status,receipt_id,receipt_path,external_effect,notes
+APR-EXAMPLE-001,GOV-20990101-001,GOV,review_example_bid_pack,approval_desk_agent,receipts/examples/sample_approval_card.html,1000,,example_owner,2099-01-01,PENDING,RCPT-EXAMPLE-001,receipts/examples/sample_approval_card.html,NONE_DECISION_ONLY,Sanitized public example approval only.

@@ -19,7 +19,7 @@ SAFE_COMMANDS = [
     ["scripts/check_no_private_runtime_data.py", "--public-template"],
     ["scripts/system_health_check.py", "--public-template"],
     ["scripts/validate_event_type_registry.py"],
-    ["scripts/validate_register_schemas.py"],
+    ["scripts/validate_register_schemas.py", "--public-template"],
     ["scripts/validate_chatgpt_return.py", "--input", "tests/fixtures/chatgpt_returns/good_return.md"],
     ["scripts/test_source_adapters.py", "--safe", "--limit", "5"],
     ["scripts/setup_drive_folders.py", "--dry-run"],

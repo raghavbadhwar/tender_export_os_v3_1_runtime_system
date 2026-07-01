@@ -38,6 +38,18 @@ import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from scripts.check_no_private_runtime_data import (  # noqa: E402
+    ALLOWLIST,
+    SECRET_PATTERNS,
+    TEXT_SUFFIXES,
+    matches as scan_matches,
+    parse_allowlist,
+    scan_line,
+    scrub_allowed,
+)
+
 GWS = os.environ.get("GWS_BIN", "gws")
 DEFAULT_MANIFEST_OUTPUT = PROJECT_ROOT / "outputs" / "drive_sync_manifest.json"
 DRIVE_SETUP_STATE = PROJECT_ROOT / "outputs" / "drive_knowledge_bus_setup.json"
@@ -46,8 +58,7 @@ DRIVE_SETUP_STATE = PROJECT_ROOT / "outputs" / "drive_knowledge_bus_setup.json"
 # Find it in Drive URL: drive.google.com/drive/folders/<FOLDER_ID>
 DRIVE_ROOT_FOLDER_ID = os.environ.get("DRIVE_ROOT_FOLDER_ID", "")
 
-# Sub-folder names matching the Knowledge Bus layout
-SYNC_GROUPS = {
+PUBLIC_TEMPLATE_SYNC_GROUPS = {
     "00_Project_Context/01_Instructions": [
         "AGENTS.md",
         "README.md",
@@ -57,27 +68,13 @@ SYNC_GROUPS = {
         "docs/GOOGLE_DRIVE_KNOWLEDGE_BUS.md",
         "docs/CHATGPT_CODEX_HERMES_DRIVE_COMMUNICATION.md",
     ],
-    "00_Project_Context/02_State_Snapshots": [
-        "data/chatgpt_snapshot.md",
-        "outputs/drive_knowledge_bus_setup.json",
+    "00_Schemas": [
+        "config/schemas/*.json",
+        "config/schemas/event_types.yaml",
     ],
-    "00_Project_Context/03_Context_Receipts": ["receipts/drive_setup/**"],
-    "00_Control_Center": [
-        "data/events.jsonl",
-        "data/master_cases.csv",
-        "data/supplier_master.csv",
-        "data/approvals_receipts.csv",
-        "data/source_health.csv",
-        "data/plugin_health.csv",
-        "data/quote_master.csv",
-        "data/agent_run_log.csv",
-    ],
-    "00_Schemas": ["config/schemas/*.json"],
-    "01_Daily_Briefs": ["outputs/daily_briefs/*.html"],
-    "02_Case_Reports": ["outputs/case_reports/**"],
-    "03_Bid_Packs": ["outputs/bid_packs/**"],
-    "04_Export_Quote_Packs": ["outputs/export_quote_packs/**"],
-    "06_Receipts": ["receipts/**"],
+    "00_Template_Data": ["data/examples/**"],
+    "02_Case_Reports": ["outputs/examples/**"],
+    "06_Receipts": ["receipts/examples/**"],
     "07_Config_Snapshots": [
         "config/sources.gov.yaml",
         "config/sources.export.yaml",
@@ -89,14 +86,46 @@ SYNC_GROUPS = {
         "config/hermes_cron.yaml",
         "config/kanban_board.yaml",
         "config/memory_policy.yaml",
+        "config/public_scan_allowlist.yaml",
     ],
-    "08_ChatGPT_Bridge/01_To_ChatGPT": [
-        "data/chatgpt_snapshot.md",
-        "outputs/chatgpt_bridge/to_chatgpt/**",
-    ],
-    "08_ChatGPT_Bridge/02_From_ChatGPT": ["outputs/chatgpt_bridge/from_chatgpt/**"],
-    "08_ChatGPT_Bridge/03_Reviewed_For_Codex_Hermes": ["outputs/chatgpt_bridge/reviewed/**"],
 }
+
+PRIVATE_RUNTIME_SYNC_GROUPS = {
+    "00_Control_Center": [
+        "data/events.jsonl",
+        "data/master_cases.csv",
+        "data/supplier_master.csv",
+        "data/buyer_master.csv",
+        "data/approvals_receipts.csv",
+        "data/source_health.csv",
+        "data/plugin_health.csv",
+        "data/quote_master.csv",
+        "data/rfq_master.csv",
+        "data/demand_research.csv",
+        "data/drive_manifest.csv",
+        "data/agent_run_log.csv",
+    ],
+}
+
+REDACTED_OWNER_BRIEF_SYNC_GROUPS = {
+    "01_Daily_Briefs": ["outputs/daily_briefs/*.html"],
+    "01_Owner_Reports": [
+        "outputs/daily_briefs/*.md",
+        "outputs/buyer_demand/*brief*.html",
+        "outputs/buyer_demand/*brief*.md",
+        "outputs/source_health/*report*.html",
+        "outputs/deep_source_reports/*.html",
+    ],
+}
+
+MODE_SYNC_GROUPS = {
+    "public-template": PUBLIC_TEMPLATE_SYNC_GROUPS,
+    "private-runtime": PRIVATE_RUNTIME_SYNC_GROUPS,
+    "redacted-owner-brief": REDACTED_OWNER_BRIEF_SYNC_GROUPS,
+}
+
+# Backward-compatible alias for callers that import the old constant.
+SYNC_GROUPS = PRIVATE_RUNTIME_SYNC_GROUPS
 
 # Files that must NEVER be synced
 NEVER_SYNC_PATTERNS = [
@@ -164,6 +193,53 @@ def expand_patterns(patterns: list[str]) -> list[Path]:
             if p.is_file() and is_safe_to_sync(p):
                 files.append(p)
     return sorted(set(files))
+
+
+def rel(path: Path) -> str:
+    try:
+        return str(path.relative_to(PROJECT_ROOT))
+    except ValueError:
+        return str(path)
+
+
+def content_scan_file(path: Path, mode: str, allowed_paths: list[str], allowed_literals: list[str]) -> list[str]:
+    if path.suffix.lower() not in TEXT_SUFFIXES:
+        return []
+    relative = rel(path)
+    try:
+        lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
+    except OSError as exc:
+        return [f"{relative}: read-error:{exc}"]
+
+    findings: list[str] = []
+    strict_public_scan = mode in {"public-template", "redacted-owner-brief"}
+    allowed_by_path = scan_matches(relative, allowed_paths)
+    for index, line in enumerate(lines, start=1):
+        if strict_public_scan:
+            line_findings = scan_line(path, index, line, allowed_literals)
+            if allowed_by_path:
+                line_findings = [
+                    finding for finding in line_findings if not finding.endswith(" local-user-path")
+                ]
+            findings.extend(line_findings)
+            continue
+
+        text = scrub_allowed(line, allowed_literals)
+        for pattern in SECRET_PATTERNS:
+            if "re.compile(" in text:
+                continue
+            if pattern.search(text):
+                findings.append(f"{relative}:{index}: secret-like-value")
+                break
+    return findings
+
+
+def pre_upload_content_scan(files: list[Path], mode: str) -> list[str]:
+    allowed_paths, allowed_literals = parse_allowlist(ALLOWLIST)
+    findings: list[str] = []
+    for path in files:
+        findings.extend(content_scan_file(path, mode, allowed_paths, allowed_literals))
+    return findings
 
 
 def gws_upload(local_path: Path, parent_folder_id: str, dry_run: bool) -> bool:
@@ -268,8 +344,8 @@ def main() -> int:
                         help="Actually upload files. Default is dry-run (safe).")
     parser.add_argument("--dry-run", action="store_true",
                         help="Force dry-run mode. This is the default.")
-    parser.add_argument("--mode", choices=["public-template", "private-runtime"], default="private-runtime",
-                        help="Projection mode label for the manifest; dry-run remains safe in both modes.")
+    parser.add_argument("--mode", choices=sorted(MODE_SYNC_GROUPS), default="private-runtime",
+                        help="Projection mode label for the manifest; dry-run remains safe in every mode.")
     parser.add_argument("--all", action="store_true",
                         help="Sync all groups. Requires DRIVE_ROOT_FOLDER_ID.")
     parser.add_argument("--group", default="",
@@ -304,18 +380,32 @@ def main() -> int:
         print("Run: gws auth login -s drive,sheets")
         return 1
 
+    available_groups = MODE_SYNC_GROUPS[args.mode]
+
     # Determine which groups to sync
     if args.group:
         # Match by key or by short name
         groups_to_sync = {}
-        for k, v in SYNC_GROUPS.items():
+        for k, v in available_groups.items():
             if args.group.lower() in k.lower():
                 groups_to_sync[k] = v
         if not groups_to_sync:
-            print(f"❌ Group '{args.group}' not found. Available: {list(SYNC_GROUPS.keys())}")
+            print(f"❌ Group '{args.group}' not found for mode '{args.mode}'. Available: {list(available_groups.keys())}")
             return 1
     else:
-        groups_to_sync = SYNC_GROUPS
+        groups_to_sync = available_groups
+
+    group_files = {
+        group_name: expand_patterns(patterns if isinstance(patterns, list) else [patterns])
+        for group_name, patterns in groups_to_sync.items()
+    }
+    selected_files = sorted({path for files in group_files.values() for path in files})
+    content_findings = pre_upload_content_scan(selected_files, args.mode)
+    if content_findings:
+        print("❌ Pre-upload content scan failed:")
+        for finding in content_findings:
+            print(f"FAIL: {finding}")
+        return 1
 
     total_files = 0
     total_ok = 0
@@ -331,7 +421,7 @@ def main() -> int:
     }
 
     for group_name, patterns in groups_to_sync.items():
-        files = expand_patterns(patterns if isinstance(patterns, list) else [patterns])
+        files = group_files[group_name]
         manifest["groups"].append({
             "drive_folder": group_name,
             "files": [str(path.relative_to(PROJECT_ROOT)) for path in files],

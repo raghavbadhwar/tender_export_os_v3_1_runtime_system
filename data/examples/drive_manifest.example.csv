@@ -1,0 +1,2 @@
+case_id,local_path,drive_file_id,drive_url,sha256,synced_at,sync_status,receipt_path
+GOV-20990101-001,outputs/examples/sample_deep_source_report.html,,https://example.com/drive/file/fixture-001,0000000000000000000000000000000000000000000000000000000000000000,2099-01-01T09:00:00+05:30,DRY_RUN,receipts/examples/sample_approval_card.html

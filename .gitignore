@@ -31,32 +31,19 @@ browser_profiles/
 
 # Live outputs and evidence
 outputs/**
-!outputs/.gitkeep
+!outputs/examples/
 !outputs/examples/**
 
 receipts/**
-!receipts/.gitkeep
+!receipts/examples/
 !receipts/examples/**
 
 # Live ledgers and registers
-data/live/**
-data/events.jsonl
-data/agent_run_log.csv
-data/master_cases.csv
-data/supplier_master.csv
-data/buyer_master.csv
-data/quote_master.csv
-data/source_health.csv
-data/plugin_health.csv
-data/approvals_receipts.csv
-data/drive_manifest.csv
-data/rfq_master.csv
-data/demand_research.csv
+data/**
 
 # Allow examples/templates only
+!data/examples/
 !data/examples/**
-!data/*.example.csv
-!data/*.example.jsonl
 
 # Browser/session/cache/evidence
 *.sqlite

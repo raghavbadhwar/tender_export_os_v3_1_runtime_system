@@ -83,6 +83,7 @@ events:
   buyer.snapshot_imported: {object_type: buyer, citation_required: true}
   buyer.created: {object_type: buyer, citation_required: true}
   buyer.updated: {object_type: buyer, citation_required: true}
+  buyer.shipment_export_imported: {object_type: buyer, citation_required: true}
   buyer.verification_drafted: {object_type: buyer, citation_required: true}
   buyer.verification_stage_changed: {object_type: buyer, citation_required: true, required_payload_fields: [new_stage]}
   rfq.snapshot_imported: {object_type: rfq, citation_required: true}

@@ -156,7 +156,10 @@ class SelectorPortalAdapter:
             parsed_results.append(parse_document(html_path, evidence).to_dict())
             downloader = DocumentDownloader(evidence)
             for link in self.extract_document_links(page.content(), page.url)[:20]:
-                document = downloader.download_url(urljoin(page.url, link))
+                document_url = urljoin(page.url, link)
+                document = downloader.download_from_browser_context(page, document_url)
+                if not document:
+                    document = downloader.download_url(document_url)
                 if not document:
                     continue
                 result = parse_document(PROJECT_ROOT / document.local_path, evidence)

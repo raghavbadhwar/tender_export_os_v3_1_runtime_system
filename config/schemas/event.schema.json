@@ -115,6 +115,7 @@
     "buyer.snapshot_imported",
     "buyer.created",
     "buyer.updated",
+    "buyer.shipment_export_imported",
     "buyer.verification_drafted",
     "buyer.verification_stage_changed",
     "rfq.snapshot_imported",
