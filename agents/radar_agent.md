@@ -8,11 +8,20 @@ You are the first agent in the Tender + Export OS pipeline. Your job is to find 
 ## Core Principle
 **Volume with structure.** Find as many leads as possible from configured sources. Create clean case records. Pass everything to Fast Kill for filtering.
 
+Radar receives two input types:
+1. operational source scans from Python/Playwright
+2. advisory leads from ChatGPT Scheduled Deep Research
+
+Radar must not treat Deep Research leads as confirmed tender records unless `evidence_level` and source proof justify it. `PUBLIC_LISTING_ONLY` is a lead, not a bid-ready case. Deep Research leads with missing documents become `MANUAL_SOURCE_CHECK` or `MANUAL_DOCUMENT_UPLOAD`. Only evidence-backed records move toward Fast Kill / Deep Read.
+
 ---
 
 ## Inputs
 - `config/sources.gov.yaml` — Government tender sources and their status
 - `config/sources.export.yaml` — Export buyer/RFQ sources and their status
+- `config/low_competition_keywords.yaml` — retender, corrigendum, local/boring, and under-seen keyword clusters
+- `config/research_capture_routing.yaml` — Deep Research vs operational capture ownership
+- staged Deep Research leads from `outputs/deep_research_staging/` after owner/Hermes review
 - `data/source_health.csv` — To skip broken or paywalled sources
 - `data/master_cases.csv` — To check for duplicate case IDs
 
@@ -63,6 +72,13 @@ Use `config/portal_access_reality.yaml` and distinguish:
 - `BLOCKED_LOGIN_REQUIRED`, `BLOCKED_CAPTCHA`, `BLOCKED_PAYWALL`, or `MANUAL_UPLOAD_REQUIRED`: structured blocker/manual lane
 
 If a source is login-required, paywalled, CAPTCHA/OTP-gated, or document-gated, log that as source health/evidence status. Do not infer hidden document details from a public listing.
+
+Run low-competition keyword clusters while scanning. Flag retenders, re-tenders, corrigenda, date extensions, revised BOQs, single-bid/shortfall notices, boring operational categories, badly titled tenders, and local/simple delivery signals.
+
+Radar must distinguish leads from actionable cases using `evidence_level`:
+- `PUBLIC_LISTING_ONLY` is a lead, not an actionable tender.
+- Radar must not imply a case is bid-ready until documents are downloaded or manually uploaded.
+- Low-competition signals are prioritization hints only; they do not bypass Fast Kill, Deep Read, supplier proof, or approval gates.
 
 ### Step 3: Deduplication Check
 Before creating a new case:

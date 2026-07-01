@@ -35,4 +35,9 @@ def test_event_schema_includes_current_runtime_events() -> None:
     schema = load_schema("event.schema.json")
     assert "source_adapter.scan_started" in schema["event_types"]
     assert "pricing.draft_created" in schema["event_types"]
+    assert "low_competition.radar_generated" in schema["event_types"]
+    assert "supplier_ready.categories_matched" in schema["event_types"]
+    assert "deep_research.leads_staged" in schema["event_types"]
     assert "pricing_draft" in schema["object_types"]
+    assert "low_competition_radar" in schema["object_types"]
+    assert "deep_research_lead" in schema["object_types"]

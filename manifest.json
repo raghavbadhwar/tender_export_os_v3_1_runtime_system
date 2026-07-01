@@ -18,6 +18,9 @@
   "communication_contract": "docs/CHATGPT_CODEX_HERMES_DRIVE_COMMUNICATION.md",
   "chatgpt_packet_preparer": "scripts/prepare_chatgpt_drive_packet.py",
   "chatgpt_return_stager": "scripts/stage_chatgpt_return.py",
+  "hybrid_research_capture_contract": "docs/HYBRID_RESEARCH_AND_CAPTURE_MODEL.md",
+  "deep_research_lead_stager": "scripts/stage_deep_research_leads.py",
+  "deep_research_lead_schema": "config/schemas/deep_research_lead_schema.yaml",
   "layers": {
     "control_plane": "Hermes Chief Operating Agent",
     "durable_workboard": "Hermes Kanban (board: tender-export-os)",
@@ -63,6 +66,7 @@
     "config/memory_policy.yaml",
     "config/plugin_routing.yaml",
     "config/agent_capability_routing.yaml",
+    "config/research_capture_routing.yaml",
     "config/source_strategy.yaml",
     "config/sync_policy.yaml"
   ],

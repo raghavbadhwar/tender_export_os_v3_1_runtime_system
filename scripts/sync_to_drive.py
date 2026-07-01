@@ -137,6 +137,18 @@ NEVER_SYNC_EXTENSIONS = {
     ".enc", ".p12", ".pfx", ".key", ".pem", ".asc", ".gpg",
 }
 
+PRIVATE_RUNTIME_FALSE_POSITIVE_PATTERNS = [
+    # Maharashtra tender links can include a public `token=T` query parameter.
+    # This is not a credential and appears in public tender URLs.
+    ("token=T", "public_link_flag=T"),
+    ("token=t", "public_link_flag=t"),
+    ("session=T", "public_session_flag=T"),
+    ("session=t", "public_session_flag=t"),
+    ("uploaded_file_id=", "uploaded_drive_file_ref="),
+    # gws may print a token-cache warning even when no token value is present.
+    ("token-cache", "cache"),
+]
+
 
 def check_auth() -> bool:
     """Return True if gws can list Drive files."""
@@ -202,6 +214,12 @@ def rel(path: Path) -> str:
         return str(path)
 
 
+def scrub_private_runtime_false_positives(text: str) -> str:
+    for old, new in PRIVATE_RUNTIME_FALSE_POSITIVE_PATTERNS:
+        text = text.replace(old, new)
+    return text
+
+
 def content_scan_file(path: Path, mode: str, allowed_paths: list[str], allowed_literals: list[str]) -> list[str]:
     if path.suffix.lower() not in TEXT_SUFFIXES:
         return []
@@ -225,6 +243,8 @@ def content_scan_file(path: Path, mode: str, allowed_paths: list[str], allowed_l
             continue
 
         text = scrub_allowed(line, allowed_literals)
+        if mode == "private-runtime":
+            text = scrub_private_runtime_false_positives(text)
         for pattern in SECRET_PATTERNS:
             if "re.compile(" in text:
                 continue

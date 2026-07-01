@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Low-Competition Order Radar - {{generated_date}}</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 24px; background: #101418; color: #e7edf3; font-family: system-ui, -apple-system, Segoe UI, sans-serif; line-height: 1.5; }
+    main { max-width: 1040px; margin: 0 auto; }
+    h1 { margin: 0 0 6px; font-size: 26px; }
+    h2 { margin: 0; font-size: 16px; color: #d8dee7; }
+    .muted { color: #92a1b3; font-size: 13px; }
+    .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin: 18px 0; }
+    .metric { border: 1px solid #2a3541; background: #151c23; border-radius: 8px; padding: 12px; }
+    .metric strong { display: block; font-size: 22px; color: #8ad7a8; }
+    section { border-top: 1px solid #2a3541; padding: 18px 0; }
+    .card { border: 1px solid #2a3541; background: #151c23; border-radius: 8px; padding: 14px; margin: 10px 0; }
+    .card-head { display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+    .case { color: #7db5ff; font-weight: 700; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
+    .score { color: #8ad7a8; font-weight: 700; }
+    .title { margin: 6px 0; font-size: 15px; font-weight: 650; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px 14px; font-size: 13px; color: #aeb9c7; }
+    .flags { margin-top: 10px; font-size: 13px; color: #d8dee7; }
+    .badge { display: inline-block; border-radius: 4px; padding: 2px 7px; background: #253241; color: #c4d3e2; font-size: 11px; margin-right: 4px; }
+    .avoid { color: #ff9b9b; }
+    .watchlist { color: #ffd08a; }
+    .easy { color: #8ad7a8; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Low-Competition Order Radar</h1>
+  <div class="muted">Generated {{generated_at}}. Internal-only; no external send, upload, bid, payment, DSC, legal/tax certification, final price, or delivery commitment was executed.</div>
+  <div class="summary">
+    {{summary_cards}}
+  </div>
+  {{sections}}
+</main>
+</body>
+</html>

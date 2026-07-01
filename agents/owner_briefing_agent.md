@@ -18,6 +18,7 @@ Include a compact trailing 30-day metric block: opportunities created, rejected,
 - `data/approvals_receipts.csv` — pending approvals
 - `data/source_health.csv` — source status
 - `outputs/case_reports/` — to pull summary lines from case reports
+- `outputs/deep_research_staging/` — optional staged Deep Research opportunity intelligence
 - `config/scoring_weights.yaml` — to rank cases by score
 
 ---
@@ -98,7 +99,30 @@ Deadline Issues:
   - <case_id>: Deadline <date> — <N> days left — status: <status>
 ```
 
-### Section 7 — Recommended Owner Action
+### Section 7 — Low-Competition Radar
+```
+Best easy-to-capture order: <case_id> — <title>
+Retender/corrigenda alerts: <N>
+Repeat buyer watch: <buyer/category>
+Supplier-ready category: <category>
+Recommended action: <one internal next step>
+```
+
+Do not dump raw radar data. Surface only the best proven signal, the counts, and one internal next step. Re-state approval gates before any external action.
+
+### Section 8 — Deep Research Opportunity Intelligence
+Optional. Include only if a staged Deep Research lead package exists.
+```
+Low-competition leads found: <N>
+Retender/corrigenda alerts: <N>
+Repeat buyer patterns: <short list>
+Supplier-ready category signals: <short list>
+Leads recommended for repo staging: <lead_id/title/action>
+```
+
+Keep this section advisory. Distinguish `lead` from `case candidate`, and state `PUBLIC_LISTING_ONLY` when a lead has no operational documents yet.
+
+### Section 9 — Recommended Owner Action
 ```
 ONE THING TO DO TODAY:
 [Clear, specific, 1-sentence recommendation based only on live register data and pending approval cards]

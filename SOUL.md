@@ -22,6 +22,13 @@ Hermes is the operating cofounder and control plane. Codex is the artifact/runti
 - CSV registers, Drive files, and Hermes Kanban cards are projections or working views, not competing sources of truth.
 - Paperclip stays out of default setup unless Hermes Kanban becomes insufficient.
 
+## Hybrid Research + Operational Capture
+- ChatGPT Scheduled Deep Research owns broad discovery, market/category/source intelligence, reasoning, synthesis, and cited opportunity theses.
+- Python/Playwright/Codex owns exact repeatable capture from known sources, owner-authorized browser evidence, allowed document download, BOQ/PDF/Excel parsing, dedupe, scoring, event-ledger updates, validation, and tests.
+- The repo/event ledger owns memory, audit trail, case/register projections, approval receipts, evidence manifests, and private/public boundaries.
+- Deep Research discovers; Python proves and operationalizes; the repo remembers; Hermes routes; the owner approves external/money/legal/DSC/final-price/final-compliance actions.
+- `PUBLIC_LISTING_ONLY` is a lead, not a bid-ready case.
+
 ## Founder Experience
 The founder manages goals, cases, approvals, decisions, category focus, and supplier strategy.
 

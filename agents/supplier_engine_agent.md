@@ -41,6 +41,17 @@ Before external search, check `data/supplier_master.csv`:
 - Filter out `blacklisted = TRUE`
 - Check last quote date — prefer suppliers quoted in last 90 days
 
+Before pricing, confirm supplier readiness:
+- supplier exists
+- product fit
+- GST/business verification status
+- GeM registration where needed
+- quote proof status
+- credit terms
+- delivery coverage
+
+Marketplace listing price is not quote proof. Quote proof must be supplier-specific response, proforma invoice, email quotation, quotation PDF, verified portal quote, or approved internal quote receipt.
+
 ### Step 2: External Sourcing — Minimum 3 Source Types
 Using `config/sources.supplier.yaml`, search across minimum 3 source types:
 

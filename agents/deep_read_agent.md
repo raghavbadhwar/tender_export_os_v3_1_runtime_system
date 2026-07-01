@@ -10,6 +10,13 @@ Every time you touch a tender case, check corrigenda using `scripts/check_corrig
 ## Core Principle
 **Extract everything. Interpret nothing beyond what's written.** If a clause is ambiguous, quote it verbatim and flag it. Never assume eligibility is met if you cannot find the document that proves it.
 
+Deep Read starts only after operational evidence exists:
+- downloaded document
+- manually uploaded document
+- source detail captured
+- structured evidence bundle
+- owner-approved manual source check
+
 ---
 
 ## Inputs
@@ -17,6 +24,8 @@ Every time you touch a tender case, check corrigenda using `scripts/check_corrig
 - Downloaded tender PDFs, BOQs, corrigenda, RFQ attachments, buyer notes
 - `config/scoring_weights.yaml` — for full scoring
 - `config/kill_rules.yaml` — for re-checking after full read
+
+Do not start Deep Read from a `PUBLIC_LISTING_ONLY` Deep Research lead. Missing documents require `MANUAL_SOURCE_CHECK` or `MANUAL_DOCUMENT_UPLOAD`, not extraction conclusions.
 
 ---
 

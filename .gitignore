@@ -28,6 +28,7 @@ id_ed25519
 .local/
 .local/browser_profiles/
 browser_profiles/
+.hermes/
 
 # Live outputs and evidence
 outputs/**
@@ -52,4 +53,6 @@ Local Storage/
 Session Storage/
 downloads/
 artifacts/private/
+cases/*/HERMES.md
+cases/*/case.md
 cases/*/evidence/**

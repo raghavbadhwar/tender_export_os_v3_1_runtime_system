@@ -46,7 +46,13 @@
     "pipeline_error",
     "supplier_match",
     "compliance",
-    "execution"
+    "low_competition_radar",
+    "retender_corrigenda_watch",
+    "buyer_repeat_purchase",
+    "supplier_ready_category",
+    "deep_research_lead",
+    "execution",
+    "monitor_run"
   ],
   "event_types": [
     "system.snapshot_started",
@@ -87,6 +93,7 @@
     "chatgpt.return_staged",
     "chatgpt.return_rejected_schema_invalid",
     "drive.knowledge_bus_setup",
+    "drive.file_uploaded",
     "drive.chatgpt_packet_uploaded",
     "drive.lock_acquired",
     "drive.lock_released",
@@ -134,6 +141,12 @@
     "corrigendum.reviewed",
     "source_weight.recommendation_generated",
     "pipeline.error",
+    "low_competition.radar_generated",
+    "retender_corrigenda.watch_generated",
+    "buyer.repeat_purchase_analyzed",
+    "supplier_ready.categories_matched",
+    "deep_research.leads_staged",
+    "intraday_monitor.completed",
     "memory.proposal_staged",
     "skill.proposal_staged"
   ]

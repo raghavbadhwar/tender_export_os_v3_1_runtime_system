@@ -22,13 +22,29 @@ SAFE_COMMANDS = [
     ["scripts/validate_register_schemas.py", "--public-template"],
     ["scripts/validate_chatgpt_return.py", "--input", "tests/fixtures/chatgpt_returns/good_return.md"],
     ["scripts/test_source_adapters.py", "--safe", "--limit", "5"],
+    ["scripts/low_competition_order_radar.py", "--dry-run"],
+    ["scripts/retender_corrigenda_watch.py", "--dry-run"],
+    ["scripts/buyer_repeat_purchase_analyzer.py", "--dry-run"],
+    ["scripts/supplier_ready_category_matcher.py", "--dry-run"],
+    ["scripts/stage_deep_research_leads.py", "--input", "tests/fixtures/deep_research_leads/good_leads.json", "--dry-run"],
+    ["scripts/check_chatgpt_return_loop.py"],
+    ["scripts/kanban_blocked_task_drain.py", "--input", "tests/fixtures/kanban/blocked_tasks.json"],
     ["scripts/setup_drive_folders.py", "--dry-run"],
 ]
 
 
+def python_for_command(args: list[str]) -> str:
+    if args[:2] == ["-m", "pytest"]:
+        venv_python = PROJECT_ROOT / ".venv" / "bin" / "python"
+        if venv_python.exists():
+            return str(venv_python)
+    return sys.executable
+
+
 def run_command(args: list[str]) -> dict:
-    cmd = [sys.executable, *args]
-    result = subprocess.run(cmd, cwd=PROJECT_ROOT, capture_output=True, text=True, timeout=120)
+    cmd = [python_for_command(args), *args]
+    timeout = 600 if args[:2] == ["-m", "pytest"] else 180
+    result = subprocess.run(cmd, cwd=PROJECT_ROOT, capture_output=True, text=True, timeout=timeout)
     return {
         "command": " ".join(cmd),
         "returncode": result.returncode,

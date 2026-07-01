@@ -75,7 +75,12 @@ def normalize_row(row: dict[str, Any], headers: list[str]) -> dict[str, str]:
 
 def apply_update(current: dict[str, str], payload: dict[str, Any], headers: list[str]) -> dict[str, str]:
     row = dict(current)
-    updates = payload.get("updates") if isinstance(payload.get("updates"), dict) else payload
+    updates = payload
+    for nested_key in ("updates", "row", "after"):
+        nested_value = payload.get(nested_key) if isinstance(payload, dict) else None
+        if isinstance(nested_value, dict):
+            updates = nested_value
+            break
     for field, value in updates.items():
         if field in headers:
             row[field] = str(value if value is not None else "")

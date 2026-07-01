@@ -29,6 +29,23 @@ Use `08_ChatGPT_Bridge/` only for bounded packet exchange with ChatGPT, not as t
 
 Paperclip is not part of the default setup.
 
+## Hybrid Research + Operational Capture Routing
+
+The routing contract lives in `docs/HYBRID_RESEARCH_AND_CAPTURE_MODEL.md` and `config/research_capture_routing.yaml`.
+
+Deep Research discovers. Python/Playwright captures and proves. The repo remembers and audits. Hermes routes and enforces approvals. The owner decides external, money, legal, DSC, price, classification, origin, and delivery commitments.
+
+Use this decision rule:
+- If the task needs broad judgment across unknown sources -> ChatGPT Deep Research.
+- If the task needs exact repetition on known sources -> Python/Playwright.
+- If the task needs login/session/download/BOQ parsing -> Python/Playwright with approval boundaries.
+- If the task needs market/category/source discovery -> ChatGPT Deep Research.
+- If the task needs memory, dedupe, approvals, tests -> repo/Python.
+
+For low-competition orders: ChatGPT Scheduled Deep Research finds the low-competition thesis and source/category signals. Python proves, tracks, dedupes, scores, and stores the shortlisted evidence.
+
+Deep Research leads are advisory until staged and evidenced through `docs/DEEP_RESEARCH_TO_REPO_STAGING.md` and `config/schemas/deep_research_lead_schema.yaml`. `PUBLIC_LISTING_ONLY` is a lead, not a bid-ready case.
+
 ### Agent 0 — Hermes Chief Operator
 **File:** `agents/hermes_chief_operator.md`
 
@@ -79,6 +96,7 @@ Every agent MUST:
 7. Use ChatGPT only through bounded snapshots for research and strategy, not as operational source of truth or final compliance authority
 8. Treat `data/events.jsonl` as the v4.1 append-only canonical state stream; CSVs, Drive, and Kanban are projections or working views
 9. Keep stable Drive-shared context in `00_Project_Context`; use `08_ChatGPT_Bridge` only for active packet handoff lanes
+10. Route Deep Research leads through staging and evidence checks before operational case movement
 
 ## Best-in-Class Capability Overlay
 
@@ -88,6 +106,7 @@ Before specialist work, agents should identify their professional standard and c
 - research/browser/data work → use the Radar/Briefing/Chief Operator routing bundle
 - tender/RFQ extraction → use Deep Read document/PDF/spreadsheet routing
 - sourcing/procurement → use Supplier Engine 5-3-2 and supplier-performance routing
+- low-competition order capture → use Low-Competition Order Radar signals, then Fast Kill/Deep Read/Supplier Engine gates
 - pricing/margin → use Pricing Agent finance/xlsx/profit-margin routing
 - export compliance → use Compliance Agent draft-only DGFT/SCOMET/Incoterms routing
 - packs/artifacts → use Pack Builder or Codex Plugin Factory routing
@@ -106,25 +125,34 @@ These libraries improve internal drafts and artifacts only. They do not authoriz
 ### Agent 1 — Radar Agent
 **File:** `agents/radar_agent.md`
 
-**Purpose:** Find new government tenders and export/RFQ opportunities. Assign case IDs. Do not deep-read every lead.
+**Purpose:** Find new government tenders and export/RFQ opportunities. Assign case IDs. Do not deep-read every lead. Also flag legally public, under-seen, low-competition signals for downstream triage.
 
 **Runs:** Daily (automated) or on-demand
 
 **Inputs:**
 - `config/sources.gov.yaml` and `config/sources.export.yaml`
+- `config/low_competition_keywords.yaml`
+- `config/research_capture_routing.yaml`
 - `data/source_health.csv`
 - `data/master_cases.csv` (to avoid duplicate case creation)
 
 **Outputs:**
 - New rows in `data/master_cases.csv` with status = `NEW`
 - Updated `data/source_health.csv`
+- Low-competition flags for retenders/corrigenda/date extensions, repeat-buyer candidates, boring operational categories, and evidence level
 - Row in `data/agent_run_log.csv`
 
 **Stop conditions:**
 - Source is paywalled or login-required → log in source_health, skip
 - Already seen opportunity (duplicate case_id check) → skip
 
-**Must not:** Deep-read every lead (hand off to Fast Kill first), fabricate data
+**Must not:** Deep-read every lead (hand off to Fast Kill first), fabricate data, imply `PUBLIC_LISTING_ONLY` leads are bid-ready, bypass portal access controls, or treat low-competition as an override for hard kill/approval gates.
+
+Radar receives two input types:
+1. operational source scans from Python/Playwright
+2. advisory leads from ChatGPT Scheduled Deep Research
+
+Radar must not treat Deep Research leads as confirmed tender records unless `evidence_level` and source proof justify it. `PUBLIC_LISTING_ONLY` is a lead, not a bid-ready case. Deep Research lead with missing documents becomes `MANUAL_SOURCE_CHECK` or `MANUAL_DOCUMENT_UPLOAD`. Only evidence-backed records move toward Fast Kill / Deep Read.
 
 ---
 
@@ -152,6 +180,8 @@ These libraries improve internal drafts and artifacts only. They do not authoriz
 
 **Must not:** Reject opportunities due to cost alone without checking supplier options; fabricate rejection reasons
 
+Do not fast-kill or promote Deep Research leads without evidence. If evidence is insufficient, mark the staged lead as `WATCH` or `MANUAL_SOURCE_CHECK`, or keep the case in `WATCHLIST`; do not mark it `REJECTED` or `DEEP_READ`.
+
 ---
 
 ### Agent 3 — Deep Read Agent
@@ -177,6 +207,13 @@ These libraries improve internal drafts and artifacts only. They do not authoriz
 - Eligibility clearly not met → pass to Fast Kill for rejection
 
 **Must not:** Interpret ambiguous eligibility as met; claim compliance with unread clauses
+
+Deep Read starts only after operational evidence exists:
+- downloaded document
+- manually uploaded document
+- source detail captured
+- structured evidence bundle
+- owner-approved manual source check
 
 ---
 
@@ -391,7 +428,13 @@ TODAY'S OWNER BRIEF — [DATE]
 6. Risks and blockers
    Source issues | Supplier issues | Compliance issues | Deadline issues
 
-7. Recommended owner action
+7. Low-Competition Radar
+   Best proven low-competition signal | Retender/corrigenda count | Repeat-buyer watch | Supplier-ready category
+
+8. Deep Research Opportunity Intelligence
+   Low-competition leads found | Retender/corrigenda alerts | Repeat buyer patterns | Supplier-ready category signals | Leads recommended for repo staging
+
+9. Recommended owner action
    One smallest useful action for today
 ```
 

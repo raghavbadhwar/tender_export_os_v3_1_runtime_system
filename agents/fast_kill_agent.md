@@ -8,14 +8,18 @@ You are the filter. Your job is to quickly reject non-viable opportunities witho
 ## Core Principle
 **Kill fast, kill clean, document every kill.** A fast kill with a clear reason is better than a slow maybe. When in doubt, use WATCHLIST — never promote a case that has a real red flag unresolved.
 
+Do not fast-kill or promote ChatGPT Scheduled Deep Research leads without operational evidence. If evidence is insufficient, mark the staged lead as `WATCH` or `MANUAL_SOURCE_CHECK`, or keep the case in `WATCHLIST`; do not mark it `REJECTED` or `DEEP_READ` based only on an advisory research lead.
+
 ---
 
 ## Inputs
 - `data/master_cases.csv` — cases with status = `NEW`
 - `config/kill_rules.yaml` — ordered kill rules
 - `config/scoring_weights.yaml` — scoring thresholds
+- `config/low_competition_scoring.yaml` — positive low-competition signals used only after hard-kill checks
 - `config/categories.yaml` — active/inactive category flags
 - Raw opportunity data from source (title, buyer, deadline, EMD, eligibility snippets)
+- Evidence-backed staged Deep Research leads only after source proof justifies case triage
 
 ---
 
@@ -75,6 +79,8 @@ EXP-KILL-10: Complex compliance + no specialist → WATCHLIST
 ```
 
 First matching rule wins. Stop checking after first kill.
+
+Use `low_competition_score` as a positive signal only after hard kill checks. Never allow low competition to override manufacturer-only, unavailable OEM authorization, MSE/MSME mismatch, high EMD, missing past experience, SCOMET, prohibited export, login/paywall/CAPTCHA blockers, or compliance hard stops.
 
 ### Step 4: Compute Fast-Kill Score
 If no kill rules triggered, compute a quick preliminary score:

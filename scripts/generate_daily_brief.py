@@ -13,6 +13,7 @@ import argparse
 import csv
 import datetime
 import html
+import json
 import os
 import subprocess
 import sys
@@ -26,6 +27,7 @@ from scripts.approval_lifecycle import classify_approval
 DATA_DIR = os.path.join(PROJECT_ROOT, 'data')
 TEMPLATES_DIR = os.path.join(PROJECT_ROOT, 'templates')
 OUTPUTS_DIR = os.path.join(PROJECT_ROOT, 'outputs', 'daily_briefs')
+LOW_COMPETITION_DIR = os.path.join(PROJECT_ROOT, 'outputs', 'low_competition_radar')
 
 MASTER_CASES_FILE = os.path.join(DATA_DIR, 'master_cases.csv')
 APPROVALS_FILE = os.path.join(DATA_DIR, 'approvals_receipts.csv')
@@ -336,6 +338,57 @@ def render_verified_buyer_demand(rfqs):
     return '\n'.join(cards)
 
 
+def load_latest_low_competition_report(date_str=None):
+    """Load the latest low-competition radar JSON, preferring the brief date."""
+    candidates = []
+    if date_str:
+        preferred = os.path.join(LOW_COMPETITION_DIR, f'low_competition_order_radar_{date_str}.json')
+        if os.path.exists(preferred):
+            candidates.append(preferred)
+    if os.path.isdir(LOW_COMPETITION_DIR):
+        for name in os.listdir(LOW_COMPETITION_DIR):
+            if name.startswith('low_competition_order_radar_') and name.endswith('.json'):
+                candidates.append(os.path.join(LOW_COMPETITION_DIR, name))
+    if not candidates:
+        return None
+    latest = max(set(candidates), key=lambda path: os.path.getmtime(path))
+    try:
+        with open(latest, 'r', encoding='utf-8') as f:
+            report = json.load(f)
+            report['_report_path'] = latest
+            return report
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
+def render_low_competition_radar(report):
+    if not report:
+        return '<p style="color:#94a3b8">No low-competition radar report found. Run the radar dry-run to generate a local internal report.</p>'
+    sections = report.get('sections', {})
+    best = (sections.get('best_easy_to_capture_orders') or [{}])[0]
+    retender_count = len(sections.get('retenders_corrigenda_date_extensions') or [])
+    repeat = (sections.get('repeat_buyers') or [{}])[0]
+    supplier_ready = (sections.get('supplier_ready_categories') or [{}])[0]
+    action = ((sections.get('next_owner_action') or [{}])[0]).get('recommended_action', 'No recommended action available.')
+    best_title = best.get('title') or 'None proven'
+    best_case = best.get('case_id') or '—'
+    best_score = best.get('low_competition_score') or '—'
+    repeat_label = repeat.get('buyer') or repeat.get('buyer_name') or 'None proven'
+    supplier_label = supplier_ready.get('label') or supplier_ready.get('category') or 'None proven'
+    supplier_score = supplier_ready.get('supplier_readiness_score') or '—'
+    return f"""
+    <div class="case-card">
+      <div class="case-id">LOW-COMPETITION RADAR · <span class="score-badge">{esc(best_score)}/100</span></div>
+      <div class="case-title">{esc(best_case)} — {esc(best_title)}</div>
+      <div class="case-meta">
+        <span>Retender/corrigenda alerts: {esc(retender_count)}</span>
+        <span>Repeat buyer watch: {esc(repeat_label)}</span>
+        <span>Supplier-ready category: {esc(supplier_label)} ({esc(supplier_score)}/100)</span>
+      </div>
+      <div class="next-step">Recommended: {esc(action)}</div>
+    </div>"""
+
+
 def render_approval_cards(approvals, cases_by_id):
     if not approvals:
         return '<p style="color:#94a3b8">No pending approvals.</p>'
@@ -410,6 +463,7 @@ def generate_brief(date_str=None, send_gateway=False, gateway='telegram', log_ru
     run_log = load_csv(RUN_LOG_FILE)
     plugin_health = load_csv(PLUGIN_HEALTH_FILE)
     rfqs = load_csv(RFQ_MASTER_FILE)
+    low_competition_report = load_latest_low_competition_report(date_str)
 
     # Compute data
     stats = get_todays_stats(cases, run_log, date_str)
@@ -465,6 +519,7 @@ def generate_brief(date_str=None, send_gateway=False, gateway='telegram', log_ru
         '{{PENDING_SUPPLIER_PROOF}}': render_pending_supplier_proof(cases),
         '{{APPROVAL_REQUIRED}}': render_approval_cards(pending_approvals, cases_by_id),
         '{{RISKS_BLOCKERS}}': render_risks(source_issues, plugin_issues, urgent_deadlines, cases, rfqs),
+        '{{LOW_COMPETITION_RADAR}}': render_low_competition_radar(low_competition_report),
         '{{RECOMMENDED_ACTION}}': rec,
         '{{TRAILING_30_METRICS}}': render_trailing_metrics(trailing_metrics),
     }
@@ -495,12 +550,13 @@ def generate_brief(date_str=None, send_gateway=False, gateway='telegram', log_ru
             pending_approvals,
             today_display,
             gateway,
+            low_competition_report,
         )
 
     return output_path
 
 
-def send_gateway_brief(cases, approvals, source_health, run_log, stats, best_opps, source_issues, urgent_deadlines, pending_approvals, date_display, gateway):
+def send_gateway_brief(cases, approvals, source_health, run_log, stats, best_opps, source_issues, urgent_deadlines, pending_approvals, date_display, gateway, low_competition_report=None):
     """Compile and send a text version of the daily brief through an explicitly requested Hermes gateway."""
     lines = []
     lines.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
@@ -605,6 +661,22 @@ def send_gateway_brief(cases, approvals, source_health, run_log, stats, best_opp
     lines.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
     lines.append("")
     
+    lines.append("7. LOW-COMPETITION RADAR")
+    report = low_competition_report or {}
+    sections = report.get('sections', {})
+    best = (sections.get('best_easy_to_capture_orders') or [{}])[0]
+    supplier_ready = (sections.get('supplier_ready_categories') or [{}])[0]
+    repeat = (sections.get('repeat_buyers') or [{}])[0]
+    action = ((sections.get('next_owner_action') or [{}])[0]).get('recommended_action', 'Run low-competition radar dry-run.')
+    lines.append(f"   Best easy-to-capture order: {best.get('case_id', 'None proven')} — {best.get('title', '')}")
+    lines.append(f"   Retender/corrigenda alerts: {len(sections.get('retenders_corrigenda_date_extensions') or [])}")
+    lines.append(f"   Repeat buyer watch: {repeat.get('buyer') or repeat.get('buyer_name') or 'None proven'}")
+    lines.append(f"   Supplier-ready category: {supplier_ready.get('label') or supplier_ready.get('category') or 'None proven'}")
+    lines.append(f"   Recommended action: {action}")
+    lines.append("")
+    lines.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    lines.append("")
+
     # Recommended Action
     if pending_approvals:
         rec = f"Review and decide on approval card for {pending_approvals[0].get('case_id', '?')} — action required."
@@ -614,7 +686,7 @@ def send_gateway_brief(cases, approvals, source_health, run_log, stats, best_opp
     else:
         rec = "No urgent actions today. Consider running a manual source scan."
         
-    lines.append("7. RECOMMENDED ACTION TODAY")
+    lines.append("8. RECOMMENDED ACTION TODAY")
     lines.append(f"   ⭐ {rec}")
     lines.append("")
     lines.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")

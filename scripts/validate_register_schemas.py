@@ -158,6 +158,8 @@ def validate_events(public_template: bool = False) -> list[str]:
     if not path.exists():
         return [f"{label}: file missing; run scripts/initialize_event_ledger.py --overwrite"]
 
+    from event_ledger import validate_event
+
     seen: set[str] = set()
     with path.open("r", encoding="utf-8") as f:
         for index, line in enumerate(f, start=1):
@@ -187,6 +189,8 @@ def validate_events(public_template: bool = False) -> list[str]:
                 errors.append(f"{label}:{index}: payload must be object")
             if not isinstance(event.get("citations"), list):
                 errors.append(f"{label}:{index}: citations must be list")
+            for strict_error in validate_event(event):
+                errors.append(f"{label}:{index}: {strict_error}")
     return errors
 
 

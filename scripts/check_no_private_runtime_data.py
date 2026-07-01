@@ -45,6 +45,30 @@ PUBLIC_EXCEPTIONS = [
     "data/examples/**",
 ]
 
+# Public-template scans should cover only the sanitized/public surface that can
+# be shared as a template or manual. They must not walk the whole repository and
+# then try to subtract private runtime paths, because new private folders such as
+# cases/, .hermes/plans/, or ad-hoc audit outputs can otherwise leak into the
+# public scan before an exclusion rule is added.
+PUBLIC_TEMPLATE_INCLUDE_PATTERNS = [
+    "AGENTS.md",
+    "HERMES.md",
+    "README.md",
+    "SOUL.md",
+    "docs/**/*.md",
+    "config/*.yaml",
+    "config/schemas/*.json",
+    "config/schemas/*.yaml",
+    "data/examples/**/*",
+    "outputs/examples/**/*",
+    "receipts/examples/**/*",
+    "templates/**/*",
+    "scripts/check_no_private_runtime_data.py",
+    "scripts/system_health_check.py",
+    "scripts/validate_register_schemas.py",
+    "tests/fixtures/**/*",
+]
+
 TRACKED_PRIVATE_PATH_PATTERNS = [
     "data/**",
     "outputs/**",
@@ -154,7 +178,25 @@ def git_tracked_private_runtime_paths() -> list[str]:
     return sorted(path for path in result.stdout.splitlines() if is_tracked_private_runtime_path(path))
 
 
+def iter_public_template_scan_files() -> Iterable[Path]:
+    seen: set[Path] = set()
+    for pattern in PUBLIC_TEMPLATE_INCLUDE_PATTERNS:
+        for path in PROJECT_ROOT.glob(pattern):
+            if not path.is_file():
+                continue
+            if path.suffix.lower() not in TEXT_SUFFIXES:
+                continue
+            resolved = path.resolve()
+            if resolved in seen:
+                continue
+            seen.add(resolved)
+            yield path
+
+
 def iter_scan_files(public_template: bool) -> Iterable[Path]:
+    if public_template:
+        yield from iter_public_template_scan_files()
+        return
     for root, dirs, files in os.walk(PROJECT_ROOT):
         root_path = Path(root)
         dirs[:] = [
@@ -164,8 +206,6 @@ def iter_scan_files(public_template: bool) -> Iterable[Path]:
         ]
         for name in files:
             path = root_path / name
-            if public_template and is_private_runtime_path(path):
-                continue
             if path.suffix.lower() not in TEXT_SUFFIXES:
                 continue
             yield path
@@ -212,7 +252,8 @@ def main() -> int:
     allowed_paths, allowed_literals = parse_allowlist(Path(args.allowlist))
     findings: list[str] = []
     tracked_private_paths = git_tracked_private_runtime_paths()
-    findings.extend(f"git-tracked-private-runtime-path:{path}" for path in tracked_private_paths)
+    if not args.public_template:
+        findings.extend(f"git-tracked-private-runtime-path:{path}" for path in tracked_private_paths)
     for path in iter_scan_files(args.public_template):
         relative = rel(path)
         allowed_by_path = matches(relative, allowed_paths)

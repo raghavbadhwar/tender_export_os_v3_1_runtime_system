@@ -1,0 +1,26 @@
+{
+  "research_report_id": "DR-20260701-FORBIDDEN-ACTION",
+  "leads": [
+    {
+      "lead_id": "DRL-20260701-BAD-001",
+      "research_report_id": "DR-20260701-FORBIDDEN-ACTION",
+      "source_url": "https://example.gov.in/tenders/bad-action",
+      "source_name": "Example Procurement Page",
+      "buyer_name": "Example Municipal Office",
+      "buyer_type": "Municipality",
+      "workflow_type": "GOV",
+      "category": "stationery",
+      "lead_title": "Stationery supply listing",
+      "location": "Indore, Madhya Pradesh",
+      "deadline": "2026-07-09",
+      "evidence_level": "PUBLIC_LISTING_ONLY",
+      "why_interesting": "Small institutional purchase.",
+      "why_low_competition": "Low-value boring category.",
+      "fulfilment_hypothesis": "Could be easy if source evidence supports it.",
+      "risks": "Listing-only lead.",
+      "missing_info": "Tender document and BOQ.",
+      "recommended_repo_action": "SEND_QUOTE",
+      "owner_review_required": true
+    }
+  ]
+}

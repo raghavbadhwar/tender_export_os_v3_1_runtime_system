@@ -55,6 +55,7 @@ events:
   chatgpt.return_staged: {object_type: chatgpt_return, citation_required: true}
   chatgpt.return_rejected_schema_invalid: {object_type: chatgpt_return, citation_required: true, required_payload_fields: [reason]}
   drive.knowledge_bus_setup: {object_type: drive_folder, citation_required: true}
+  drive.file_uploaded: {object_type: drive_upload, citation_required: true}
   drive.chatgpt_packet_uploaded: {object_type: drive_upload, citation_required: true}
   drive.lock_acquired: {object_type: drive_lock}
   drive.lock_released: {object_type: drive_lock}
@@ -102,5 +103,11 @@ events:
   corrigendum.reviewed: {object_type: corrigendum, citation_required: true}
   source_weight.recommendation_generated: {object_type: source_weight, citation_required: true}
   pipeline.error: {object_type: pipeline_error, required_payload_fields: [reason]}
+  low_competition.radar_generated: {object_type: low_competition_radar, citation_required: true, required_payload_fields: [run_id, report_path, records_analyzed, top_candidates_count, created_at]}
+  retender_corrigenda.watch_generated: {object_type: retender_corrigenda_watch, citation_required: true, required_payload_fields: [run_id, report_path, records_analyzed, top_candidates_count, created_at]}
+  buyer.repeat_purchase_analyzed: {object_type: buyer_repeat_purchase, citation_required: true, required_payload_fields: [run_id, report_path, records_analyzed, top_candidates_count, created_at]}
+  supplier_ready.categories_matched: {object_type: supplier_ready_category, citation_required: true, required_payload_fields: [run_id, report_path, records_analyzed, top_candidates_count, created_at]}
+  deep_research.leads_staged: {object_type: deep_research_lead, citation_required: true, required_payload_fields: [staging_id, lead_count, output_path]}
+  intraday_monitor.completed: {object_type: monitor_run, citation_required: true, required_payload_fields: [schedule_id, report_path, status]}
   memory.proposal_staged: {object_type: memory_proposal, citation_required: true}
   skill.proposal_staged: {object_type: skill_proposal, citation_required: true}

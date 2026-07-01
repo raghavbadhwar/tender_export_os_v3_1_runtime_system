@@ -193,3 +193,5 @@ settings:
   auto_reject_scomet: true
   watchlist_borderline_categories: ["EXP-AGRI-001"]  # Export policy changes frequently
   review_frequency_days: 30
+  low_competition_category_config: "config/low_competition_categories.yaml"
+  low_competition_scope: "Internal prioritization only; does not override eligibility, supplier proof, compliance, or approval gates."

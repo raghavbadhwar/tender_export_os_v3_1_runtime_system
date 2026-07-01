@@ -1,0 +1,26 @@
+{
+  "research_report_id": "DR-20260701-PUBLIC-LISTING",
+  "leads": [
+    {
+      "lead_id": "DRL-20260701-PUBLIC-001",
+      "research_report_id": "DR-20260701-PUBLIC-LISTING",
+      "source_url": "https://example.gov.in/tenders/public-listing-only",
+      "source_name": "Example Public Listing",
+      "buyer_name": "Example District Office",
+      "buyer_type": "District Office",
+      "workflow_type": "GOV",
+      "category": "printer AMC",
+      "lead_title": "Printer AMC public listing",
+      "location": "Jaipur, Rajasthan",
+      "deadline": "2026-07-10",
+      "evidence_level": "PUBLIC_LISTING_ONLY",
+      "why_interesting": "Simple recurring maintenance category.",
+      "why_low_competition": "AMC listing with generic title may be under-seen.",
+      "fulfilment_hypothesis": "Possible local service category after documents are checked.",
+      "risks": "No documents downloaded.",
+      "missing_info": "Detailed scope, EMD, eligibility, SLA, buyer documents.",
+      "recommended_repo_action": "CREATE_CASE_CANDIDATE_AFTER_EVIDENCE",
+      "owner_review_required": true
+    }
+  ]
+}

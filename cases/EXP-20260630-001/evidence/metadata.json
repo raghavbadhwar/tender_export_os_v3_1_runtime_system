@@ -1,29 +1,10 @@
 {
   "case_id": "EXP-20260630-001",
   "workflow_type": "EXPORT",
-  "created_or_refreshed_at": "2026-06-30T07:31:42+00:00",
+  "created_or_refreshed_at": "2026-07-01T07:38:56+00:00",
   "source_name": "Alibaba RFQ",
   "source_url": "https://rfq.alibaba.com",
-  "evidence_items": [
-    {
-      "path": "cases/EXP-20260630-001/evidence/downloaded_docs/alibaba_rfq_landing_20260630.headers.txt",
-      "sha256": "843c52b7eedb73442628e4e0f456118095067961ba323ca42f61e37908bc5cac"
-    },
-    {
-      "path": "cases/EXP-20260630-001/evidence/downloaded_docs/alibaba_rfq_landing_20260630.html",
-      "sha256": "3ca739ddcbd44ee255cb0121412a969b8852dec02c9fd43de64a14f0224af002"
-    },
-    {
-      "path": "cases/EXP-20260630-001/evidence/extracted_text/alibaba_rfq_landing_20260630.txt",
-      "sha256": "2c8134628b1eb0b0558c7cefa00710b1c1b66c0e480fc47ac4657606ae489eaa"
-    },
-    {
-      "path": "cases/EXP-20260630-001/evidence/extracted_text/rfq_evidence_intake_EXP-20260630-001.md",
-      "sha256": "c9ca5605a9719084654a3fa2c57bcb956d4700e962d5271054359fb8ca3590f7"
-    }
-  ],
+  "evidence_items": [],
   "hash_manifest": "cases/EXP-20260630-001/evidence/hashes/sha256sums.txt",
-  "notes": "Populate evidence_items when source pages, PDFs, screenshots, or extracted text are captured.",
-  "refreshed_at": "2026-06-30T07:37:33+00:00",
-  "evidence_item_count": 4
+  "notes": "Populate evidence_items when source pages, PDFs, screenshots, or extracted text are captured."
 }

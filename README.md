@@ -11,6 +11,22 @@ v4.1 adds an append-only event ledger, schema validation, projection rebuilds, o
 
 The max-capability upgrade adds live Hermes cron operating loops, per-case workspaces, evidence bundles, executable Kanban task graphs, structured approval-card JSON, founder quick commands, and an expanded event taxonomy. The agent-excellence upgrade tunes each agent to a best-in-class professional standard and maps Claude plugins/Accio skills into safe capability bundles. See `docs/MAX_CAPABILITY_UPGRADE_ROADMAP.md`, `docs/FOUNDER_QUICK_COMMANDS.md`, `docs/AGENT_EXCELLENCE_SYSTEM.md`, and `docs/ROLE_CAPABILITY_STANDARDS.md`.
 
+v4.1.2 now includes the Hybrid Research + Operational Capture correction and Low-Competition Order Radar operating lane: an internal-only prioritization layer for legally public, under-seen, boring, local, repeated, retendered, corrigendum-driven, low-EMD, and supplier-ready orders. It does not bypass portals or approval gates and does not send, submit, upload, pay, use DSC, commit final price/delivery, or certify compliance.
+
+The hybrid research + operational capture model makes that boundary executable:
+- Deep Research discovers.
+- Python/Playwright captures and proves.
+- The repo remembers and audits.
+- Hermes routes and approves.
+- The owner decides external commitments.
+
+Routing source of truth:
+- `docs/HYBRID_RESEARCH_AND_CAPTURE_MODEL.md`
+- `docs/DEEP_RESEARCH_TO_REPO_STAGING.md`
+- `docs/DRIVE_CHATGPT_PRIVACY_BOUNDARY.md`
+- `config/research_capture_routing.yaml`
+- `config/schemas/deep_research_lead_schema.yaml`
+
 Communication between ChatGPT and Codex/Hermes runs through Google Drive:
 
 ```text
@@ -18,6 +34,8 @@ Tender Export OS - Knowledge Bus/08_ChatGPT_Bridge/
 ```
 
 Codex/Hermes writes bounded packets to `01_To_ChatGPT`; ChatGPT returns research to `02_From_ChatGPT`; Hermes/Codex stages and reviews returns before anything reaches the event ledger or registers.
+
+ChatGPT Scheduled Deep Research is for broad discovery, market/category/source intelligence, reasoning, synthesis, and cited reports. Python/Playwright Source Runtime is for exact repeatable capture from known sources, evidence downloads where allowed, BOQ/PDF parsing, dedupe, scoring, state updates, validation, and tests. Python must not become a broad arbitrary-web research machine.
 
 It runs a structured pipeline across two workflows:
 
@@ -192,6 +210,59 @@ python3 scripts/score_opportunity.py --case_id GOV-20260630-001
 python3 scripts/generate_chatgpt_snapshot.py
 ```
 
+### Low-Competition Order Radar
+Run these internal-only analyzers to find legally public, under-seen order opportunities:
+
+```bash
+python3 scripts/low_competition_order_radar.py --dry-run
+python3 scripts/retender_corrigenda_watch.py --dry-run
+python3 scripts/buyer_repeat_purchase_analyzer.py --dry-run
+python3 scripts/supplier_ready_category_matcher.py --dry-run
+```
+
+Outputs are written under `outputs/low_competition_radar/`. `PUBLIC_LISTING_ONLY` rows remain leads, not bid-ready cases. Marketplace listing prices are not quote proof; supplier-specific quote evidence is required before pricing.
+
+### Scheduled Deep Research Tasks
+The prompt files under `scheduled_deep_research_tasks/` are for ChatGPT Scheduled Deep Research, not Python scraping:
+
+```text
+scheduled_deep_research_tasks/daily_low_competition_order_radar.md
+scheduled_deep_research_tasks/daily_retender_corrigenda_watch.md
+scheduled_deep_research_tasks/weekly_repeat_buyer_review.md
+scheduled_deep_research_tasks/weekly_supplier_ready_category_review.md
+scheduled_deep_research_tasks/weekly_export_opportunity_intelligence.md
+```
+
+These reports may identify leads and case candidates for later staging. They do not mutate repo state, approve actions, send messages, submit/upload/pay/use DSC, or make final price, HSN/ITC-HS, origin, legal, tax, or compliance claims.
+
+Stage a saved Deep Research lead report with:
+
+```bash
+python3 scripts/stage_deep_research_leads.py --input <file> --dry-run
+python3 scripts/stage_deep_research_leads.py --input <file> --stage
+```
+
+Default behavior is dry-run/staging only. `PUBLIC_LISTING_ONLY` remains a lead, not a bid-ready case. `DOCUMENTS_DOWNLOADED` or manually uploaded evidence can become a case candidate only after operational review.
+
+### Hybrid Example Workflows
+Workflow A: New category discovery
+1. Deep Research finds low-competition categories.
+2. Owner selects categories.
+3. Repo adds source/keyword watch.
+4. Python scans known sources repeatedly.
+
+Workflow B: Specific tender proof
+1. Deep Research flags a possible retender.
+2. Lead is staged.
+3. Python/Playwright checks source.
+4. Documents/evidence are captured.
+5. Case enters Fast Kill/Deep Read only if evidence supports it.
+
+Workflow C: Export opportunity
+1. Deep Research identifies buyer/product market.
+2. Lead is staged.
+3. Repo validates buyer, supplier readiness, compliance category, and quote proof.
+
 ### Deep Source Access Runtime
 Install the browser/document parsing dependencies before running authorised deep source access:
 
@@ -304,6 +375,7 @@ tender-export-os/
 ├── agents/                      ← Agent instruction files
 ├── skills/                      ← v4 reusable Hermes/Codex workflow skills
 ├── chatgpt_project/             ← Boardroom instructions and research prompts
+├── scheduled_deep_research_tasks/ ← ChatGPT Scheduled Deep Research prompt files
 ├── workflows/                   ← Runtime flow documents and agent loop handoff
 ├── templates/                   ← Email, approval card, brief templates
 ├── hermes/                      ← Hermes mobile command center config
@@ -417,6 +489,7 @@ Public-template checks never upload, send, submit, pay, use DSC, or commit prici
 .venv/bin/python scripts/check_no_private_runtime_data.py --public-template
 .venv/bin/python scripts/system_health_check.py --public-template
 .venv/bin/python scripts/run_full_safe_regression.py
+.venv/bin/python scripts/stage_deep_research_leads.py --input tests/fixtures/deep_research_leads/good_leads.json --dry-run
 .venv/bin/pytest
 ```
 
@@ -452,7 +525,11 @@ The GeM/CPPP commands are read-only browser scans. CAPTCHA, OTP, login walls, pa
 - `docs/PAPERCLIP_DECISION.md`
 - `docs/APPROVAL_BOUNDARIES.md`
 - `docs/WEB_BROWSER_RESEARCH_ROUTING.md`
-- `docs/CHATGPT_CODEX_HERMES_DRIVE_COMMUNICATION.md`
+- `docs/HYBRID_RESEARCH_AND_CAPTURE_MODEL.md`
+- `docs/DEEP_RESEARCH_TO_REPO_STAGING.md`
+- `docs/DRIVE_CHATGPT_PRIVACY_BOUNDARY.md`
+- `config/research_capture_routing.yaml`
+
 - `data/events.jsonl`
 - `config/schemas/`
 - `scripts/validate_register_schemas.py`
@@ -462,5 +539,6 @@ The GeM/CPPP commands are read-only browser scans. CAPTCHA, OTP, login walls, pa
 - `scripts/reconcile_hermes_kanban.py`
 - `scripts/prepare_chatgpt_drive_packet.py`
 - `scripts/stage_chatgpt_return.py`
+- `scripts/stage_deep_research_leads.py`
 
 *System version: v4.1 | Hermes-native | Event-ledger hardened | Built for one-founder operation | Safe for semi-autonomous daily use*

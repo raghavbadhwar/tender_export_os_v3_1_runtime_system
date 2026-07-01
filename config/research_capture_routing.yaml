@@ -1,0 +1,95 @@
+version: 1
+
+deep_research_owns:
+  - broad_market_discovery
+  - low_competition_category_discovery
+  - export_country_research
+  - supplier_market_research
+  - buyer_pattern_discovery
+  - weekly_opportunity_intelligence
+  - competitor_landscape
+  - past_award_landscape_research
+  - source_discovery
+  - new_category_thesis
+  - new_source_scouting
+
+python_playwright_owns:
+  - known_source_scan
+  - exact_portal_monitoring
+  - public_listing_capture
+  - owner_authorized_browser_evidence
+  - document_download_when_allowed
+  - pdf_boq_excel_parsing
+  - corrigenda_diffing
+  - dedupe
+  - case_id_generation
+  - event_ledger_update
+  - schema_validation
+  - source_health
+  - scoring
+  - regression_tests
+  - html_report_from_structured_data
+
+repo_owns:
+  - canonical_event_stream
+  - case_register_projections
+  - supplier_master
+  - buyer_master
+  - quote_master
+  - approval_receipts
+  - evidence_manifests
+  - private_public_boundary
+
+hermes_owns:
+  - daily_owner_rhythm
+  - approval_routing
+  - kanban_coordination
+  - briefing
+  - owner_action_recommendation
+  - scheduled_task_governance
+
+owner_owns:
+  - external_commitments
+  - bid_submission_decision
+  - supplier_outreach_approval
+  - buyer_quote_approval
+  - payment_decision
+  - dsc_use
+  - final_price
+  - final_compliance
+
+forbidden_for_deep_research:
+  - mutate_registers_directly
+  - approve_actions
+  - send_messages
+  - submit_bids
+  - final_compliance_claims
+  - final_price_commitments
+
+forbidden_for_python:
+  - broad_unbounded_web_research
+  - captcha_bypass
+  - otp_bypass
+  - paywall_bypass
+  - bid_submission
+  - payment
+  - dsc_use
+  - external_send_without_approval
+
+decision_rule:
+  judgment_unknown_sources: deep_research
+  exact_known_source_repetition: python_playwright
+  document_capture_and_parsing: python_playwright
+  market_strategy: deep_research
+  memory_and_audit: repo
+
+low_competition_orders:
+  deep_research_role: "Find low-competition theses, categories, buyer/source patterns, and cited public leads."
+  python_playwright_role: "Prove, track, dedupe, score, and store shortlisted evidence from known sources."
+  public_listing_only: "lead_not_bid_ready_case"
+  case_candidate_requires_any:
+    - DOCUMENTS_DOWNLOADED
+    - manually_uploaded_document
+    - source_detail_captured
+    - structured_evidence_bundle
+    - owner_approved_manual_source_check

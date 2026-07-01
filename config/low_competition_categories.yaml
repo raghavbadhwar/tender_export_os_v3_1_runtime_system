@@ -1,0 +1,165 @@
+categories:
+  water_filter_ro_amc:
+    label: Water filter / RO AMC / filter replacement
+    beginner_friendly_score: 85
+    supplier_depth: high
+    capital_required: low_medium
+    license_required: low
+    margin_band: medium
+    keywords:
+      - ro
+      - water purifier
+      - filter
+      - water cooler
+      - membrane
+      - drinking water
+    recommended_order_types:
+      - AMC
+      - filter replacement
+      - small-rate contract
+    avoid_if:
+      - OEM authorization mandatory and unavailable
+      - service SLA impossible
+      - remote delivery with short timeline
+
+  office_stationery_printing:
+    label: Office stationery / printing / conference material
+    beginner_friendly_score: 90
+    supplier_depth: high
+    capital_required: low
+    license_required: low
+    margin_band: low_medium
+    keywords:
+      - stationery
+      - printing
+      - toner
+      - cartridge
+      - photocopier
+      - conference kit
+      - training material
+      - office automation
+    recommended_order_types:
+      - consumables
+      - local delivery
+      - rate contract
+    avoid_if:
+      - L1-only extreme price war
+      - delivery too far
+      - tender fee/EMD disproportionate
+
+  digitisation_scanning_records:
+    label: Digitisation / scanning / record management
+    beginner_friendly_score: 80
+    supplier_depth: medium
+    capital_required: low_medium
+    license_required: low
+    margin_band: medium_high
+    keywords:
+      - scanning
+      - digitization
+      - digitisation
+      - indexing
+      - record room
+      - data entry
+      - document management
+      - mis
+      - dashboard
+    recommended_order_types:
+      - scanning
+      - indexing
+      - record-room digitisation
+    avoid_if:
+      - mandatory prior government experience
+      - data security requirement impossible
+      - manpower compliance not manageable
+
+  cleaning_housekeeping_consumables:
+    label: Cleaning consumables / housekeeping supplies
+    beginner_friendly_score: 82
+    supplier_depth: high
+    capital_required: low
+    license_required: low
+    margin_band: medium
+    keywords:
+      - cleaning material
+      - sanitation
+      - housekeeping
+      - waste bin
+      - segregation bins
+      - disinfection
+    recommended_order_types:
+      - consumables
+      - local replenishment
+      - simple supplies
+    avoid_if:
+      - hazardous chemical license required
+      - unrealistic delivery frequency
+      - buyer asks for brand lock-in
+
+  pest_control:
+    label: Pest control
+    beginner_friendly_score: 70
+    supplier_depth: medium
+    capital_required: low
+    license_required: medium
+    margin_band: medium
+    keywords:
+      - pest control
+      - fumigation
+      - disinfection
+      - anti termite
+      - rodent control
+    recommended_order_types:
+      - pest-control AMC
+      - campus treatment
+    avoid_if:
+      - license unavailable
+      - hospital compliance too high
+      - chemical/MSDS proof missing
+
+  printer_toner_amc:
+    label: Printer toner / cartridge / AMC
+    beginner_friendly_score: 78
+    supplier_depth: high
+    capital_required: low_medium
+    license_required: low
+    margin_band: medium
+    keywords:
+      - printer
+      - toner
+      - cartridge
+      - photocopier
+      - refill
+      - printer amc
+    recommended_order_types:
+      - cartridge supply
+      - refill
+      - printer AMC
+    avoid_if:
+      - OEM-only
+      - refill quality risk
+      - strict warranty clauses
+
+  linen_hostel_hospital:
+    label: Linen / bedsheets / towels for hostels/hospitals
+    beginner_friendly_score: 75
+    supplier_depth: high
+    capital_required: medium
+    license_required: low_medium
+    margin_band: medium
+    keywords:
+      - linen
+      - bedsheet
+      - towel
+      - pillow cover
+      - hospital linen
+      - hostel linen
+      - laundry
+    recommended_order_types:
+      - linen supply
+      - hostel consumables
+      - hospital linen replacement
+    avoid_if:
+      - medical-grade compliance required
+      - laundry service compliance too high
+      - delivery volume exceeds supplier capacity

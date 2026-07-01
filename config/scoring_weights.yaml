@@ -203,3 +203,12 @@ supplier_scoring:
   preferred_threshold: 70
   acceptable_threshold: 55
   reject_threshold: 54
+
+# ══════════════════════════════════
+# LOW-COMPETITION ORDER CAPTURE
+# ══════════════════════════════════
+
+low_competition_scoring:
+  config_file: "config/low_competition_scoring.yaml"
+  use_after_hard_kill_checks: true
+  notes: "Positive capture signals never override manufacturer-only/OEM, high EMD, past-experience, SCOMET, prohibited export, compliance, evidence, or approval hard stops."

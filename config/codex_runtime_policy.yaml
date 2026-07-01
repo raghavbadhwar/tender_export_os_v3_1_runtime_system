@@ -2,8 +2,10 @@ version: 4
 name: codex_app_server_runtime_policy
 default_runtime: codex_app_server
 fallback_runtime: auto
+default_safety_mode: restricted_internal
+elevated_safety_mode: owner_approved_isolated_task
 
-principle: "Use Hermes built-in Codex App-Server Runtime before building a custom Hermes-to-Codex bridge."
+principle: "Use Hermes built-in Codex App-Server Runtime before building a custom Hermes-to-Codex bridge. Codex is the artifact/runtime factory, not an external-action executor."
 
 local_readiness_checks:
   hermes:
@@ -57,6 +59,13 @@ fallback_bridge:
   runner_script: scripts/codex_task_runner.py
 
 safety:
+  default_sandbox: "restricted/internal file work only"
+  unrestricted_mode_allowed: false
+  unrestricted_mode_requires:
+    - owner_approval
+    - isolated_task_scope
+    - explicit_rollback_path
+    - receipt_or_run_log
   no_external_send_without_approval: true
   no_bid_submission_without_approval_and_dsc: true
   no_final_hsn_itchs_or_origin_claims: true

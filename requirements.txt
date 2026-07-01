@@ -10,6 +10,7 @@ pydantic
 PyYAML
 python-dateutil
 rapidfuzz
+requests
 rich
 tenacity
 pytest

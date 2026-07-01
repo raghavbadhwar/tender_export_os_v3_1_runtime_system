@@ -21,11 +21,15 @@ Approval status: PENDING
 - Create approval cards and internal reports.
 - Update event ledger, projections, and Kanban comments.
 
-## Forbidden until explicit owner approval and receipt
-- Send buyer or supplier messages.
+## Standing-authorized execution
+- Supplier quote/availability requests, supplier clarifications, supplier follow-ups, and portal login/signup for research are allowed under the owner's 2026-06-30 standing authorization.
+- Write receipts for any such external supplier/portal action and never log credential values.
+
+## Forbidden until separate explicit owner approval and receipt
+- Send buyer messages, buyer RFQ replies, export quotations, or invoices.
 - Submit bids or upload tender documents.
 - Use DSC.
-- Pay EMD/security/advance.
+- Pay EMD/security/advance or buy paid portal plans/credits.
 - Commit final price, delivery, payment terms, HSN/ITC-HS, or origin.
 - Place supplier purchase orders or permanently blacklist suppliers.
 

@@ -31,6 +31,13 @@ Use ChatGPT Project for:
 - weekly boardroom review
 - dashboard interpretation
 
+## Hybrid Research + Capture Decision Rule
+If the task needs broad judgment across unknown sources, market/category/source discovery, export opportunity thesis, buyer pattern discovery, or competitor landscape, route it to ChatGPT Scheduled Deep Research / ChatGPT Boardroom.
+
+If the task needs exact repetition on known sources, portal listing capture, owner-authorized browser-session evidence, allowed document download, BOQ/PDF/Excel parsing, corrigenda diffing, dedupe, scoring, event-ledger update, schema validation, regression tests, or HTML reporting from stored data, route it to Python/Playwright/Codex.
+
+Deep Research leads are advisory until staged and evidenced. `PUBLIC_LISTING_ONLY` is a lead, not a bid-ready case.
+
 ## Approval Discipline
 Stop at approval gates. Do not send, submit, upload, pay, use DSC, confirm HSN/ITC-HS, claim origin, commit price, commit delivery, accept payment terms, place purchase orders, blacklist permanently, or expose services publicly without explicit owner approval and a receipt.
 

@@ -9,4 +9,4 @@
 - Source: Recovered local registers 
 
 ## Next action
-Recovered from data/approvals_receipts.csv APR-001, data/quote_master.csv Q-003, data/supplier_master.csv SUP-004, and agent_run_log RUN-005/RUN-006. Buyer identity/source URL missing; do not send externally until approval card is corrected.
+Supplier candidate proof refreshed 2026-07-01: 7 candidates found across existing local-cluster/internal history, IndiaMART/TradeIndia public B2B listings, and ExportersIndia directory. Formal supplier-specific quote proofs remain 1/2 (Q-003 only); Q-006 is an indicative public listing price, not a supplier-requested quote proof. APR-004 is pending before formal supplier quote/availability requests. Buyer/RFQ remains RAW_LEAD and APR-001 should remain held/Ask Changes until buyer/source proof is supplied.

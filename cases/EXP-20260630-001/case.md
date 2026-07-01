@@ -9,4 +9,4 @@
 - Source: Alibaba RFQ https://rfq.alibaba.com
 
 ## Next action
-Reconciled 2026-06-30: quote_master has 1 quote proof (Q-002), not 3. Supplier search incomplete; APR-003 prepared for supplier RFQs/clarification, not sent. HSN updated to draft turmeric-powder candidate; 95% curcumin wording requires COA/spec clarification.
+5-3-2 supplier proof reconciled 2026-06-30: 6 candidates across internal/APEDA, direct exporter site, TradeIndia, and ExportersIndia sources. Quote proofs now Q-002 plus Q-005; Q-005 is a public listed Amar Foodz price proof, not a supplier-requested quote. No supplier RFQ/contact sent; APR-003 remains required for formal quote/COA/spec clarification. Do not finalize pricing/classification/origin claims until turmeric powder vs curcumin ambiguity is resolved.

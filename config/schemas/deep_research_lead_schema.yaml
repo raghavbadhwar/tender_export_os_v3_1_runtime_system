@@ -1,0 +1,71 @@
+version: 1
+description: "Schema for manually staged ChatGPT Scheduled Deep Research leads."
+
+required_fields:
+  - lead_id
+  - research_report_id
+  - source_url
+  - source_name
+  - buyer_name
+  - buyer_type
+  - workflow_type
+  - category
+  - lead_title
+  - location
+  - deadline
+  - evidence_level
+  - why_interesting
+  - why_low_competition
+  - fulfilment_hypothesis
+  - risks
+  - missing_info
+  - recommended_repo_action
+  - owner_review_required
+
+workflow_types:
+  - GOV
+  - EXPORT
+  - SUPPLIER
+  - RESEARCH
+
+evidence_levels:
+  - PUBLIC_LISTING_ONLY
+  - DETAIL_PAGE_READ
+  - DOCUMENTS_DISCOVERED
+  - DOCUMENTS_DOWNLOADED
+  - MANUAL_UPLOAD_REQUIRED
+  - BLOCKED_LOGIN_REQUIRED
+  - BLOCKED_CAPTCHA
+  - BLOCKED_PAYWALL
+
+case_candidate_evidence_levels:
+  - DOCUMENTS_DOWNLOADED
+
+allowed_recommended_repo_actions:
+  - IGNORE
+  - WATCH
+  - MANUAL_SOURCE_CHECK
+  - MANUAL_DOCUMENT_UPLOAD
+  - CREATE_RADAR_LEAD
+  - CREATE_CASE_CANDIDATE_AFTER_EVIDENCE
+
+forbidden_recommended_repo_actions:
+  - SUBMIT
+  - SEND_QUOTE
+  - PAY
+  - UPLOAD
+  - USE_DSC
+  - COMMIT_PRICE
+  - CERTIFY_COMPLIANCE
+
+rules:
+  public_listing_only_is_lead: true
+  public_listing_only_forbidden_bid_ready: true
+  owner_review_required_default: true
+  deep_research_output_is_advisory: true
+  no_external_actions: true
+
+staging_outputs:
+  default_output_dir: outputs/deep_research_staging
+  event_type: deep_research.leads_staged
+  event_object_type: deep_research_lead
