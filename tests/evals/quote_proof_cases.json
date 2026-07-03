@@ -1,0 +1,14 @@
+[
+  {
+    "name": "public_listing_is_not_quote_proof",
+    "case_id": "EXP-20260704-EVAL1",
+    "kind": "quote",
+    "text": "Supplier: Example Traders\nProduct: PET bottle 330 ml\nPrice: Rs. 7.50 per piece\nMOQ: 1000 pieces\nLead Time: 4 days\nSource: Indiamart public listing only, not a written quote.",
+    "expect_fields": {
+      "supplier": "Example Traders",
+      "unit_price": "Rs. 7.50"
+    },
+    "expect_quote_proof_classification": "INDICATIVE_SIGNAL",
+    "expect_approval_gate": "DO_NOT_USE_FOR_FINAL_PRICING"
+  }
+]

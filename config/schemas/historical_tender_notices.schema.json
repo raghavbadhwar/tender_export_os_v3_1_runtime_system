@@ -1,0 +1,10 @@
+{
+  "file": "data/historical_tender_notices.csv",
+  "primary_key": "notice_id",
+  "required_columns": ["notice_id", "buyer_name", "buyer_type", "workflow_type", "country_or_state", "source_name", "source_url", "category_code", "category_name", "product_or_service", "notice_date", "deadline_date", "estimated_value_inr", "emd_amount_inr", "competition_signal", "evidence_level", "created_at"],
+  "required_fields": ["notice_id", "buyer_name", "workflow_type", "source_name", "category_name", "notice_date", "evidence_level", "created_at"],
+  "enums": {"workflow_type": ["GOV", "EXPORT", "MIXED", "RESEARCH"], "evidence_level": ["PUBLIC_LISTING_ONLY", "DETAIL_PAGE_READ", "DOCUMENTS_DISCOVERED", "DOCUMENTS_DOWNLOADED", "STRUCTURED_EVIDENCE_BUNDLE"]},
+  "date_fields": ["notice_date", "deadline_date", "created_at"],
+  "numeric_fields": ["estimated_value_inr", "emd_amount_inr"],
+  "url_fields": ["source_url"]
+}

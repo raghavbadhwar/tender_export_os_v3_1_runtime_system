@@ -1,0 +1,9 @@
+Bid Number: GEM/2026/B/123456
+Buyer Organisation: Delhi Jal Board
+Tender Value: INR 12,50,000
+EMD: Rs. 25,000
+Bid End Date: 20 July 2026 15:00
+Delivery Location: New Delhi warehouse
+Payment Terms: 30 days after delivery and inspection.
+Documents Required: GST certificate, PAN, past experience certificate.
+BOQ: Supply of 500 stainless steel bottles.

@@ -1,0 +1,2 @@
+demand_id,country,category_code,category_name,product_or_service,source_name,source_url,import_signal_type,signal_score,evidence_level,observed_at,created_at
+HID-EXAMPLE-001,USA,EXP-HAND-001,Premium Handicrafts,Small artisan decor,Example Import Data,https://example.com/import-demand/001,import_growth_signal,70,PUBLIC_LISTING_ONLY,2099-01-01,2099-01-01

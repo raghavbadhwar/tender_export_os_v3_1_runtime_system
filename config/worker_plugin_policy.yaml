@@ -1,0 +1,229 @@
+version: 1
+purpose: "Role-specific plugin/skill capability loading policy for Tender Export OS Hermes worker profiles."
+
+policy:
+  mode: profile_local_skill_imports
+  original_external_directories_modified: false
+  hermes_native_plugins_auto_enabled: false
+  mcp_servers_auto_enabled: false
+  external_message_plugins_require_owner_approval: true
+  credential_heavy_plugins_require_owner_approval: true
+  submit_upload_payment_dsc_plugins_require_owner_approval: true
+  imported_skills_are_subordinate_to:
+    - worker SOUL.md
+    - Tender Export OS approval policy
+    - tender-export-operator skill
+    - live task instructions
+
+source_roots:
+  accio: "/Volumes/RAGHAV2/aios the final/accio_skills"
+  claude: "/Volumes/RAGHAV2/aios the final/claude-plugin-files"
+
+profiles_root: "/Users/raghav/.hermes/profiles"
+import_category_path: "tender-export-os/plugin-imports"
+
+# Runtime Hermes-native plugins are listed as candidates only.
+# They are not enabled by this pass because many require credentials or can create external side effects.
+hermes_native_plugin_candidates:
+  gov-tender-radar:
+    - web-firecrawl
+    - web-tavily
+    - web-exa
+    - browser-firecrawl
+    - browser-browserbase
+  export-rfq-radar:
+    - web-firecrawl
+    - web-tavily
+    - web-exa
+    - browser-firecrawl
+    - browser-browserbase
+  source-health:
+    - web-firecrawl
+    - web-tavily
+    - web-exa
+    - browser-firecrawl
+  codex-artifact-factory:
+    - google-workspace
+  sales-followup:
+    - gmail
+    - telegram-platform
+    - whatsapp-platform
+
+profile_imports:
+  hermes-chief-operator:
+    maps_runtime_agents:
+      - hermes_chief_operator
+      - approval_desk_agent
+      - owner_briefing_agent
+    accio:
+      - skill-vetter
+      - skill-creator
+      - self-improvement
+      - xlsx
+      - pptx
+      - docx
+      - sales-negotiator
+      - company-research
+      - internal-comms
+    claude:
+      - directory_plugins/by_name/operations/skills/status-report
+      - directory_plugins/by_name/operations/skills/risk-assessment
+      - directory_plugins/by_name/operations/skills/runbook
+      - directory_plugins/by_name/enterprise-search/skills/digest
+      - directory_plugins/by_name/enterprise-search/skills/knowledge-synthesis
+
+  gov-tender-radar:
+    maps_runtime_agents:
+      - radar_agent
+      - fast_kill_agent
+      - deep_read_agent
+    accio:
+      - company-research
+      - org-structure-research
+      - market-insight-product-selection
+      - competitor-deep-analysis
+      - market-viability-logic-auditor
+      - pdf
+      - docx
+      - xlsx
+    claude:
+      - directory_plugins/by_name/enterprise-search/skills/search-strategy
+      - directory_plugins/by_name/enterprise-search/skills/knowledge-synthesis
+      - directory_plugins/by_name/operations/skills/risk-assessment
+      - directory_plugins/by_name/data/skills/validate-data
+
+  export-rfq-radar:
+    maps_runtime_agents:
+      - radar_agent
+      - fast_kill_agent
+      - deep_read_agent
+    accio:
+      - company-research
+      - org-structure-research
+      - market-insight-product-selection
+      - competitor-deep-analysis
+      - market-viability-logic-auditor
+      - pdf
+      - docx
+      - xlsx
+    claude:
+      - directory_plugins/by_name/sales/skills/account-research
+      - directory_plugins/by_name/enterprise-search/skills/search-strategy
+      - directory_plugins/by_name/enterprise-search/skills/knowledge-synthesis
+      - directory_plugins/by_name/data/skills/validate-data
+
+  supplier-sourcing:
+    maps_runtime_agents:
+      - supplier_engine_agent
+    accio:
+      - product-supplier-sourcing
+      - supplier-performance-manager
+      - company-research
+      - 1688-sourcing
+      - aliexpress-supplier-evaluator
+    claude:
+      - directory_plugins/by_name/operations/skills/vendor-review
+      - directory_plugins/by_name/sales/skills/account-research
+      - directory_plugins/by_name/enterprise-search/skills/search-strategy
+      - directory_plugins/by_name/data/skills/validate-data
+
+  pricing-compliance:
+    maps_runtime_agents:
+      - pricing_agent
+      - compliance_agent
+    accio:
+      - profit-margin-analyzer
+      - tariff-search
+      - international-shipping-customs
+      - sales-tax-vat-automator
+      - b2b-payment-terms-optimizer
+      - ecommerce-budget-forecaster
+      - xlsx
+    claude:
+      - directory_plugins/by_name/small-business/skills/price-check
+      - directory_plugins/by_name/small-business/skills/margin-analyzer
+      - directory_plugins/by_name/finance/skills/variance-analysis
+      - directory_plugins/by_name/operations/skills/compliance-tracking
+      - marketplace_sources/claude-for-legal-india/regulatory-legal/skills/gap-surfacer
+
+  codex-artifact-factory:
+    maps_runtime_agents:
+      - pack_builder_agent
+      - codex_plugin_factory_agent
+    accio:
+      - pdf
+      - docx
+      - xlsx
+      - pptx
+      - invoice-generator
+      - skill-vetter
+      - skill-creator
+    claude:
+      - directory_plugins/by_name/data/skills/explore-data
+      - directory_plugins/by_name/data/skills/data-visualization
+      - directory_plugins/by_name/data/skills/validate-data
+      - directory_plugins/by_name/product-management/skills/write-spec
+      - additional_claude_sources/dot_claude_plugins/marketplaces/claude-plugins-official/plugins/claude-code-setup/skills/claude-automation-recommender
+
+  sales-followup:
+    maps_runtime_agents:
+      - execution_tracker_agent
+      - sales_followup_agent
+    accio:
+      - gmail-assistant
+      - sales-negotiator
+      - email-automation-flow-builder
+      - lifecycle-marketing-automator
+      - copywriting
+      - supplier-performance-manager
+    claude:
+      - directory_plugins/by_name/sales/skills/draft-outreach
+      - directory_plugins/by_name/sales/skills/call-summary
+      - directory_plugins/by_name/sales/skills/pipeline-review
+      - directory_plugins/by_name/small-business/skills/lead-triage
+      - directory_plugins/by_name/operations/skills/status-report
+
+  source-health:
+    maps_runtime_agents:
+      - source_health_agent
+    accio:
+      - supplier-performance-manager
+      - company-research
+      - review-analyst-agent
+      - review-summarizer
+      - competitive-landscape
+    claude:
+      - directory_plugins/by_name/enterprise-search/skills/source-management
+      - directory_plugins/by_name/enterprise-search/skills/search-strategy
+      - directory_plugins/by_name/enterprise-search/skills/knowledge-synthesis
+      - directory_plugins/by_name/data/skills/validate-data
+      - directory_plugins/by_name/operations/skills/risk-assessment
+
+  learning-review:
+    maps_runtime_agents:
+      - learning_review_agent
+    accio:
+      - self-improvement
+      - skill-creator
+      - skill-vetter
+      - review-analyst-agent
+    claude:
+      - directory_plugins/by_name/operations/skills/process-optimization
+      - directory_plugins/by_name/operations/skills/process-doc
+      - directory_plugins/by_name/operations/skills/runbook
+      - directory_plugins/by_name/data/skills/validate-data
+
+  chatgpt-boardroom-handoff:
+    maps_runtime_agents:
+      - chatgpt_boardroom_handoff_agent
+    accio:
+      - pptx
+      - docx
+      - xlsx
+      - internal-comms
+      - company-research
+    claude:
+      - directory_plugins/by_name/enterprise-search/skills/search-strategy
+      - directory_plugins/by_name/enterprise-search/skills/knowledge-synthesis
+      - directory_plugins/by_name/product-management/skills/competitive-brief
+      - directory_plugins/by_name/operations/skills/status-report

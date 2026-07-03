@@ -10,6 +10,10 @@ These commands define the mobile/desktop command palette for the founder. They a
 - `show kanban` — summarize the Tender Export OS Kanban board.
 - `show source health` — summarize source status and degraded/broken sources.
 - `show plugin health` — summarize Hermes/Codex/plugin readiness.
+- `show operating queues` — summarize pending approvals, approved execution, supplier-search, watchlist, deadline, source, plugin, and stale-run queues.
+- `run operating desk` — generate the operating-desk JSON/HTML report and append a run-log row.
+- `run no-codex tests` — run the core validation lane that proves business logic without Codex.
+- `run codex readiness` — run Hermes/Codex runtime readiness separately from core business tests.
 
 ## Case control
 

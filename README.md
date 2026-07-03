@@ -222,6 +222,17 @@ python3 scripts/supplier_ready_category_matcher.py --dry-run
 
 Outputs are written under `outputs/low_competition_radar/`. `PUBLIC_LISTING_ONLY` rows remain leads, not bid-ready cases. Marketplace listing prices are not quote proof; supplier-specific quote evidence is required before pricing.
 
+### V5 Demand Forecasting + Low-Competition Engine
+The V5 module turns current cases, demand research, low-competition radar output, buyer repeat history, and category demand history into proof-aware daily recommendations.
+
+- Spec: `docs/V5_DEMAND_FORECASTING_LOW_COMPETITION_ENGINE.md`
+- Runbook: `docs/V5_DEMAND_FORECASTING_LOW_COMPETITION_RUNBOOK.md`
+- Generator: `scripts/generate_v5_demand_forecast_low_competition.py`
+- Projection builders: `scripts/build_buyer_purchase_history.py`, `scripts/build_category_demand_history.py`
+- Backtester: `scripts/backtest_v5_demand_forecasts.py`
+
+Default generator mode is report-only. Use `--write-candidates` only when you want to refresh `data/forecast_candidates.csv`.
+
 ### Scheduled Deep Research Tasks
 The prompt files under `scheduled_deep_research_tasks/` are for ChatGPT Scheduled Deep Research, not Python scraping:
 

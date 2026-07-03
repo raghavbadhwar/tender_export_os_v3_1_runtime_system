@@ -43,6 +43,23 @@ jobs:
       - data/external_task_inbox.csv
       - data/agent_run_log.csv
     command_hint: "hermes cron create --name tender-export-morning-operator-brief --workdir <project> --deliver telegram '30 8 * * *' '<prompt>'"
+  - id: v5_demand_forecast_low_competition_shadow
+    enabled: false
+    cadence: "15 7 * * *"
+    local_time: "07:15 IST daily"
+    runtime: hermes_no_agent_script
+    max_runtime_minutes: 5
+    purpose: "Shadow-run the V5 demand forecast and low-competition intelligence report. Internal-only; no external actions."
+    command: "python3 scripts/build_buyer_purchase_history.py --write && python3 scripts/build_category_demand_history.py --write && python3 scripts/generate_v5_demand_forecast_low_competition.py --write-candidates && python3 scripts/backtest_v5_demand_forecasts.py --write"
+    stop_condition: "Local projection/report generation only; no buyer/supplier contact, portal login, bid/RFQ submission, document upload, payment, DSC, final classification/origin claim, or final price/terms commitment."
+    outputs:
+      - data/buyer_purchase_history.csv
+      - data/category_demand_history.csv
+      - data/forecast_candidates.csv
+      - data/forecast_backtests.csv
+      - outputs/demand_forecasting/v5_demand_forecast_low_competition_YYYYMMDD.md
+      - outputs/demand_forecasting/v5_demand_forecast_low_competition_YYYYMMDD.html
+      - outputs/demand_forecasting/v5_demand_forecast_low_competition_YYYYMMDD.json
   - id: midday_opportunity_radar
     cadence: "0 13 * * *"
     local_time: "13:00 IST daily"

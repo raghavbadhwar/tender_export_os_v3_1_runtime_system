@@ -8,6 +8,11 @@ import csv
 import json
 from pathlib import Path
 
+try:
+    from scripts.quote_proof import strict_quote_proofs
+except ModuleNotFoundError:  # pragma: no cover - direct script execution
+    from quote_proof import strict_quote_proofs
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "data"
@@ -21,10 +26,7 @@ def load_csv(path: Path) -> list[dict]:
 
 
 def quote_proofs(case_id: str, quotes: list[dict]) -> list[dict]:
-    return [
-        quote for quote in quotes
-        if quote.get("case_id") == case_id and quote.get("quote_received_at")
-    ]
+    return strict_quote_proofs(case_id, quotes)
 
 
 def pending_approvals(case_id: str, approvals: list[dict]) -> list[dict]:

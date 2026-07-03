@@ -1,0 +1,8 @@
+{
+  "file": "data/historical_buyer_category_stats.csv",
+  "primary_key": "stat_id",
+  "required_columns": ["stat_id", "buyer_name", "buyer_type", "country_or_state", "category_code", "category_name", "past_notice_count", "past_award_count", "avg_estimated_value_inr", "avg_award_value_inr", "last_seen_date", "repeat_score", "created_at"],
+  "required_fields": ["stat_id", "buyer_name", "category_name", "past_notice_count", "repeat_score", "created_at"],
+  "date_fields": ["last_seen_date", "created_at"],
+  "numeric_fields": ["past_notice_count", "past_award_count", "avg_estimated_value_inr", "avg_award_value_inr", "repeat_score"]
+}

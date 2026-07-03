@@ -68,6 +68,85 @@ def days_left(case: dict) -> str:
         return "?"
 
 
+def text_value(value) -> str:
+    return str(value if value is not None else "").strip()
+
+
+def approval_output_paths(approval: dict, case_id: str) -> tuple[Path, Path]:
+    configured = text_value(approval.get("approval_card_path"))
+    html_path = PROJECT_ROOT / configured if configured else OUTPUT_DIR / f"{case_id}_approval_card.html"
+    try:
+        html_path.resolve().relative_to(PROJECT_ROOT.resolve())
+    except ValueError as exc:
+        raise ValueError(f"Approval card path escapes project root: {html_path}") from exc
+    return html_path, html_path.with_suffix(".json")
+
+
+def approval_options() -> list[str]:
+    return ["Approve", "Reject", "Ask Changes"]
+
+
+def expected_benefit_text(approval: dict) -> str:
+    return (
+        text_value(approval.get("expected_benefit"))
+        or text_value(approval.get("notes"))
+        or "Owner can make a documented approval decision with an audit trail before any gated external action proceeds."
+    )
+
+
+def concrete_risk_text(approval: dict, case: dict) -> str:
+    if text_value(approval.get("concrete_risk")):
+        return text_value(approval.get("concrete_risk"))
+
+    action = get_action(approval).lower()
+    case_id = approval.get("case_id") or case.get("case_id") or "this case"
+    if "supplier" in action and ("quote" in action or "rfq" in action or "clarification" in action):
+        return (
+            f"Supplier outreach for {case_id} is externally visible and may create commercial expectations. "
+            "Supplier replies may include price, payment, MOQ, or delivery terms that are not approved, and no PO, "
+            "payment, final price, delivery promise, HSN/ITC-HS confirmation, origin claim, buyer message, bid, or submission is authorized by this card."
+        )
+    if "export_quotation" in action or "buyer_rfq_reply" in action or "quotation" in action:
+        return (
+            f"A buyer-facing quotation or reply for {case_id} can be treated as a commercial price/delivery signal. "
+            "If buyer proof, supplier quote proof, final price, payment terms, delivery terms, HSN/ITC-HS, or origin evidence is incomplete, the external message could be inaccurate or create an unintended commitment."
+        )
+    if "submit" in action or "upload" in action or "dsc" in action or "emd" in action or "payment" in action or "purchase_order" in action:
+        return (
+            f"The requested action for {case_id} can create legal, financial, portal, or signature consequences that may be difficult to reverse if evidence, documents, or owner intent are wrong."
+        )
+    return (
+        f"The approval-gated action for {case_id} may create external, financial, legal, or operational consequences if performed on incomplete evidence or beyond the approved scope."
+    )
+
+
+def recovery_rollback_text(approval: dict, case: dict) -> str:
+    existing = text_value(approval.get("recovery_rollback_path")) or text_value(approval.get("recovery_path"))
+    if existing:
+        return existing
+
+    action = get_action(approval).lower()
+    case_id = approval.get("case_id") or case.get("case_id") or "this case"
+    if "supplier" in action and ("quote" in action or "rfq" in action or "clarification" in action):
+        return (
+            f"If rejected or ask-changes, keep {case_id} internal-only and do not contact suppliers. "
+            "If already sent under a valid approval, stop follow-ups, log the receipt, and require fresh owner approval before any cancellation note, PO, payment, final price, delivery, HSN/ITC-HS, origin, buyer message, bid, or submission."
+        )
+    if "export_quotation" in action or "buyer_rfq_reply" in action or "quotation" in action:
+        return (
+            f"If rejected or ask-changes, keep the quotation/reply for {case_id} as an internal draft and mark the card superseded or changes-requested. "
+            "If a message was already sent under a valid approval, log a correction/withdrawal plan and obtain fresh owner approval before any external correction, final price, delivery, payment, HSN/ITC-HS, origin, invoice, PO, or follow-up commitment."
+        )
+    if "submit" in action or "upload" in action or "dsc" in action or "emd" in action or "payment" in action or "purchase_order" in action:
+        return (
+            f"If rejected or ask-changes, do not execute the gated action for {case_id}; keep artifacts internal and issue a revised card. "
+            "If execution has already occurred under valid approval, preserve receipts, notify the owner, and follow the portal/bank/legal rollback path before any further external step."
+        )
+    return (
+        f"If rejected or ask-changes, keep {case_id} internal-only, mark the card superseded or changes-requested, and regenerate a corrected approval card before any external action."
+    )
+
+
 def missing_items_list(approval: dict, case: dict) -> list[str]:
     values = []
     if approval.get("changes_requested"):
@@ -75,9 +154,11 @@ def missing_items_list(approval: dict, case: dict) -> list[str]:
     if not approval.get("approval_card_path"):
         values.append("Approval card path was missing before generation.")
     if not approval.get("expected_benefit"):
-        values.append("Expected benefit not fully quantified in approval register.")
+        values.append("Expected benefit was derived from approval notes because the register lacks a separate expected_benefit field.")
     if not approval.get("concrete_risk"):
-        values.append("Concrete risk not fully specified in approval register.")
+        values.append("Concrete risk was generated from approval action family and case evidence because the register lacks a custom concrete_risk field.")
+    if not approval.get("recovery_rollback_path") and not approval.get("recovery_path"):
+        values.append("Recovery/rollback path was generated from approval action family because the register lacks a custom recovery_rollback_path field.")
     if case.get("workflow_type") == "EXPORT" and case.get("hsn_itchs_candidate"):
         values.append("HSN/ITC-HS is candidate only until expert approval.")
     return values or ["None recorded in local register."]
@@ -112,9 +193,9 @@ def render_card(template: str, approval: dict, case: dict) -> str:
     deadline = case.get("deadline_date") or "N/A"
     days = days_left(case) if deadline != "N/A" else "N/A"
     days_suffix = f" [{days} days]" if days != "N/A" else ""
-    benefit = approval.get("expected_benefit") or approval.get("notes") or "Benefit not fully quantified in approval register."
-    risk = approval.get("concrete_risk") or "Risk note missing; ask changes before approving if this matters."
-    recovery = approval.get("recovery_rollback_path") or "Recovery path missing; ask changes before approving if this matters."
+    benefit = expected_benefit_text(approval)
+    risk = concrete_risk_text(approval, case)
+    recovery = recovery_rollback_text(approval, case)
     confidence = approval.get("confidence_score") or "60"
     business_object = case.get("buyer_name") or case.get("opportunity_title") or action
     replacements = {
@@ -145,6 +226,10 @@ def structured_card(approval: dict, case: dict, html_path: Path, json_path: Path
     workflow = approval.get("workflow_type") or case.get("workflow_type") or "UNKNOWN"
     action = get_action(approval)
     business_object = case.get("buyer_name") or case.get("opportunity_title") or action
+    benefit = expected_benefit_text(approval)
+    risk = concrete_risk_text(approval, case)
+    recovery = recovery_rollback_text(approval, case)
+    decisions = approval_options()
     try:
         confidence = int(float(approval.get("confidence_score") or 60))
     except ValueError:
@@ -157,13 +242,15 @@ def structured_card(approval: dict, case: dict, html_path: Path, json_path: Path
         "business_object": business_object,
         "amount_or_price": get_amount(approval, case),
         "external_party": case.get("buyer_name", ""),
-        "expected_benefit": approval.get("expected_benefit") or approval.get("notes") or "Benefit not fully quantified in approval register.",
-        "concrete_risk": approval.get("concrete_risk") or "Risk note missing; ask changes before approving if this matters.",
-        "recovery_path": approval.get("recovery_rollback_path") or "Recovery path missing; ask changes before approving if this matters.",
+        "expected_benefit": benefit,
+        "concrete_risk": risk,
+        "recovery_rollback_path": recovery,
+        "recovery_path": recovery,
         "documents_sources_used": documents_sources_list(approval, case),
         "confidence_score": max(0, min(100, confidence)),
         "missing_information": missing_items_list(approval, case),
-        "allowed_decisions": ["Approve", "Reject", "Ask Changes"],
+        "approval_options": decisions,
+        "allowed_decisions": decisions,
         "approval_status": approval.get("approval_status", ""),
         "created_at": dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat(),
         "created_by": "generate_approval_cards",
@@ -175,6 +262,7 @@ def structured_card(approval: dict, case: dict, html_path: Path, json_path: Path
 def main() -> int:
     parser = argparse.ArgumentParser(description="Generate approval cards from approvals_receipts.csv")
     parser.add_argument("--case-id", help="Generate one case only")
+    parser.add_argument("--approval-id", help="Generate one approval row only")
     parser.add_argument("--overwrite", action="store_true", help="Overwrite existing cards")
     parser.add_argument("--json", action="store_true", help="Also write structured JSON approval cards")
     parser.add_argument("--record-event", action="store_true", help="Append approval.card_created events for generated cards")
@@ -191,15 +279,17 @@ def main() -> int:
         case_id = approval.get("case_id", "")
         if args.case_id and case_id != args.case_id:
             continue
+        if args.approval_id and approval.get("approval_id") != args.approval_id:
+            continue
         if not case_id:
             skipped += 1
             continue
-        path = OUTPUT_DIR / f"{case_id}_approval_card.html"
-        json_path = OUTPUT_DIR / f"{case_id}_approval_card.json"
+        path, json_path = approval_output_paths(approval, case_id)
         if path.exists() and (not args.json or json_path.exists()) and not args.overwrite:
             skipped += 1
             continue
         case = cases.get(case_id, {})
+        path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(render_card(template, approval, case), encoding="utf-8")
         citations = [rel(path), "data/approvals_receipts.csv", "data/master_cases.csv"]
         if args.json:

@@ -49,6 +49,20 @@ def test_append_event_rejects_unknown_event_type(tmp_path) -> None:
         )
 
 
+def test_append_event_rejects_blank_source(tmp_path) -> None:
+    with pytest.raises(ValueError, match="source must be a non-empty string"):
+        append_event(
+            "case.created",
+            "test",
+            object_type="case",
+            object_id="GOV-20990101-001",
+            source="",
+            payload={"status": "WATCHLIST"},
+            citations=["https://example.com/tender"],
+            events_file=tmp_path / "events.jsonl",
+        )
+
+
 def test_pipeline_error_helpers_write_event_and_failure_row(tmp_path) -> None:
     error = make_pipeline_error("safe_regression", "example blocker")
     event = append_error_event(error, actor="pytest", events_file=tmp_path / "events.jsonl")

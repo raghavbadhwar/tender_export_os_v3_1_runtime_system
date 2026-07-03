@@ -1,0 +1,51 @@
+import datetime as dt
+import subprocess
+from pathlib import Path
+
+from scripts.check_cron_gateway_reliability import build_report, run_hermes_cron_status
+
+
+def test_cron_gateway_reports_duplicate_visible_jobs(tmp_path: Path) -> None:
+    cron1 = tmp_path / "a.yaml"
+    cron2 = tmp_path / "b.yaml"
+    body = """
+owner_gateway: telegram
+jobs:
+  - id: daily_job
+    cadence: "0 6 * * *"
+"""
+    cron1.write_text(body, encoding="utf-8")
+    cron2.write_text(body, encoding="utf-8")
+
+    report = build_report(
+        cron_paths=[cron1, cron2],
+        run_rows=[{"run_date": "2026-07-01", "status": "SUCCESS"}],
+        now=dt.datetime(2026, 7, 3, tzinfo=dt.timezone.utc),
+    )
+
+    assert report["duplicate_jobs"][0]["job_id"] == "daily_job"
+    assert any(item["code"] == "DUPLICATE_JOB_ID" for item in report["findings"])
+    assert "local-only" in report["tui_delivery_note"]
+
+
+def test_hermes_cron_status_gateway_not_running_is_blocker() -> None:
+    def runner(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(
+            command,
+            0,
+            stdout="✗ Gateway is not running — cron jobs will NOT fire\n\n  6 active job(s)\n  Next run: 2026-07-02T06:00:00+05:30\n",
+            stderr="",
+        )
+
+    parsed = run_hermes_cron_status(runner=runner)
+    report = build_report(
+        cron_paths=[],
+        run_rows=[],
+        cron_status=parsed,
+        now=dt.datetime(2026, 7, 3, tzinfo=dt.timezone.utc),
+    )
+
+    assert parsed["gateway_running"] is False
+    assert parsed["active_jobs"] == 6
+    assert report["status"] == "BLOCKED"
+    assert any(item["code"] == "GATEWAY_NOT_RUNNING" for item in report["findings"])

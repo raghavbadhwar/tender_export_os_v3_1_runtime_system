@@ -203,6 +203,9 @@ def validate_event(event: dict[str, Any]) -> list[str]:
     if not isinstance(citations, list):
         errors.append("citations must be a list")
         citations = []
+    source = event.get("source")
+    if not isinstance(source, str) or not source.strip():
+        errors.append("source must be a non-empty string")
     try:
         dt.datetime.fromisoformat(str(event.get("event_time", "")).replace("Z", "+00:00"))
     except ValueError:

@@ -16,6 +16,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from scripts.event_ledger import append_event  # noqa: E402
+from scripts.quote_proof import is_supplier_specific_proof_asset  # noqa: E402
 from scripts.source_runtime.credential_policy import sanitize_payload  # noqa: E402
 from scripts.source_runtime.evidence_store import safe_name  # noqa: E402
 
@@ -46,11 +47,7 @@ def score_supplier(row: dict[str, str], tender_terms: set[str]) -> tuple[int, li
 
 
 def is_quote_proof(candidate: dict[str, Any]) -> bool:
-    proof_type = str(candidate.get("quote_proof_type", "")).lower()
-    proof_path = str(candidate.get("quote_proof_path", ""))
-    indicative = bool(candidate.get("indicative_price_only")) or bool(candidate.get("not_a_quote_warning"))
-    accepted = {"supplier_specific_response", "proforma", "email_quote", "quotation_pdf", "verified_portal_quote"}
-    return bool(proof_path and proof_type in accepted and not indicative)
+    return is_supplier_specific_proof_asset(candidate)
 
 
 def gem_registration_gate(candidate: dict[str, Any], workflow: str = "GOV") -> dict[str, Any]:

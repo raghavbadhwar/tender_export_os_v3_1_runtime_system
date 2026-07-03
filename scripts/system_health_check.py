@@ -14,6 +14,7 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_DIR = PROJECT_ROOT / "outputs" / "system_health"
+PYTHON = str(PROJECT_ROOT / ".venv" / "bin" / "python") if (PROJECT_ROOT / ".venv" / "bin" / "python").exists() else sys.executable
 
 VALID_STATUSES = {
     "NEW",
@@ -59,12 +60,14 @@ REQUIRED_FILES = [
     "docs/MOBILE_APPROVAL_PROTOCOL.md",
     "docs/GOOGLE_DRIVE_SYNC_RUNBOOK.md",
     "docs/REGRESSION_CHECKLIST_90_PLUS.md",
+    "docs/TEOS_WORKER_PLUGIN_LOADING.md",
     "config/hermes_cron.yaml",
     "config/codex_runtime_policy.yaml",
     "config/kanban_board.yaml",
     "config/memory_policy.yaml",
     "config/plugin_routing.yaml",
     "config/agent_capability_routing.yaml",
+    "config/worker_plugin_policy.yaml",
     "config/sync_policy.yaml",
     "config/source_strategy.yaml",
     "config/schemas/master_cases.schema.json",
@@ -110,6 +113,8 @@ REQUIRED_FILES = [
     "scripts/audit_agent_prompts.py",
     "scripts/run_agent_regression_checks.py",
     "scripts/generate_90_plus_scorecard.py",
+    "scripts/import_external_worker_skills.py",
+    "scripts/validate_worker_plugin_imports.py",
     "scripts/source_adapters/base.py",
     "scripts/source_adapters/mock_adapter.py",
     "tests/fixtures/sources/mock_opportunities.json",
@@ -340,7 +345,7 @@ def check_csv_contracts(health: Health) -> None:
 
 
 def check_v41_schemas(health: Health) -> None:
-    rc, stdout, stderr = run(["python3", "scripts/validate_register_schemas.py"])
+    rc, stdout, stderr = run([PYTHON, "scripts/validate_register_schemas.py"])
     if rc != 0:
         health.fail(f"v4.1 schema validation failed: {stderr or stdout}")
     else:
@@ -369,7 +374,7 @@ def check_public_examples(health: Health) -> None:
 
 
 def check_private_data_scan(health: Health) -> None:
-    rc, stdout, stderr = run(["python3", "scripts/check_no_private_runtime_data.py", "--public-template"])
+    rc, stdout, stderr = run([PYTHON, "scripts/check_no_private_runtime_data.py", "--public-template"])
     if rc != 0:
         health.fail(f"Private runtime public-template scan failed: {stderr or stdout}")
     else:
@@ -410,35 +415,61 @@ def check_templates(health: Health) -> None:
 def check_script_dry_runs(health: Health) -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     commands = [
-        ["python3", "scripts/case_id_generator.py", "--type", "GOV", "--date", "20260630"],
-        ["python3", "scripts/supplier_score.py", "--top", "1"],
-        ["python3", "scripts/validate_register_schemas.py"],
-        ["python3", "scripts/rebuild_projections_from_events.py", "--output-dir", str(OUTPUT_DIR / "projections")],
-        ["python3", "scripts/process_owner_decision.py", "--approval-id", "APR-001", "--decision", "ask-changes", "--owner", "health_check", "--changes", "dry run only", "--dry-run"],
-        ["python3", "scripts/validate_case_readiness.py", "--all"],
-        ["python3", "scripts/generate_artifact_manifest.py", "--all"],
-        ["python3", "scripts/run_source_adapter.py", "--adapter", "mock", "--output", str(OUTPUT_DIR / "mock_source_opportunities.json")],
-        ["python3", "scripts/reconcile_hermes_kanban.py", "--output", str(OUTPUT_DIR / "hermes_kanban_reconciliation_plan.json")],
-        ["python3", "scripts/prepare_chatgpt_drive_packet.py", "--topic", "system_health", "--outbox", str(OUTPUT_DIR / "chatgpt_to_chatgpt")],
-        ["python3", "scripts/stage_chatgpt_return.py", "--input", "tests/fixtures/chatgpt_returns/sample_return.md", "--inbox", str(OUTPUT_DIR / "chatgpt_from_chatgpt")],
-        ["python3", "scripts/setup_drive_knowledge_bus.py", "--output", str(OUTPUT_DIR / "drive_knowledge_bus_setup_plan.json")],
-        ["python3", "scripts/generate_chatgpt_snapshot.py", "--output", str(OUTPUT_DIR / "chatgpt_snapshot.md")],
-        ["python3", "scripts/sync_to_drive.py", "--mode", "public-template", "--output", str(OUTPUT_DIR / "drive_sync_manifest.json")],
-        ["python3", "scripts/import_from_drive.py", "--output", str(OUTPUT_DIR / "drive_import_plan.json")],
-        ["python3", "scripts/generate_daily_brief.py", "--date", "20260630", "--no-log"],
-        ["python3", "scripts/codex_task_runner.py"],
-        ["python3", "scripts/render_mobile_approval_payload.py", "--all-pending", "--dry-run"],
-        ["python3", "scripts/render_mobile_dashboard_summary.py", "--dry-run"],
-        ["python3", "scripts/sync_drive_manifest.py", "--dry-run", "--case-id", "GOV-20260630-001"],
-        ["python3", "scripts/test_source_adapters.py", "--safe", "--limit", "5"],
-        ["python3", "scripts/generate_source_health_report.py"],
-        ["python3", "scripts/record_plugin_run_receipt.py", "--case-id", "GOV-20260630-001", "--capability-name", "health-check", "--dry-run"],
-        ["python3", "scripts/capture_browser_evidence.py", "--url", "https://example.com", "--case-id", "GOV-20260630-001", "--dry-run"],
-        ["python3", "scripts/generate_founder_dashboard.py"],
-        ["python3", "scripts/audit_agent_prompts.py"],
-        ["python3", "scripts/run_agent_regression_checks.py", "--structural-only"],
-        ["python3", "scripts/generate_90_plus_scorecard.py"],
+        [PYTHON, "scripts/case_id_generator.py", "--type", "GOV", "--date", "20260630"],
+        [PYTHON, "scripts/supplier_score.py", "--top", "1"],
+        [PYTHON, "scripts/validate_register_schemas.py"],
+        [PYTHON, "scripts/rebuild_projections_from_events.py", "--output-dir", str(OUTPUT_DIR / "projections")],
+        [PYTHON, "scripts/validate_case_readiness.py", "--all"],
+        [PYTHON, "scripts/generate_artifact_manifest.py", "--all"],
+        [PYTHON, "scripts/run_source_adapter.py", "--adapter", "mock", "--output", str(OUTPUT_DIR / "mock_source_opportunities.json")],
+        [PYTHON, "scripts/reconcile_hermes_kanban.py", "--output", str(OUTPUT_DIR / "hermes_kanban_reconciliation_plan.json")],
+        [PYTHON, "scripts/prepare_chatgpt_drive_packet.py", "--topic", "system_health", "--outbox", str(OUTPUT_DIR / "chatgpt_to_chatgpt")],
+        [PYTHON, "scripts/stage_chatgpt_return.py", "--input", "tests/fixtures/chatgpt_returns/sample_return.md", "--inbox", str(OUTPUT_DIR / "chatgpt_from_chatgpt")],
+        [PYTHON, "scripts/setup_drive_knowledge_bus.py", "--output", str(OUTPUT_DIR / "drive_knowledge_bus_setup_plan.json")],
+        [PYTHON, "scripts/generate_chatgpt_snapshot.py", "--output", str(OUTPUT_DIR / "chatgpt_snapshot.md")],
+        [PYTHON, "scripts/sync_to_drive.py", "--mode", "public-template", "--output", str(OUTPUT_DIR / "drive_sync_manifest.json")],
+        [PYTHON, "scripts/import_from_drive.py", "--output", str(OUTPUT_DIR / "drive_import_plan.json")],
+        [PYTHON, "scripts/generate_daily_brief.py", "--date", "20260630", "--no-log"],
+        [PYTHON, "scripts/codex_task_runner.py"],
+        [PYTHON, "scripts/render_mobile_approval_payload.py", "--all-pending", "--dry-run"],
+        [PYTHON, "scripts/render_mobile_dashboard_summary.py", "--dry-run"],
+        [PYTHON, "scripts/sync_drive_manifest.py", "--dry-run", "--case-id", "GOV-20260630-001"],
+        [PYTHON, "scripts/test_source_adapters.py", "--safe", "--limit", "5"],
+        [PYTHON, "scripts/generate_source_health_report.py"],
+        [PYTHON, "scripts/record_plugin_run_receipt.py", "--case-id", "GOV-20260630-001", "--capability-name", "health-check", "--dry-run"],
+        [PYTHON, "scripts/capture_browser_evidence.py", "--url", "https://example.com", "--case-id", "GOV-20260630-001", "--dry-run"],
+        [PYTHON, "scripts/generate_founder_dashboard.py"],
+        [PYTHON, "scripts/audit_agent_prompts.py"],
+        [PYTHON, "scripts/run_agent_regression_checks.py", "--structural-only"],
+        [PYTHON, "scripts/generate_90_plus_scorecard.py"],
     ]
+    pending_approval = next(
+        (
+            row
+            for row in load_csv(PROJECT_ROOT / "data" / "approvals_receipts.csv")
+            if (row.get("approval_status") or "").upper() == "PENDING" and row.get("approval_id")
+        ),
+        None,
+    )
+    if pending_approval:
+        commands.append(
+            [
+                PYTHON,
+                "scripts/process_owner_decision.py",
+                "--approval-id",
+                pending_approval["approval_id"],
+                "--decision",
+                "ask-changes",
+                "--owner",
+                "health_check",
+                "--changes",
+                "dry run only",
+                "--dry-run",
+            ]
+        )
+    else:
+        health.warn("Owner decision dry-run skipped: no pending approval rows")
+
     failures = []
     for command in commands:
         rc, stdout, stderr = run(command)
@@ -473,9 +504,9 @@ def check_script_dry_runs(health: Health) -> None:
 
 def check_existing_validators(health: Health) -> None:
     for command in [
-        ["python3", "-m", "py_compile", *[str(p) for p in sorted((PROJECT_ROOT / "scripts").glob("*.py"))]],
-        ["python3", "scripts/validate_agent_loops.py"],
-        ["python3", "scripts/validate_loop_schedule.py"],
+        [PYTHON, "-m", "py_compile", *[str(p) for p in sorted((PROJECT_ROOT / "scripts").glob("*.py"))]],
+        [PYTHON, "scripts/validate_agent_loops.py"],
+        [PYTHON, "scripts/validate_loop_schedule.py"],
     ]:
         rc, stdout, stderr = run(command)
         if rc != 0:
@@ -484,8 +515,16 @@ def check_existing_validators(health: Health) -> None:
     health.pass_("Python compile and loop validators pass")
 
 
+def check_worker_plugin_imports(health: Health) -> None:
+    rc, stdout, stderr = run([PYTHON, "scripts/validate_worker_plugin_imports.py"], timeout=90)
+    if rc != 0:
+        health.fail(f"Hermes worker plugin imports failed: {stderr or stdout}")
+    else:
+        health.pass_("Hermes worker plugin imports validate")
+
+
 def check_runtime(health: Health) -> None:
-    rc, stdout, stderr = run(["python3", "scripts/check_codex_runtime_readiness.py"], timeout=60)
+    rc, stdout, stderr = run([PYTHON, "scripts/check_codex_runtime_readiness.py"], timeout=60)
     if rc != 0:
         health.fail(f"Runtime readiness failed: {stderr or stdout}")
     else:
@@ -523,6 +562,7 @@ def main() -> int:
         check_v41_schemas(health)
         check_templates(health)
         check_existing_validators(health)
+        check_worker_plugin_imports(health)
         check_script_dry_runs(health)
         if args.runtime:
             check_runtime(health)

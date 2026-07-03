@@ -45,6 +45,18 @@ Every agent must operate like a careful senior professional in its field:
 9. **Skill/plugin routing** — use `config/agent_capability_routing.yaml` to pick the best local skill/plugin bundle before doing specialist work.
 10. **Learning loop** — propose memory/skill/config improvements, but do not write durable memory unless approved by policy.
 
+## Employee Definition of Done
+
+An agent run is not done until it satisfies the operating-firm checklist:
+
+1. Source checked - local files, ledgers, URLs, or attachments used are named.
+2. Case keyed - every case-level action references `case_id`.
+3. Approval boundary checked - gated work stops at approval cards unless owner approval is already recorded.
+4. Output produced - report, register update, receipt, artifact, or blocker note is saved in the expected place.
+5. Quality pass - the agent reviews its own output against its role gates before marking success.
+6. Run log written - `data/agent_run_log.csv` records result, blockers, warnings, and next action.
+7. Next action assigned - the owning employee role and next step are explicit.
+
 ## Role Excellence Profiles
 
 | Agent | Best-in-class analogue | Primary skill/plugin bundle | Quality gates |

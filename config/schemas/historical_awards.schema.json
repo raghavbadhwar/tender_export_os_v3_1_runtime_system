@@ -1,0 +1,10 @@
+{
+  "file": "data/historical_awards.csv",
+  "primary_key": "award_id",
+  "required_columns": ["award_id", "notice_id", "buyer_name", "winner_name", "award_date", "award_value_inr", "category_code", "category_name", "source_name", "source_url", "evidence_level", "created_at"],
+  "required_fields": ["award_id", "buyer_name", "winner_name", "award_date", "category_name", "source_name", "evidence_level", "created_at"],
+  "enums": {"evidence_level": ["PUBLIC_LISTING_ONLY", "DETAIL_PAGE_READ", "DOCUMENTS_DISCOVERED", "DOCUMENTS_DOWNLOADED", "STRUCTURED_EVIDENCE_BUNDLE"]},
+  "date_fields": ["award_date", "created_at"],
+  "numeric_fields": ["award_value_inr"],
+  "url_fields": ["source_url"]
+}

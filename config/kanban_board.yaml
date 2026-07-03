@@ -46,6 +46,7 @@ task_templates:
   - Artifact Production
   - Approval Required
   - Execution Tracking
+  - Operating Desk Review
   - Weekly Review
   - Source Health Issue
   - Plugin Health Issue

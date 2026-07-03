@@ -1,0 +1,30 @@
+{
+  "file": "data/forecast_backtests.csv",
+  "primary_key": "backtest_id",
+  "required_columns": [
+    "backtest_id",
+    "forecast_id",
+    "forecast_date",
+    "review_date",
+    "case_or_research_id",
+    "forecast_type",
+    "predicted_action",
+    "observed_outcome",
+    "outcome_label",
+    "score_delta",
+    "false_positive_reason",
+    "false_negative_reason",
+    "learning_note",
+    "config_change_recommended",
+    "created_at"
+  ],
+  "required_fields": ["backtest_id", "forecast_id", "forecast_date", "review_date", "case_or_research_id", "forecast_type", "outcome_label", "created_at"],
+  "enums": {
+    "forecast_type": ["ACTIVE_CASE", "RESEARCH_LANE", "LOW_COMPETITION", "BUYER_REPEAT", "CATEGORY_DEMAND"],
+    "outcome_label": ["HIT", "PARTIAL_HIT", "MISS", "NOT_ENOUGH_TIME", "BLOCKED_BY_PROOF", "KILLED_CORRECTLY"],
+    "config_change_recommended": ["", "TRUE", "FALSE"]
+  },
+  "date_fields": ["forecast_date", "review_date", "created_at"],
+  "numeric_fields": ["score_delta"],
+  "url_fields": []
+}

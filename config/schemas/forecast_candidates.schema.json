@@ -1,0 +1,44 @@
+{
+  "file": "data/forecast_candidates.csv",
+  "primary_key": "forecast_id",
+  "required_columns": [
+    "forecast_id",
+    "run_id",
+    "forecast_date",
+    "horizon",
+    "forecast_type",
+    "case_or_research_id",
+    "workflow_type",
+    "buyer_or_market",
+    "category_name",
+    "product_or_service",
+    "source_name",
+    "source_url",
+    "forecast_score",
+    "confidence",
+    "repeat_probability",
+    "low_competition_score",
+    "supplier_readiness_score",
+    "evidence_level",
+    "proof_gap",
+    "next_safe_action",
+    "approval_required_before_external_action",
+    "kill_or_watch_reason",
+    "created_at"
+  ],
+  "required_fields": ["forecast_id", "run_id", "forecast_date", "forecast_type", "case_or_research_id", "forecast_score", "created_at"],
+  "enums": {
+    "forecast_type": ["ACTIVE_CASE", "RESEARCH_LANE", "LOW_COMPETITION", "BUYER_REPEAT", "CATEGORY_DEMAND"],
+    "workflow_type": ["", "GOV", "EXPORT", "MIXED", "EXPORT_RESEARCH", "LOW_COMP_RADAR"],
+    "confidence": ["HIGH", "MEDIUM", "LOW"],
+    "approval_required_before_external_action": ["TRUE", "FALSE"]
+  },
+  "date_fields": ["forecast_date", "created_at"],
+  "numeric_fields": [
+    "forecast_score",
+    "repeat_probability",
+    "low_competition_score",
+    "supplier_readiness_score"
+  ],
+  "url_fields": ["source_url"]
+}

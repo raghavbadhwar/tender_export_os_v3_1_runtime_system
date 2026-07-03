@@ -1,0 +1,2 @@
+stat_id,buyer_name,buyer_type,country_or_state,category_code,category_name,past_notice_count,past_award_count,avg_estimated_value_inr,avg_award_value_inr,last_seen_date,repeat_score,created_at
+HBC-EXAMPLE-001,Example Municipal Buyer,Government,Maharashtra,GOV-OPS-001,Operational Consumables,3,2,130000,120000,2099-02-01,75,2099-02-01

@@ -1,0 +1,156 @@
+version: 1
+module: v5_demand_forecasting_low_competition
+safety_boundary: "Internal-only decision support. No external send, portal login, bid/RFQ submission, payment, DSC, final price, delivery, HSN/ITC-HS, origin, tax, or legal/compliance commitment."
+
+horizons:
+  short_days: 7
+  near_days: 30
+  medium_days: 60
+  long_days: 90
+
+confidence_thresholds:
+  high: 80
+  medium: 60
+  low: 0
+
+forecast_score_weights:
+  repeat_buyer_or_category_pattern: 30
+  source_reliability: 20
+  evidence_density_or_proof_level: 15
+  low_competition_signal: 15
+  supplier_readiness: 10
+  actionability_deadline_window: 10
+
+low_competition_score_weights:
+  signal_strength: 25
+  beginner_category_fit: 20
+  supplier_readiness: 15
+  capital_emd_fit: 15
+  document_boq_clarity: 10
+  no_hard_eligibility_blocker: 10
+  repeat_or_learning_value: 5
+
+export_forecast_score_weights:
+  product_country_demand_signal: 25
+  buyer_or_rfq_proof: 20
+  supplier_readiness: 15
+  compliance_readiness: 15
+  landed_margin_potential: 15
+  repeatability: 10
+
+proof_level_labels:
+  buyer:
+    0: "generic market thesis only"
+    1: "public source lane"
+    2: "visible buyer or institution"
+    3: "buyer-specific public RFQ/listing"
+    4: "RFQ document/source detail captured"
+    5: "verified RFQ with direct buyer identity/contact path"
+  supplier:
+    0: "no supplier"
+    1: "public listing only"
+    2: "supplier identity/company proof"
+    3: "indicative verbal or catalogue price"
+    4: "supplier-specific written quote"
+    5: "proforma/sample/terms/certificates verified"
+  pricing:
+    0: "no pricing"
+    1: "generic marketplace/public listing"
+    2: "indicative benchmark"
+    3: "recent comparable quote"
+    4: "supplier-specific quote"
+    5: "supplier quote + landed cost + payment terms"
+
+hard_gates:
+  forecast_never_bid_ready: true
+  public_listing_only_not_bid_ready: true
+  require_document_or_rfq_proof_before_deep_read: true
+  require_supplier_specific_quote_for_pricing_ready: true
+  require_owner_approval_before_external_action: true
+
+low_competition_positive_signals:
+  - retender
+  - re-tender
+  - recalled tender
+  - date extension
+  - corrigendum
+  - revised BOQ
+  - shortfall of bidders
+  - single bid received
+  - AMC
+  - annual maintenance
+  - repair
+  - refilling
+  - replacement
+  - rate contract
+  - misc item
+  - consumables
+  - local purchase
+  - spares
+  - badly titled operational order
+
+low_competition_negative_signals:
+  - manufacturer only
+  - OEM required
+  - past experience required
+  - high turnover required
+  - high EMD
+  - high PBG
+  - short deadline
+  - remote delivery
+  - unclear BOQ
+  - missing documents
+  - compliance heavy
+  - crowded commodity
+
+priority_categories:
+  government_beginner:
+    - office stationery / printing / conference material
+    - RO / water purifier AMC / filter replacement
+    - digitisation / scanning / record management
+    - cleaning / housekeeping consumables
+    - printer toner / cartridge / AMC
+    - linen / bedsheets / towels
+    - pest control
+  export_research:
+    - premium Indian handicrafts / small décor / artisan textiles / gifting
+    - compliant spices / condiments
+    - simple engineering parts only with exact RFQ + supplier certificates
+
+outputs:
+  directory: outputs/demand_forecasting
+  markdown: v5_demand_forecast_low_competition_YYYYMMDD.md
+  html: v5_demand_forecast_low_competition_YYYYMMDD.html
+  json: v5_demand_forecast_low_competition_YYYYMMDD.json
+  forecast_candidates_csv: data/forecast_candidates.csv
+  buyer_purchase_history_csv: data/buyer_purchase_history.csv
+  category_demand_history_csv: data/category_demand_history.csv
+  forecast_backtests_csv: data/forecast_backtests.csv
+
+projection_builders:
+  buyer_purchase_history:
+    command: "python3 scripts/build_buyer_purchase_history.py --write"
+    default_mode: dry_run
+  category_demand_history:
+    command: "python3 scripts/build_category_demand_history.py --write"
+    default_mode: dry_run
+  forecast_candidates:
+    command: "python3 scripts/generate_v5_demand_forecast_low_competition.py --date YYYYMMDD --write-candidates"
+    default_mode: report_only
+  forecast_backtests:
+    command: "python3 scripts/backtest_v5_demand_forecasts.py --write"
+    default_mode: dry_run
+
+report_sections:
+  - founder_snapshot
+  - recommended_internal_actions
+  - top_active_demand_forecasts
+  - top_low_competition_candidates
+  - top_repeat_buyer_category_predictions
+  - top_export_research_lanes
+  - killed_not_ready_reasons
+  - proof_gaps
+  - backtest_learning_notes
+  - guardrails
+
+recommended_shadow_run_days: 7

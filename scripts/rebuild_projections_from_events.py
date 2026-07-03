@@ -9,7 +9,10 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-from event_ledger import EVENTS_FILE, load_events
+try:
+    from event_ledger import EVENTS_FILE, load_events
+except ModuleNotFoundError:  # pragma: no cover - pytest package import path
+    from scripts.event_ledger import EVENTS_FILE, load_events
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]

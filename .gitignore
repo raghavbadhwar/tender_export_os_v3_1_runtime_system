@@ -47,6 +47,7 @@ data/**
 !data/examples/**
 
 # Browser/session/cache/evidence
+.crawl4ai/
 *.sqlite
 Cookies
 Local Storage/

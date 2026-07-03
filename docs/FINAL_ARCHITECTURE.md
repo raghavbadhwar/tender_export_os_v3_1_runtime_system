@@ -39,6 +39,8 @@ Use these scripts to maintain the state model:
 - `scripts/process_owner_decision.py` records owner decisions and receipts without external execution.
 - `scripts/generate_artifact_manifest.py` maps all artifacts and receipts per case.
 - `scripts/reconcile_hermes_kanban.py` creates a plan-only Hermes Kanban reconciliation.
+- `scripts/extract_case_evidence.py` extracts source-grounded tender/quote fields into JSON plus reviewable HTML, with exact spans back to local source text.
+- `scripts/run_extraction_evals.py` runs the local source-grounded extraction eval suite for tender fields and quote-proof classification.
 
 ## Runtime Split
 Hermes directly handles:

@@ -36,11 +36,11 @@ def render(row):
         f"Action: {row.get('action_approved') or pick(card,'proposed_action','action_approved')}",
         f"Business object: {pick(card,'business_object', default=row.get('business_object',''))}",
     ]
-    amount=pick(card,'amount','amount_inr','price','quote_amount', default=row.get('amount',''))
+    amount=pick(card,'amount_or_price','amount','amount_inr','price','quote_amount', default=row.get('amount',''))
     if amount: lines.append(f"Amount/price: {amount}")
     deadline=pick(card,'deadline','deadline_date', default=row.get('deadline_date',''))
     if deadline: lines.append(f"Deadline: {deadline}")
-    for label, keys in [('Benefit',('expected_benefit','benefit')),('Risk',('concrete_risk','risk')),('Recovery',('recovery_path','rollback_path')),('Missing info',('missing_information','missing_info'))]:
+    for label, keys in [('Benefit',('expected_benefit','benefit')),('Risk',('concrete_risk','risk')),('Recovery',('recovery_rollback_path','recovery_path','rollback_path')),('Missing info',('missing_information','missing_info'))]:
         val=pick(card,*keys, default=row.get(keys[0],''))
         if isinstance(val,list): val='; '.join(map(str,val))
         if val: lines.append(f"{label}: {val}")
@@ -56,6 +56,11 @@ def main():
     args=ap.parse_args(); rows=read_csv(PROJECT_ROOT/'data'/'approvals_receipts.csv')
     rows=[r for r in rows if (r.get('approval_status') or '').upper()=='PENDING'] if args.all_pending else rows
     if args.approval_id: rows=[r for r in rows if r.get('approval_id')==args.approval_id]
-    if not rows: print('No matching pending approvals.'); return 0
+    if not rows:
+        print('No matching pending approvals.')
+        if args.dry_run:
+            print('Reply options format: APPROVE <approval_id> | REJECT <approval_id> <reason> | CHANGES <approval_id> <request>')
+            print('Safety: dry-run rendering only; no approval state, send, submit, pay, DSC, price, classification, or origin action is executed.')
+        return 0
     print('\n\n---\n\n'.join(render(r) for r in rows)); return 0
 if __name__=='__main__': raise SystemExit(main())

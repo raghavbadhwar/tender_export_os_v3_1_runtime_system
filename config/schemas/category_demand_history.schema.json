@@ -1,0 +1,46 @@
+{
+  "file": "data/category_demand_history.csv",
+  "primary_key": "category_history_id",
+  "required_columns": [
+    "category_history_id",
+    "workflow_type",
+    "category_code",
+    "category_name",
+    "country_or_state",
+    "source_names",
+    "total_signal_count",
+    "active_case_count",
+    "research_lane_count",
+    "verified_rfq_count",
+    "low_competition_count",
+    "supplier_ready_count",
+    "last_seen_date",
+    "trend_direction",
+    "demand_score",
+    "low_competition_fit_score",
+    "supplier_readiness_score",
+    "confidence",
+    "recommended_next_action",
+    "created_at",
+    "updated_at"
+  ],
+  "required_fields": ["category_history_id", "workflow_type", "category_name", "total_signal_count", "trend_direction", "created_at"],
+  "enums": {
+    "workflow_type": ["GOV", "EXPORT", "MIXED"],
+    "trend_direction": ["RISING", "STABLE", "DECLINING", "UNKNOWN"],
+    "confidence": ["HIGH", "MEDIUM", "LOW"]
+  },
+  "date_fields": ["last_seen_date", "created_at", "updated_at"],
+  "numeric_fields": [
+    "total_signal_count",
+    "active_case_count",
+    "research_lane_count",
+    "verified_rfq_count",
+    "low_competition_count",
+    "supplier_ready_count",
+    "demand_score",
+    "low_competition_fit_score",
+    "supplier_readiness_score"
+  ],
+  "url_fields": []
+}
