@@ -12,6 +12,8 @@ Usage:
     python scripts/run_daily_autopilot_pseudocode.py --mode=brief_only
 """
 
+from __future__ import annotations
+
 import argparse
 import datetime
 import time

@@ -24,6 +24,16 @@ OUTPUT_DIR = PROJECT_ROOT / "outputs" / "demand_forecasting"
 LOW_COMP_DIR = PROJECT_ROOT / "outputs" / "low_competition_radar"
 FORECAST_CANDIDATES_PATH = DATA_DIR / "forecast_candidates.csv"
 
+
+def display_path(path: Path) -> str:
+    """Return a repo-relative path when possible, otherwise an absolute path."""
+    resolved = path.resolve()
+    try:
+        return str(resolved.relative_to(PROJECT_ROOT.resolve()))
+    except ValueError:
+        return str(resolved)
+
+
 SAFETY_BOUNDARY = (
     "Internal-only decision support. No buyer/supplier contact, portal login, "
     "bid/RFQ submission, payment, DSC use, final price, delivery, HSN/ITC-HS, "
@@ -1043,10 +1053,10 @@ def main() -> int:
 
     print(json.dumps({
         "ok": True,
-        "markdown": str(md_path.relative_to(PROJECT_ROOT)),
-        "html": str(html_path.relative_to(PROJECT_ROOT)),
-        "json": str(json_path.relative_to(PROJECT_ROOT)),
-        "forecast_candidates": str(candidates_path.relative_to(PROJECT_ROOT)) if args.write_candidates else "",
+        "markdown": display_path(md_path),
+        "html": display_path(html_path),
+        "json": display_path(json_path),
+        "forecast_candidates": display_path(candidates_path) if args.write_candidates else "",
         "forecast_candidates_written": len(candidate_rows),
         "summary": payload["summary"],
     }, indent=2))
