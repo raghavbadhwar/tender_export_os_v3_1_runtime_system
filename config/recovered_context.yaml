@@ -1,0 +1,43 @@
+version: 1
+profile: tender-export-os
+policy: read_only_provenance_first
+
+sources:
+  - id: supplied_recovered_source_tree
+    kind: source_checkout
+    path: "/Volumes/ANUJ SSD 2/RAGHAV2_RECOVERED_FINAL_2026-07-11/CONSOLIDATED_ORIGINAL_TREE/hermes"
+    observed_version: "0.14.0"
+    authority: design_evidence_only
+    notes: "Ares Wholesale AIOS source and operating patterns; not a live profile backup."
+  - id: local_ares_runtime_state
+    kind: legacy_runtime
+    path: "/Users/raghav/.ares"
+    observed_version: "0.14-era"
+    authority: historical_evidence_only
+    contains:
+      - 52 legacy sessions
+      - 754 legacy messages
+      - bounded MEMORY.md and USER.md
+      - a-soul profile instructions
+      - legacy cron definitions
+      - demo wholesaler fixtures
+  - id: preserved_ares_session_archive
+    kind: immutable_session_archive
+    path: "/Users/raghav/.hermes/profiles/tender-export-os/recovered-context/ares-v014/state.db"
+    authority: on_demand_legacy_session_search
+
+search:
+  command: "python3 scripts/search_recovered_ares_context.py --query '<terms>' --scope tender"
+  default_scope: tender
+  default_roles: [user, assistant]
+  tool_messages_default: excluded
+  max_results: 100
+
+promotion_rules:
+  - recovered_content_is_not_current_truth
+  - verify_against_live_repo_and_external_sources
+  - cite_legacy_session_id_and_archive_hash
+  - owner_approval_required_for_memory_or_skill_promotion
+  - never_promote_demo_wholesaler_or_mock_gst_records
+  - never_import_credentials_cookies_tokens_dsc_or_bank_data
+  - never_activate_legacy_tom_or_a_soul_identity_in_this_profile

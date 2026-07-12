@@ -1,4 +1,5 @@
 import csv
+import json
 import sys
 from pathlib import Path
 
@@ -91,6 +92,59 @@ def seed_operating_desk_root(root: Path) -> None:
             }
         ],
     )
+    write_csv(
+        data / "buyer_demand_signals.csv",
+        ["signal_id", "company_name", "country", "category_name", "market_fit_score", "demand_confidence", "contact_status", "next_safe_action", "case_id"],
+        [
+            {
+                "signal_id": "SIG-TEST-001",
+                "company_name": "Example Ethical Store",
+                "country": "United Kingdom",
+                "category_name": "Handicrafts",
+                "market_fit_score": "82",
+                "demand_confidence": "MEDIUM",
+                "contact_status": "PUBLIC_GENERAL_CONTACT",
+                "next_safe_action": "DRAFT_OUTREACH_FOR_APPROVAL",
+                "case_id": "EXP-TEST-001",
+            }
+        ],
+    )
+    write_csv(
+        data / "outreach_queue.csv",
+        ["outreach_id", "case_id", "buyer_id", "signal_id", "subject", "approval_id", "approval_status", "send_status", "reply_status", "last_reply_at", "stop_reason"],
+        [
+            {
+                "outreach_id": "OUT-TEST-001",
+                "case_id": "EXP-TEST-001",
+                "buyer_id": "BUY-TEST-001",
+                "signal_id": "SIG-TEST-001",
+                "subject": "Indian artisan homeware",
+                "approval_id": "APR-TEST-001",
+                "approval_status": "PENDING",
+                "send_status": "DRAFT_ONLY",
+                "reply_status": "NO_REPLY",
+            }
+        ],
+    )
+    write_csv(
+        data / "communication_log.csv",
+        ["communication_id", "outreach_id", "case_id", "buyer_id", "direction", "occurred_at", "subject", "classification", "requires_owner_action", "recommended_next_action", "content_path"],
+        [
+            {
+                "communication_id": "COM-TEST-001",
+                "outreach_id": "OUT-TEST-001",
+                "case_id": "EXP-TEST-001",
+                "buyer_id": "BUY-TEST-001",
+                "direction": "INBOUND",
+                "occurred_at": "2026-07-02T08:00:00+00:00",
+                "subject": "Re: Indian artisan homeware",
+                "classification": "POSITIVE_INTEREST",
+                "requires_owner_action": "TRUE",
+                "recommended_next_action": "Prepare a factual response draft for approval.",
+                "content_path": "receipts/buyer_replies/COM-TEST-001.txt",
+            }
+        ],
+    )
 
 
 def test_operating_desk_report_sections_and_health_status(tmp_path: Path) -> None:
@@ -105,8 +159,31 @@ def test_operating_desk_report_sections_and_health_status(tmp_path: Path) -> Non
     assert report["stale_or_failed_agent_runs"][0]["status"] == "FAILED"
     assert report["source_blockers"][0]["health_status"] == "Paywalled"
     assert report["plugin_blockers"][0]["blocker"] == "auth warning"
-    assert report["one_smallest_owner_action"].startswith("Review approval APR-TEST-001")
+    assert report["buyer_acquisition"]["target_count"] == 1
+    assert report["buyer_acquisition"]["outreach_draft_count"] == 1
+    assert report["buyer_acquisition"]["reply_count"] == 1
+    assert report["buyer_acquisition"]["owner_action_replies"][0]["classification"] == "POSITIVE_INTEREST"
+    assert report["one_smallest_owner_action"].startswith("Review buyer reply COM-TEST-001")
     assert any(queue["agent"] == "supplier_engine_agent" for queue in report["employee_queues"])
+
+
+def test_operating_desk_keeps_safety_held_approved_action_blocked(tmp_path: Path) -> None:
+    seed_operating_desk_root(tmp_path)
+    approvals = tmp_path / "data" / "approvals_receipts.csv"
+    rows = list(csv.DictReader(approvals.open(newline="", encoding="utf-8")))
+    for row in rows:
+        row["approval_status"] = "APPROVED"
+    rows[0]["external_effect"] = "PENDING_APPROVED_EXECUTION"
+    rows[0]["notes"] = "Execution clearance attempt: SAFETY_HELD_NOT_SENT because RFQ is RAW_LEAD."
+    headers = list(rows[0].keys())
+    if "notes" not in headers:
+        headers.append("notes")
+    write_csv(approvals, headers, rows)
+
+    report = desk.build_report(project_root=tmp_path, today=desk.dt.date(2026, 7, 2), deadline_window_days=14)
+
+    assert report["approved_actions_awaiting_execution"][0]["next_action"].startswith("Keep held")
+    assert report["one_smallest_owner_action"].startswith("Review buyer reply COM-TEST-001")
 
 
 def test_operating_desk_no_log_does_not_mutate_run_log(tmp_path: Path, monkeypatch) -> None:
@@ -121,3 +198,86 @@ def test_operating_desk_no_log_does_not_mutate_run_log(tmp_path: Path, monkeypat
     assert run_log.read_text(encoding="utf-8") == before
     assert (tmp_path / "outputs" / "operating_desk" / "operating_desk_20260702.json").exists()
     assert (tmp_path / "outputs" / "operating_desk" / "operating_desk_20260702.html").exists()
+
+
+def test_operating_desk_flags_stale_health_and_strict_quote_gap(tmp_path: Path) -> None:
+    seed_operating_desk_root(tmp_path)
+    source_health = tmp_path / "data" / "source_health.csv"
+    rows = list(csv.DictReader(source_health.open(newline="", encoding="utf-8")))
+    rows[0]["last_checked_date"] = "2026-06-20"
+    write_csv(source_health, list(rows[0]), rows)
+    write_csv(
+        tmp_path / "data" / "quote_master.csv",
+        [
+            "quote_id",
+            "case_id",
+            "supplier_id",
+            "quote_received_at",
+            "quote_proof_type",
+            "quote_proof_path",
+            "indicative_price_only",
+        ],
+        [
+            {
+                "quote_id": "Q-LISTING",
+                "case_id": "GOV-TEST-001",
+                "supplier_id": "SUP-1",
+                "quote_received_at": "2026-07-01T09:00:00",
+                "quote_proof_type": "marketplace_listing",
+                "quote_proof_path": "outputs/listing.html",
+                "indicative_price_only": "TRUE",
+            }
+        ],
+    )
+
+    report = desk.build_report(
+        project_root=tmp_path,
+        today=desk.dt.date(2026, 7, 2),
+        deadline_window_days=14,
+        stale_days=1,
+    )
+
+    stale = next(item for item in report["source_blockers"] if item["name"] == "Working Source")
+    assert stale["stale"] is True
+    assert stale["next_action"].startswith("Refresh this health probe")
+    assert report["quote_proof_gaps"][0]["case_id"] == "GOV-TEST-001"
+    assert report["quote_proof_gaps"][0]["strict_quote_proof_count"] == 0
+    assert report["summary"]["quote_proof_gaps"] == 1
+
+
+def test_operating_desk_surfaces_hermes_and_prediction_health(tmp_path: Path) -> None:
+    seed_operating_desk_root(tmp_path)
+    cron_dir = tmp_path / "outputs" / "cron_gateway"
+    cron_dir.mkdir(parents=True)
+    (cron_dir / "cron_gateway_reliability_20990101_090000.json").write_text(
+        json.dumps(
+            {
+                "status": "PASS",
+                "generated_at": "2099-01-01T09:00:00+00:00",
+                "hermes_cron_status": {"gateway_running": True, "active_jobs": 7, "profile": "tender-export-os"},
+                "findings": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    forecast_dir = tmp_path / "outputs" / "demand_forecasting"
+    forecast_dir.mkdir(parents=True)
+    (forecast_dir / "forecast_calibration_20990101.json").write_text(
+        json.dumps(
+            {
+                "status": "INSUFFICIENT_MATURE_SAMPLE",
+                "review_date": "2099-01-01",
+                "mature_sample_size": 0,
+                "minimum_mature_sample": 30,
+                "brier_score": None,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    report = desk.build_report(project_root=tmp_path, today=desk.dt.date(2099, 1, 1))
+
+    assert report["hermes_runtime_health"]["status"] == "PASS"
+    assert report["hermes_runtime_health"]["active_jobs"] == 7
+    assert report["prediction_health"]["status"] == "INSUFFICIENT_MATURE_SAMPLE"
+    assert report["prediction_health"]["mature_sample_size"] == 0

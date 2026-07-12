@@ -1,6 +1,13 @@
 version: 4
 default_router: hermes-chief-operator
 
+gmail_operation_policy:
+  required_connector: gmail_plugin
+  forbidden_substitutes: [gws, direct_imap, himalaya, browser_gmail]
+  send_gate: "Current owner approval receipt and matching scope hash required."
+  reply_gate: "Classify and brief only; never auto-reply."
+  gws_allowed_scope: [drive, sheets]
+
 groups:
   primary_artifact_runtime:
     plugins:

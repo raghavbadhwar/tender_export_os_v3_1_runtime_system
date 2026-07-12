@@ -1,0 +1,59 @@
+version: 1
+profile: tender-export-os
+purpose: "Read-only public web evidence capture for market, buyer, supplier, catalogue, and source research"
+
+routing:
+  discovery: "Hermes DDGS web_search or ChatGPT Deep Research"
+  static_html_and_batch: "scripts/public_web_evidence_scraper.py"
+  javascript_rendered_pages: "scripts/agent_browser_capture.py"
+  known_portal_adapters: "scripts/run_source_adapter.py and scripts/run_agent_browser_core_sources.py"
+  pdf_or_document: "Deep Read document/PDF/spreadsheet lane"
+
+defaults:
+  scheme: https_only
+  network_scope: public_only
+  robots_txt: enforce_fail_closed
+  user_agent: "TenderExportOS-EvidenceBot/1.0 (read-only public research)"
+  same_host_link_following: true
+  max_pages: 10
+  hard_max_pages: 50
+  max_depth: 1
+  hard_max_depth: 3
+  delay_seconds: 1.5
+  minimum_delay_seconds: 1.0
+  timeout_seconds: 30
+  max_response_bytes: 5000000
+  hard_max_response_bytes: 10000000
+
+artifacts:
+  output_root: outputs/web_scraping
+  preserve_raw_html: true
+  preserve_extracted_text: true
+  preserve_structured_json: true
+  preserve_sha256: true
+  preserve_redirect_final_url: true
+  extract:
+    - title
+    - meta_description
+    - canonical_url
+    - headings
+    - links
+    - public_mailto_contacts
+    - visible_text
+
+prohibited:
+  - login_or_authenticated_scraping
+  - captcha_or_paywall_bypass
+  - private_or_local_network_targets
+  - cross_host_recursive_crawl
+  - forms_clicks_uploads_or_messages
+  - credential_cookie_or_browser_auth_import
+  - personal_email_guessing
+  - ignoring_robots_txt
+  - portal_submission_payment_or_dsc
+  - treating_public_catalogue_fit_as_confirmed_demand
+
+approval_boundary:
+  public_read_only_capture: no_approval
+  authenticated_browser_or_session: owner_approval_and_manual_login
+  external_contact_or_message: owner_approval_and_receipt

@@ -64,6 +64,31 @@ PROJECTIONS = {
         "id_field": "research_id",
         "snapshot_event": "demand_research.snapshot_imported",
     },
+    "buyer_demand_signal": {
+        "file": PROJECT_ROOT / "data" / "buyer_demand_signals.csv",
+        "id_field": "signal_id",
+        "snapshot_event": "buyer_demand_signal.snapshot_imported",
+    },
+    "outreach": {
+        "file": PROJECT_ROOT / "data" / "outreach_queue.csv",
+        "id_field": "outreach_id",
+        "snapshot_event": "outreach.snapshot_imported",
+    },
+    "communication": {
+        "file": PROJECT_ROOT / "data" / "communication_log.csv",
+        "id_field": "communication_id",
+        "snapshot_event": "communication.snapshot_imported",
+    },
+}
+
+
+# Historical adapters used short labels while the register used owner-facing
+# source names. Keep those events on the same durable source-health row.
+SOURCE_HEALTH_ID_ALIASES = {
+    "CPPP/eProcure": "CPPP — Central Public Procurement Portal",
+    "GeM": "GeM — Government e-Marketplace",
+    "Indian Trade Portal (ITP)": "Indian Trade Portal",
+    "UNGM": "UN Global Marketplace (UNGM)",
 }
 
 
@@ -90,6 +115,41 @@ def apply_update(current: dict[str, str], payload: dict[str, Any], headers: list
     return row
 
 
+def update_values(payload: dict[str, Any]) -> dict[str, Any]:
+    """Return the row-shaped portion of an event payload."""
+    if not isinstance(payload, dict):
+        return {}
+    for nested_key in ("updates", "row", "after"):
+        nested_value = payload.get(nested_key)
+        if isinstance(nested_value, dict):
+            return nested_value
+    return payload
+
+
+def has_projection_fields(payload: dict[str, Any], headers: list[str], id_field: str) -> bool:
+    """Reject metadata-only events that do not mutate a CSV projection."""
+    values = update_values(payload)
+    return any(field in headers and field != id_field for field in values)
+
+
+def event_record_id(event: dict[str, Any], id_field: str) -> str:
+    """Resolve the canonical register key represented by an event."""
+    payload = event.get("payload", {}) if isinstance(event.get("payload", {}), dict) else {}
+    values = update_values(payload)
+
+    if event.get("object_type") == "case":
+        # case_id is the cross-system key. Some workspace events legitimately
+        # use a path as object_id, which must never become a register row.
+        record_id = event.get("case_id") or values.get(id_field) or event.get("object_id")
+    else:
+        record_id = event.get("object_id") or values.get(id_field)
+
+    record_id = str(record_id or "")
+    if event.get("object_type") == "source_health":
+        return SOURCE_HEALTH_ID_ALIASES.get(record_id, record_id)
+    return record_id
+
+
 def project(events: list[dict]) -> dict[str, list[dict[str, str]]]:
     states: dict[str, dict[str, dict[str, str]]] = {name: {} for name in PROJECTIONS}
     headers = {name: load_headers(spec["file"]) for name, spec in PROJECTIONS.items()}
@@ -101,15 +161,23 @@ def project(events: list[dict]) -> dict[str, list[dict[str, str]]]:
         spec = PROJECTIONS[object_type]
         id_field = spec["id_field"]
         payload = event.get("payload", {})
-        object_id = event.get("object_id") or payload.get(id_field) or payload.get("row", {}).get(id_field)
+        if not isinstance(payload, dict):
+            continue
+        object_id = event_record_id(event, id_field)
         if not object_id:
             continue
 
         if event.get("event_type") == spec["snapshot_event"] and isinstance(payload.get("row"), dict):
-            states[object_type][object_id] = normalize_row(payload["row"], headers[object_type])
+            row = normalize_row(payload["row"], headers[object_type])
+            row[id_field] = str(object_id)
+            states[object_type][object_id] = row
         elif event.get("event_type") in {f"{object_type}.updated", f"{object_type}.created"}:
+            if not has_projection_fields(payload, headers[object_type], id_field):
+                continue
             existing = states[object_type].get(object_id, {field: "" for field in headers[object_type]})
-            states[object_type][object_id] = apply_update(existing, payload, headers[object_type])
+            row = apply_update(existing, payload, headers[object_type])
+            row[id_field] = str(object_id)
+            states[object_type][object_id] = row
         elif event.get("event_type") == "case.status_changed" and object_type == "case":
             existing = states[object_type].get(object_id, {field: "" for field in headers[object_type]})
             updates = {
@@ -118,10 +186,20 @@ def project(events: list[dict]) -> dict[str, list[dict[str, str]]]:
             }
             if payload.get("actor"):
                 updates["created_by_agent"] = payload["actor"]
-            states[object_type][object_id] = apply_update(existing, {"updates": updates}, headers[object_type])
+            row = apply_update(existing, {"updates": updates}, headers[object_type])
+            row[id_field] = str(object_id)
+            states[object_type][object_id] = row
         elif event.get("event_type") == "approval.owner_decision_recorded" and object_type == "approval":
+            decision = update_values(payload)
+            decision_case_id = str(event.get("case_id") or decision.get("case_id") or "")
+            if not decision_case_id or not decision.get("approval_status"):
+                # Standing policies are durable approval events, but they are
+                # not row-level case approvals in approvals_receipts.csv.
+                continue
             existing = states[object_type].get(object_id, {field: "" for field in headers[object_type]})
-            states[object_type][object_id] = apply_update(existing, payload, headers[object_type])
+            row = apply_update(existing, payload, headers[object_type])
+            row[id_field] = str(object_id)
+            states[object_type][object_id] = row
 
     return {
         name: sorted(rows.values(), key=lambda row: row.get(PROJECTIONS[name]["id_field"], ""))

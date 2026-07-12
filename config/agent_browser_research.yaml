@@ -1,0 +1,64 @@
+version: 1
+description: "Read-only agent-browser routes for evidence capture and buyer-market research."
+
+policy:
+  mode: READ_ONLY_EVIDENCE
+  content_boundaries: true
+  max_output_characters: 50000
+  timeout_seconds: 90
+  profile_root: .local/browser_profiles/agent_browser
+  permitted_commands:
+    - open
+    - snapshot
+    - get
+    - screenshot
+    - close
+  forbidden_commands:
+    - click
+    - dblclick
+    - fill
+    - type
+    - press
+    - check
+    - uncheck
+    - select
+    - upload
+    - download
+    - eval
+    - auth
+    - confirm
+  forbidden_business_actions:
+    - submit_form
+    - send_message
+    - upload_document
+    - pay
+    - use_dsc
+    - accept_terms
+    - commit_price
+    - commit_delivery
+
+core_sources:
+  gem:
+    source_name: "GeM — Government e-Marketplace"
+    start_url: https://bidplus.gem.gov.in/all-bids
+    allowed_domains: [gem.gov.in, "*.gem.gov.in"]
+    workflow: GOV
+  cppp:
+    source_name: "CPPP — Central Public Procurement Portal"
+    start_url: https://eprocure.gov.in/eprocure/app
+    allowed_domains: [eprocure.gov.in, "*.eprocure.gov.in"]
+    workflow: GOV
+  ungm:
+    source_name: "UN Global Marketplace (UNGM)"
+    start_url: https://www.ungm.org/Public/Notice
+    allowed_domains: [ungm.org, "*.ungm.org"]
+    workflow: EXPORT
+
+dynamic_public_research:
+  enabled: true
+  rule: "Allow only the requested public HTTPS host and its subdomains after private-network rejection."
+  purpose:
+    - foreign retailer catalogue evidence
+    - public company identity and contact-page evidence
+    - market and assortment demand signals
+  external_actions: false

@@ -1,0 +1,10 @@
+{
+  "connected": true,
+  "connector": "GMAIL_PLUGIN",
+  "account": "raghavbadhwar7@gmail.com",
+  "verified_at": "2026-07-11T22:57:41Z",
+  "verification": "gmail_get_profile_and_sent_message_readback",
+  "automation_id": "tender-export-os-buyer-reply-monitor",
+  "automation_scope": "READ_AND_REPORT_REPLIES_ONLY",
+  "automatic_reply_allowed": false
+}

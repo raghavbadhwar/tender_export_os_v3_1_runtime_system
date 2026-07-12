@@ -1,0 +1,34 @@
+{
+  "file": "data/communication_log.csv",
+  "primary_key": "communication_id",
+  "required_columns": [
+    "communication_id",
+    "outreach_id",
+    "case_id",
+    "buyer_id",
+    "direction",
+    "channel",
+    "external_message_id",
+    "external_thread_id",
+    "occurred_at",
+    "subject",
+    "content_path",
+    "classification",
+    "requires_owner_action",
+    "recommended_next_action",
+    "source_connector",
+    "source_receipt",
+    "created_at"
+  ],
+  "required_fields": ["communication_id", "outreach_id", "case_id", "direction", "channel", "occurred_at", "classification", "source_connector", "created_at"],
+  "enums": {
+    "direction": ["OUTBOUND", "INBOUND"],
+    "channel": ["EMAIL", "CONTACT_FORM", "PORTAL"],
+    "classification": ["OUTREACH_SENT", "POSITIVE_INTEREST", "QUESTION", "NEGOTIATION", "NOT_INTERESTED", "OPT_OUT", "BOUNCE", "AUTO_REPLY", "NEEDS_REVIEW"],
+    "requires_owner_action": ["TRUE", "FALSE"],
+    "source_connector": ["GMAIL_PLUGIN", "MANUAL_IMPORT", "PORTAL_RECEIPT"]
+  },
+  "date_fields": ["occurred_at", "created_at"],
+  "numeric_fields": [],
+  "url_fields": []
+}

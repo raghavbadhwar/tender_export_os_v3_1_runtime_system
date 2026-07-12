@@ -11,6 +11,12 @@
     "predicted_action",
     "observed_outcome",
     "outcome_label",
+    "predicted_probability",
+    "binary_outcome",
+    "is_mature",
+    "brier_component",
+    "model_version",
+    "eligible_for_backtest_at",
     "score_delta",
     "false_positive_reason",
     "false_negative_reason",
@@ -22,9 +28,11 @@
   "enums": {
     "forecast_type": ["ACTIVE_CASE", "RESEARCH_LANE", "LOW_COMPETITION", "BUYER_REPEAT", "CATEGORY_DEMAND"],
     "outcome_label": ["HIT", "PARTIAL_HIT", "MISS", "NOT_ENOUGH_TIME", "BLOCKED_BY_PROOF", "KILLED_CORRECTLY"],
-    "config_change_recommended": ["", "TRUE", "FALSE"]
+    "config_change_recommended": ["", "TRUE", "FALSE"],
+    "binary_outcome": ["", "0", "1"],
+    "is_mature": ["", "TRUE", "FALSE"]
   },
-  "date_fields": ["forecast_date", "review_date", "created_at"],
-  "numeric_fields": ["score_delta"],
+  "date_fields": ["forecast_date", "review_date", "eligible_for_backtest_at", "created_at"],
+  "numeric_fields": ["score_delta", "predicted_probability", "binary_outcome", "brier_component"],
   "url_fields": []
 }

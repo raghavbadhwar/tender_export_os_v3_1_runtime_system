@@ -10,7 +10,10 @@ import sys
 import uuid
 from pathlib import Path
 
-from event_ledger import append_event
+try:
+    from scripts.event_ledger import append_event
+except ModuleNotFoundError:  # pragma: no cover - direct script execution
+    from event_ledger import append_event
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -22,7 +25,7 @@ sys.path.insert(0, str(SCRIPTS_DIR))
 from scripts.source_adapters.adapter_registry import ADAPTERS, create_adapter  # noqa: E402
 from scripts.source_runtime.credential_policy import sanitize_payload  # noqa: E402
 from scripts.source_runtime.deep_source_result import to_plain_dict, write_json  # noqa: E402
-from scripts.source_runtime.source_health import append_source_health_event, upsert_source_health_csv  # noqa: E402
+from scripts.source_runtime.source_health import update_source_health  # noqa: E402
 
 
 def run_id() -> str:
@@ -53,6 +56,24 @@ def record_event(enabled: bool, event_type: str, adapter_name: str, payload: dic
 
 def is_blocked(item: dict) -> bool:
     return bool(item.get("blocker_status") or item.get("shallow", {}).get("blocker_status"))
+
+
+def document_event_citations(document: dict, result_citations: list[str]) -> list[str]:
+    """Return non-empty proof references for document lifecycle events."""
+    values = [
+        document.get("extracted_text_path", ""),
+        document.get("local_path", ""),
+        document.get("source_url", ""),
+        *result_citations,
+    ]
+    seen: set[str] = set()
+    output: list[str] = []
+    for value in values:
+        text = str(value or "").strip()
+        if text and text not in seen:
+            output.append(text)
+            seen.add(text)
+    return output
 
 
 def source_health_should_update(blockers: list[str]) -> bool:
@@ -97,9 +118,17 @@ def run_scan(name: str, args: argparse.Namespace, run: str) -> dict:
     source_display_name = getattr(adapter, "source_name", name)
     blocker_reasons = [item.get("blocker_status", "") for item in blocked]
     if name != "mock" and source_health_should_update(blocker_reasons):
-        upsert_source_health_csv(source_display_name, {"health_status": status, "notes": f"Deep source scan run {run}: records_found={len(opportunities)} blockers={len(blocked)}"})
-        if args.record_event:
-            append_source_health_event(source_display_name, {"health_status": status, "last_attempted_at": run, "records_found": len(opportunities), "blocker_type": ",".join(blocker_reasons)})
+        update_source_health(
+            source_display_name,
+            {
+                "health_status": status,
+                "notes": f"Deep source scan run {run}: records_found={len(opportunities)} blockers={len(blocked)}",
+                "last_attempted_at": run,
+                "records_found": len(opportunities),
+                "blocker_type": ",".join(blocker_reasons),
+            },
+            record_event=args.record_event,
+        )
     return {"adapter": name, "mode": "scan", "opportunities": opportunities}
 
 
@@ -118,8 +147,9 @@ def run_deep(name: str, args: argparse.Namespace, run: str) -> dict:
         if result_dict.get("blocker_status"):
             record_event(args.record_event, "source_adapter.blocked", name, result_dict, citations=citations)
         for document in result_dict.get("documents", []):
-            record_event(args.record_event, "source_adapter.document_downloaded", name, document, citations=[document.get("local_path", ""), document.get("source_url", "")])
-            record_event(args.record_event, "source_adapter.document_parse_completed", name, document, citations=[document.get("extracted_text_path", "")])
+            document_citations = document_event_citations(document, citations)
+            record_event(args.record_event, "source_adapter.document_downloaded", name, document, citations=document_citations)
+            record_event(args.record_event, "source_adapter.document_parse_completed", name, document, citations=document_citations)
         record_event(args.record_event, "source_adapter.extraction_completed", name, result_dict.get("extracted", {}), citations=citations)
         if not result_dict.get("blocker_status"):
             record_event(args.record_event, "source_adapter.case_candidate_created", name, {"external_reference": opportunity.external_reference, "evidence_dir": result_dict.get("evidence_dir", "")}, citations=citations)
@@ -128,9 +158,17 @@ def run_deep(name: str, args: argparse.Namespace, run: str) -> dict:
     blocker_reasons = sorted({item.get("blocker_status", "") for item in deep_results if item.get("blocker_status")})
     source_display_name = getattr(adapter, "source_name", name)
     if name != "mock" and source_health_should_update(blocker_reasons):
-        upsert_source_health_csv(source_display_name, {"health_status": "Manual Check Required" if blocked_count == len(deep_results) and deep_results else "Working", "notes": f"Deep source run {run}: deep_read={len(deep_results)} blockers={blocked_count}"})
-        if args.record_event:
-            append_source_health_event(source_display_name, {"last_attempted_at": run, "records_deep_read": len(deep_results), "blocker_type": ",".join(blocker_reasons), "health_status": "Manual Check Required" if blocked_count == len(deep_results) and deep_results else "Working"})
+        update_source_health(
+            source_display_name,
+            {
+                "health_status": "Manual Check Required" if blocked_count == len(deep_results) and deep_results else "Working",
+                "notes": f"Deep source run {run}: deep_read={len(deep_results)} blockers={blocked_count}",
+                "last_attempted_at": run,
+                "records_deep_read": len(deep_results),
+                "blocker_type": ",".join(blocker_reasons),
+            },
+            record_event=args.record_event,
+        )
     return {"adapter": name, "mode": "deep", "opportunities": [item.to_dict() for item in opportunities], "deep_results": deep_results}
 
 

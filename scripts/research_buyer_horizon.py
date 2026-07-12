@@ -199,7 +199,7 @@ def make_rows(categories: list[dict], sources: list[dict]) -> list[dict]:
                     "evidence_density_score": density,
                     "recommended_next_action": action,
                     "approval_required": "TRUE" if tier == "TIER_5_STRATEGIC_ACCOUNT" else "FALSE",
-                    "notes": "Public-source/portal-lane V1; owner standing authorization covers research login/signup, but operational demand still requires RFQ verification and all buyer/bid/payment/final commitments remain gated.",
+                    "notes": "Public-source/portal-lane V1; credentialed research login/signup requires owner approval, and operational demand still requires RFQ verification with all buyer/bid/payment/final commitments gated.",
                     "created_at": today(),
                     "updated_at": today(),
                 })

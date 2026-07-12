@@ -1,0 +1,31 @@
+diff --git a/scripts/stage_deep_research_leads.py b/scripts/stage_deep_research_leads.py
+index a235123..b456789 100644
+--- a/scripts/stage_deep_research_leads.py
++++ b/scripts/stage_deep_research_leads.py
+@@ -157,13 +157,15 @@ def parse_input(path: Path) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+     if isinstance(data, dict):
+-        leads = data.get("leads", [])
+-        if isinstance(leads, list):
+-            meta = {key: value for key, value in data.items() if key != "leads"}
+-            meta.setdefault("raw_report_path", display_path(path))
+-            return [item for item in leads if isinstance(item, dict)], meta
+-        items = data.get("items", [])
+-        if isinstance(items, list):
+-            meta = {key: value for key, value in data.items() if key != "items"}
+-            meta.setdefault("raw_report_path", display_path(path))
+-            meta.setdefault("parse_note", "Converted JSON appendix items[] into lead records for staging.")
+-            return [research_item_to_lead(item, meta, index) for index, item in enumerate(items, 1) if isinstance(item, dict)], meta
++        if "leads" in data:
++            leads = data["leads"]
++            if isinstance(leads, list):
++                meta = {key: value for key, value in data.items() if key != "leads"}
++                meta.setdefault("raw_report_path", display_path(path))
++                return [item for item in leads if isinstance(item, dict)], meta
++        elif "items" in data:
++            items = data["items"]
++            if isinstance(items, list):
++                meta = {key: value for key, value in data.items() if key != "items"}
++                meta.setdefault("raw_report_path", display_path(path))
++                meta.setdefault("parse_note", "Converted JSON appendix items[] into lead records for staging.")
++                return [research_item_to_lead(item, meta, index) for index, item in enumerate(items, 1) if isinstance(item, dict)], meta
+     return [], {"raw_report_path": display_path(path), "parse_note": "Input JSON did not contain a lead list."}

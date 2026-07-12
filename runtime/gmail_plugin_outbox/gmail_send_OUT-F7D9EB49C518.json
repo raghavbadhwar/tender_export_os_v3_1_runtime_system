@@ -1,0 +1,17 @@
+{
+  "connector": "GMAIL_PLUGIN",
+  "operation": "SEND_APPROVED_BUYER_OUTREACH",
+  "outreach_id": "OUT-F7D9EB49C518",
+  "case_id": "EXP-TA-F7D9EB49C5",
+  "buyer_id": "BUY-TARGET-F7D9EB49C5",
+  "recipient": "sales@namaste-uk.com",
+  "subject": "Indian artisan small decorative giftware and mirror-work accessories for Namaste-UK Ltd",
+  "body_text": "Hello Namaste-UK Ltd team,\n\nI noticed Indian beaded and mirror-work tealight holders in your public catalogue. Your official product page highlights Indian mirror-work giftware and a long-established handicraft supplier, which makes a focused adjacent collection relevant to review.\n\nWe may be able to assemble a tightly curated India-sourced selection in small decorative giftware and mirror-work accessories, backed by a verified producer shortlist. Materials, production capacity, MOQ, documentation, and lead-time evidence would be clearly separated from assumptions. Would you be open to reviewing a small, relevant selection? If so, could you point me to the person responsible for sourcing or buying this category?\n\nNo price, delivery date, payment term, certification, origin, or product availability is being committed in this introduction. Those details would be verified before any quotation.\n\nIf this is not relevant, please let me know and I will not follow up.\n\nRegards,\nRaghav\n",
+  "approval_id": "APR-OUT-F7D9EB49C5",
+  "approval_receipt": "receipts/owner_decisions/EXP-TA-F7D9EB49C5_APR-OUT-F7D9EB49C5_20260712042245.json",
+  "approval_scope_hash": "adfdffa5fee4bca6c61b815ee551ef7c27a3aea1d86e7fc5831faabac7d2019d",
+  "idempotency_key": "3aeea4e2a29660945bb9f18f8eceb6df62f264713eb2d616145b705db9398a31",
+  "send_authorized_by_owner": true,
+  "fresh_approval_required_for_followup": true,
+  "external_action_executed": false
+}

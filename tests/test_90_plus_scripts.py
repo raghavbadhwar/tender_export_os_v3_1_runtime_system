@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -12,12 +13,13 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 def run_cmd(*args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        ["python3", *args],
+        [sys.executable, *args],
         cwd=PROJECT_ROOT,
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         check=False,
+        timeout=300,
     )
 
 

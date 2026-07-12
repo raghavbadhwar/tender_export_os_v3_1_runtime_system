@@ -85,9 +85,9 @@ Approval status: {safe_text(approval, 'unknown')}
 - Create approval cards and internal reports.
 - Update event ledger, projections, and Kanban comments.
 
-## Standing-authorized execution
-- Supplier quote/availability requests, supplier clarifications, supplier follow-ups, and portal login/signup for research are allowed under the owner's 2026-06-30 standing authorization.
-- Write receipts for any such external supplier/portal action and never log credential values.
+## Approval-gated execution
+- Supplier quote/availability requests, supplier clarifications, supplier follow-ups, and credentialed portal login/signup require explicit owner approval and receipts.
+- Never log credential values; receipts must cite secret aliases only.
 
 ## Forbidden until separate explicit owner approval and receipt
 - Send buyer messages, buyer RFQ replies, export quotations, or invoices.

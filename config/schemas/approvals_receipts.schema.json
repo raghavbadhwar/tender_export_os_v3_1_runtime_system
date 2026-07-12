@@ -16,7 +16,10 @@
     "receipt_id",
     "receipt_path",
     "external_effect",
-    "notes"
+    "notes",
+    "requested_at",
+    "approval_timeout_at",
+    "scope_hash"
   ],
   "required_fields": ["approval_id", "case_id", "workflow_type", "action_approved", "approval_status"],
   "enums": {
@@ -24,6 +27,6 @@
     "approval_status": ["PENDING", "APPROVED", "REJECTED", "CHANGES_REQUESTED", "SUPERSEDED"],
     "external_effect": ["", "NONE_DECISION_ONLY", "PENDING_APPROVED_EXECUTION", "EXECUTED_AFTER_APPROVAL"]
   },
-  "date_fields": ["approved_at"],
+  "date_fields": ["approved_at", "requested_at", "approval_timeout_at"],
   "numeric_fields": ["amount_inr", "amount_usd"]
 }

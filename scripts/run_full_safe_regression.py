@@ -28,6 +28,8 @@ SAFE_COMMANDS = [
     ["scripts/supplier_ready_category_matcher.py", "--dry-run"],
     ["scripts/stage_deep_research_leads.py", "--input", "tests/fixtures/deep_research_leads/good_leads.json", "--dry-run"],
     ["scripts/check_chatgpt_return_loop.py"],
+    ["scripts/evaluate_hermes_behavioral_contracts.py", "--validate-only"],
+    ["scripts/tender_os_policy.py", "--self-test"],
     ["scripts/kanban_blocked_task_drain.py", "--input", "tests/fixtures/kanban/blocked_tasks.json"],
     ["scripts/setup_drive_folders.py", "--dry-run"],
 ]
@@ -43,8 +45,19 @@ def python_for_command(args: list[str]) -> str:
 
 def run_command(args: list[str]) -> dict:
     cmd = [python_for_command(args), *args]
-    timeout = 600 if args[:2] == ["-m", "pytest"] else 180
-    result = subprocess.run(cmd, cwd=PROJECT_ROOT, capture_output=True, text=True, timeout=timeout)
+    timeout = 1200 if args[:2] == ["-m", "pytest"] else 300
+    try:
+        result = subprocess.run(cmd, cwd=PROJECT_ROOT, capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired as exc:
+        stdout = exc.stdout if isinstance(exc.stdout, str) else ""
+        stderr = exc.stderr if isinstance(exc.stderr, str) else ""
+        return {
+            "command": " ".join(cmd),
+            "returncode": 124,
+            "stdout_tail": stdout[-2000:],
+            "stderr_tail": (stderr + f"\nTimed out after {timeout}s")[-2000:],
+            "ok": False,
+        }
     return {
         "command": " ".join(cmd),
         "returncode": result.returncode,

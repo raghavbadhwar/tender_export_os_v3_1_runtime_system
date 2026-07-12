@@ -1,0 +1,17 @@
+{
+  "connector": "GMAIL_PLUGIN",
+  "operation": "SEND_APPROVED_BUYER_OUTREACH",
+  "outreach_id": "OUT-E3120B029167",
+  "case_id": "EXP-TA-E3120B0291",
+  "buyer_id": "BUY-TARGET-E3120B0291",
+  "recipient": "sales@iansnow.com",
+  "subject": "Indian artisan handmade paper lighting and expressive home decor for Ian Snow Ltd",
+  "body_text": "Hello Ian Snow Ltd team,\n\nI noticed Handmade Jaipur paper lampshade in your public catalogue. Your Jaipur paper-lighting range and wider artisan-led homeware story show a strong fit for distinctive, responsibly made Indian craft.\n\nWe may be able to assemble a tightly curated India-sourced selection in handmade paper lighting and expressive home decor, backed by a verified producer shortlist. Materials, production capacity, MOQ, documentation, and lead-time evidence would be clearly separated from assumptions. Would you be open to reviewing a small, relevant selection? If so, could you point me to the person responsible for sourcing or buying this category?\n\nNo price, delivery date, payment term, certification, origin, or product availability is being committed in this introduction. Those details would be verified before any quotation.\n\nIf this is not relevant, please let me know and I will not follow up.\n\nRegards,\nRaghav\n",
+  "approval_id": "APR-OUT-E3120B0291",
+  "approval_receipt": "receipts/owner_decisions/EXP-TA-E3120B0291_APR-OUT-E3120B0291_20260712042246.json",
+  "approval_scope_hash": "1259baf19c6010b7bf59d2be0f3664e224917906d6fe32c830aaab3a94531773",
+  "idempotency_key": "d3e7bcda17b9e18b2cce0e57c2afc9cc19525204fb5af2135cd102f2418e89fd",
+  "send_authorized_by_owner": true,
+  "fresh_approval_required_for_followup": true,
+  "external_action_executed": false
+}

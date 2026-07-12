@@ -37,7 +37,7 @@ from scripts.source_runtime.open_source_discovery import (  # noqa: E402
     run_katana,
     write_discovery_bundle,
 )
-from scripts.source_runtime.source_health import append_source_health_event, upsert_source_health_csv  # noqa: E402
+from scripts.source_runtime.source_health import update_source_health  # noqa: E402
 
 try:  # noqa: E402
     from scripts.event_ledger import append_event
@@ -183,9 +183,19 @@ def main() -> int:
     if args.update_source_health:
         health = "Working" if bundle["summary"]["unique_candidate_count"] else "Manual Check Required"
         notes = f"Open-source discovery run {run_id}: query={args.query!r} candidates={bundle['summary']['unique_candidate_count']} captured={bundle['summary']['captured_page_count']} blockers={bundle['summary']['blocker_count']}"
-        upsert_source_health_csv("Open Source Discovery Stack", {"health_status": health, "notes": notes, "url": args.searxng_url, "workflow": args.workflow})
-        if args.record_event:
-            append_source_health_event("Open Source Discovery Stack", {"health_status": health, "last_attempted_at": run_id, "records_found": bundle["summary"]["unique_candidate_count"]}, citations=citations)
+        update_source_health(
+            "Open Source Discovery Stack",
+            {
+                "health_status": health,
+                "notes": notes,
+                "url": args.searxng_url,
+                "workflow": args.workflow,
+                "last_attempted_at": run_id,
+                "records_found": bundle["summary"]["unique_candidate_count"],
+            },
+            record_event=args.record_event,
+            citations=citations,
+        )
 
     print(f"Wrote open-source discovery bundle to {written['bundle_json']}")
     print(f"Wrote markdown report to {written['bundle_md']}")

@@ -31,6 +31,7 @@ standing_authorizations:
     - portal_credential_creation
     - portal_session_refresh_for_research
     - send_buyer_rfq_reply
+    - send_buyer_introductory_outreach
     - send_export_quotation
     - submit_tender_bid
     - upload_tender_documents
@@ -132,6 +133,11 @@ mode_b_approval_gated:
 
     - action: "send_buyer_rfq_reply"
       reason: "External reply to buyer — creates business impression and potential obligation"
+      approval_type: per_case
+      card_required: true
+
+    - action: "send_buyer_introductory_outreach"
+      reason: "First-contact buyer message; must use verified public contact evidence and owner-approved factual copy"
       approval_type: per_case
       card_required: true
 

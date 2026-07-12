@@ -1,0 +1,51 @@
+version: 1
+description: "Structured ChatGPT Deep Research return for foreign retailer assortment and buyer-target discovery."
+
+top_level_required:
+  - research_report_id
+  - category_code
+  - category_name
+  - items
+
+item_required:
+  - company_name
+  - country
+  - company_type
+  - website_url
+  - catalog_url
+  - matching_products
+  - assortment_evidence
+  - contact_page_url
+  - contact_scope
+  - evidence_level
+  - market_fit_score
+  - demand_confidence
+  - source_citations
+
+contact_scopes:
+  - UNKNOWN
+  - GENERAL_CONTACT
+  - PROCUREMENT
+  - BUYING
+  - TRADE_ACCOUNT
+
+evidence_levels:
+  - CATALOG_OBSERVED
+  - COMPANY_AND_CATALOG_VERIFIED
+  - CONTACT_PATH_VERIFIED
+  - BUYER_RESPONSE
+  - RFQ_VERIFIED
+
+demand_confidence:
+  - LOW
+  - MEDIUM
+  - HIGH
+
+rules:
+  catalogue_fit_is_not_rfq: true
+  no_guessed_contacts: true
+  contact_page_must_be_cited: true
+  product_pages_must_be_cited: true
+  no_external_actions: true
+  owner_approval_before_outreach: true
+  owner_approval_before_followup: true

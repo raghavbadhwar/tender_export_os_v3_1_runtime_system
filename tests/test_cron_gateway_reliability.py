@@ -49,3 +49,31 @@ def test_hermes_cron_status_gateway_not_running_is_blocker() -> None:
     assert parsed["active_jobs"] == 6
     assert report["status"] == "BLOCKED"
     assert any(item["code"] == "GATEWAY_NOT_RUNNING" for item in report["findings"])
+
+
+def test_staleness_is_calculated_per_job_not_from_global_success(tmp_path: Path) -> None:
+    cron = tmp_path / "cron.yaml"
+    cron.write_text(
+        """
+owner_gateway: telegram
+jobs:
+  - id: morning_job
+    cadence: "0 6 * * *"
+    run_log_agent: morning_agent
+  - id: evening_job
+    cadence: "30 20 * * *"
+    run_log_agent: evening_agent
+""",
+        encoding="utf-8",
+    )
+    report = build_report(
+        cron_paths=[cron],
+        run_rows=[
+            {"run_date": "2026-07-03", "status": "SUCCESS", "agent_name": "morning_agent"},
+            {"run_date": "2026-06-30", "status": "SUCCESS", "agent_name": "evening_agent"},
+        ],
+        cron_status={"gateway_running": True, "active_jobs": 2, "next_run": "soon"},
+        now=dt.datetime(2026, 7, 3, tzinfo=dt.timezone.utc),
+    )
+
+    assert [item["job_id"] for item in report["stale_or_missed_runs"]] == ["evening_job"]

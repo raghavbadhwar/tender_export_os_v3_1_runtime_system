@@ -1,18 +1,30 @@
 source: ungm
 start_url: https://www.ungm.org/Public/Notice
 listing_card:
-  - ".notice"
+  - "#tblNotices .tableBody .notice-table"
   - ".notice-card"
-  - "table tbody tr"
-  - "tr"
 fields:
-  tender_id: [".notice-id", "[data-field='notice_id']", "td:nth-child(1)"]
-  title: [".notice-title", ".title", "[data-field='title']", "td:nth-child(2)"]
-  buyer: [".agency", ".buyer", "[data-field='agency']", "td:nth-child(3)"]
-  deadline: [".deadline", "[data-field='deadline']", "td:nth-child(4)"]
-  value: [".value", "[data-field='value']"]
-  detail_link: ["a.notice-link", "a.detail-link", "td a"]
-  document_link: ["a[href$='.pdf']", "a[href*='download']", "a.document-link"]
-  corrigendum_link: ["a[href*='amendment']", "a[href*='corrigendum']"]
-  boq_link: ["a[href*='boq']", "a[href*='schedule']"]
+  tender_id:
+    - "[data-description='Reference']"
+    - ".notice-id"
+  title:
+    - ".resultTitle .ungm-title"
+    - ".notice-title"
+  buyer:
+    - ".resultAgency"
+    - ".agency"
+  deadline:
+    - ".deadline"
+  value:
+    - ".value"
+  detail_link:
+    - ".resultTitle a[href*='/Public/Notice/']"
+    - "a.notice-link"
+  document_link:
+    - "a.document-link"
+    - "a[href$='.pdf']"
+  corrigendum_link:
+    - "a.corrigendum-link"
+  boq_link:
+    - "a.boq-link"
 unsafe_actions: [submit, upload, pay, declaration]

@@ -75,7 +75,15 @@ def classify_approval(approval: dict[str, str], now: dt.datetime | None = None, 
     status = approval.get("approval_status", "")
     if status != "PENDING":
         return {"state": status or "UNKNOWN", "expired": False, "timeout_at": approval.get("approval_timeout_at", "")}
-    created_at = approval.get("created_at") or approval.get("requested_at") or approval.get("approved_at") or current_time.isoformat()
+    created_at = approval.get("requested_at") or approval.get("created_at") or approval.get("approved_at")
+    if not created_at and not approval.get("approval_timeout_at"):
+        return {
+            "state": "PENDING_UNDATED",
+            "expired": False,
+            "timeout_at": "",
+            "next_status": "APPROVAL_REQUIRED",
+            "requires_reissue": True,
+        }
     timeout_at = approval.get("approval_timeout_at") or approval_timeout_at(created_at, policy)
     expired = current_time >= parse_datetime(timeout_at)
     return {
@@ -83,6 +91,7 @@ def classify_approval(approval: dict[str, str], now: dt.datetime | None = None, 
         "expired": expired,
         "timeout_at": timeout_at,
         "next_status": "CHANGES_REQUESTED" if expired else "APPROVAL_REQUIRED",
+        "requires_reissue": False,
     }
 
 

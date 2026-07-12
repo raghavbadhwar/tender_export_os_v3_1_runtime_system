@@ -3,16 +3,35 @@ start_url: https://eprocure.gov.in/cppp/latestactivetendersnew/cpppdata
 listing_card:
   - "table tbody tr"
   - "tr"
-  - ".tender-card"
 fields:
-  tender_id: ["td:nth-child(2)", ".tender-id", "[data-field='tender_id']"]
-  title: ["td:nth-child(3)", ".tender-title", "[data-field='title']"]
-  buyer: ["td:nth-child(4)", ".organisation", ".buyer", "[data-field='buyer']"]
-  deadline: ["td:nth-child(5)", ".deadline", "[data-field='deadline']"]
-  value: ["td:nth-child(6)", ".value", "[data-field='value']"]
-  emd: [".emd", "[data-field='emd']"]
-  detail_link: ["a[href*='TenderDetails']", "a.detail-link", "td a"]
-  document_link: ["a[href$='.pdf']", "a[href*='download']", "a.document-link"]
-  corrigendum_link: ["a[href*='corrigendum']", "a.corrigendum-link"]
-  boq_link: ["a[href*='BOQ']", "a[href*='boq']", "a.boq-link"]
-unsafe_actions: [submit, upload, pay, dsc, declaration]
+  tender_id:
+    - "td:nth-child(5) a[href*='tendersfullview']"
+    - "td:nth-child(2)"
+  title:
+    - "td:nth-child(5):has(a[href*='tendersfullview'])"
+    - "td:nth-child(3) a"
+    - "td:nth-child(3)"
+  buyer:
+    - "td:nth-child(5):has(a[href*='tendersfullview']) + td"
+    - "td:nth-child(4)"
+  deadline:
+    - "td:nth-child(3):not(:has(a.detail-link))"
+    - "td:nth-child(5)"
+  value:
+    - ".value"
+    - "td:nth-child(6)"
+  detail_link:
+    - "td:nth-child(5) a[href*='tendersfullview']"
+    - "a.detail-link"
+    - "a[href*='TenderDetails']"
+  document_link:
+    - "a.document-link"
+    - "a[href$='.pdf']"
+    - "a[href*='download']"
+  corrigendum_link:
+    - "a.corrigendum-link"
+    - "a[href*='corrigendum']"
+  boq_link:
+    - "a.boq-link"
+    - "a[href*='boq']"
+unsafe_actions: [submit, upload, pay, declaration, dsc]

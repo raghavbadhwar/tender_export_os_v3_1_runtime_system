@@ -13,6 +13,13 @@
     "payload",
     "citations"
   ],
+  "optional_fields": [
+    "schema_version",
+    "stream_position",
+    "correlation_id",
+    "causation_id",
+    "idempotency_key"
+  ],
   "object_types": [
     "",
     "system",
@@ -52,7 +59,18 @@
     "supplier_ready_category",
     "deep_research_lead",
     "execution",
-    "monitor_run"
+    "monitor_run",
+    "job_run",
+    "hermes_run",
+    "forecast_run",
+    "forecast_backtest",
+    "forecast_calibration"
+    ,"browser_capture"
+    ,"buyer_demand_signal"
+    ,"outreach"
+    ,"communication"
+    ,"reply_monitor"
+    ,"policy_decision"
   ],
   "event_types": [
     "system.snapshot_started",
@@ -99,6 +117,7 @@
     "drive.lock_released",
     "drive.lock_timeout",
     "kanban.reconciliation_planned",
+    "kanban.reconciliation_applied",
     "kanban.task_graph_created",
     "source_adapter.mock_ran",
     "source_adapter.external_probe_ran",
@@ -146,8 +165,33 @@
     "buyer.repeat_purchase_analyzed",
     "supplier_ready.categories_matched",
     "deep_research.leads_staged",
+    "system.intraday_monitor_completed",
     "intraday_monitor.completed",
     "memory.proposal_staged",
-    "skill.proposal_staged"
+    "skill.proposal_staged",
+    "job.started",
+    "job.completed",
+    "job.failed",
+    "job.skipped",
+    "hermes.gateway_started",
+    "hermes.agent_started",
+    "hermes.agent_step",
+    "hermes.agent_completed",
+    "forecast.generated",
+    "forecast.backtest_evaluated",
+    "forecast.calibration_evaluated"
+    ,"browser.capture_completed"
+    ,"browser.capture_failed"
+    ,"buyer_demand_signal.snapshot_imported"
+    ,"buyer_demand_signal.created"
+    ,"buyer_demand_signal.updated"
+    ,"outreach.snapshot_imported"
+    ,"outreach.created"
+    ,"outreach.updated"
+    ,"outreach.gmail_handoff_prepared"
+    ,"communication.snapshot_imported"
+    ,"communication.created"
+    ,"buyer_reply.monitor_completed"
+    ,"policy.decision_recorded"
   ]
 }

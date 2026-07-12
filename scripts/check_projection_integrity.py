@@ -39,6 +39,13 @@ def load_live_rows(path: Path, id_field: str) -> dict[str, dict[str, str]]:
         }
 
 
+def count_blank_primary_keys(path: Path, id_field: str) -> int:
+    if not path.exists():
+        return 0
+    with path.open("r", newline="", encoding="utf-8") as f:
+        return sum(1 for row in csv.DictReader(f) if not str(row.get(id_field, "") or "").strip())
+
+
 def row_changes(projected: dict[str, str], live: dict[str, str], headers: list[str]) -> dict[str, dict[str, str]]:
     changes: dict[str, dict[str, str]] = {}
     for field in headers:
@@ -53,6 +60,8 @@ def compare_projection(name: str, projected_rows: list[dict[str, str]]) -> dict[
     spec = PROJECTIONS[name]
     id_field = spec["id_field"]
     live = load_live_rows(spec["file"], id_field)
+    blank_live_primary_keys = count_blank_primary_keys(spec["file"], id_field)
+    blank_projected_primary_keys = sum(1 for row in projected_rows if not str(row.get(id_field, "") or "").strip())
     projected = {str(row.get(id_field, "") or ""): row for row in projected_rows if row.get(id_field)}
     headers = load_headers(spec["file"])
 
@@ -80,7 +89,15 @@ def compare_projection(name: str, projected_rows: list[dict[str, str]]) -> dict[
         "missing_from_live": missing_from_live,
         "missing_from_projection": missing_from_projection,
         "changed_rows": changed,
-        "drift_count": len(missing_from_live) + len(missing_from_projection) + len(changed),
+        "blank_live_primary_keys": blank_live_primary_keys,
+        "blank_projected_primary_keys": blank_projected_primary_keys,
+        "drift_count": (
+            len(missing_from_live)
+            + len(missing_from_projection)
+            + len(changed)
+            + blank_live_primary_keys
+            + blank_projected_primary_keys
+        ),
     }
 
 
@@ -108,6 +125,8 @@ def write_markdown(path: Path, report: dict[str, Any]) -> None:
                 f"- Missing from live: {len(item['missing_from_live'])}",
                 f"- Missing from projection: {len(item['missing_from_projection'])}",
                 f"- Changed rows: {len(item['changed_rows'])}",
+                f"- Blank live primary keys: {item['blank_live_primary_keys']}",
+                f"- Blank projected primary keys: {item['blank_projected_primary_keys']}",
                 "",
             ]
         )

@@ -1,0 +1,28 @@
+{
+  "connector": "GMAIL_PLUGIN",
+  "account": "raghavbadhwar7@gmail.com",
+  "verified_by": "gmail_get_profile_and_sent_readback",
+  "sends": [
+    {
+      "outreach_id": "OUT-F58135E1D4E5",
+      "status": "SENT",
+      "external_message_id": "19f5364221ff5b15",
+      "external_thread_id": "19f5364221ff5b15",
+      "sent_at": "2026-07-11T22:54:59+00:00"
+    },
+    {
+      "outreach_id": "OUT-F7D9EB49C518",
+      "status": "SENT",
+      "external_message_id": "19f5364446913601",
+      "external_thread_id": "19f5364446913601",
+      "sent_at": "2026-07-11T22:55:08+00:00"
+    },
+    {
+      "outreach_id": "OUT-E3120B029167",
+      "status": "SENT",
+      "external_message_id": "19f536467dfaf753",
+      "external_thread_id": "19f536467dfaf753",
+      "sent_at": "2026-07-11T22:55:16+00:00"
+    }
+  ]
+}

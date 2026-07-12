@@ -250,6 +250,15 @@ def build_rows(
         low_score = bucket["low_score_total"] / bucket["low_competition_count"] if bucket["low_competition_count"] else 0
         supplier_score = bucket["supplier_score_total"] / bucket["supplier_ready_count"] if bucket["supplier_ready_count"] else 0
         demand_score = min(100, (bucket["score_total"] / total) * 0.55 + min(30, total * 6) + min(15, independent_sources * 5))
+        # Research rows are useful discovery signals, not observed demand. Until a
+        # verified RFQ or operational case exists, cap both score and confidence.
+        if bucket["verified_rfq_count"] == 0 and bucket["active_case_count"] == 0:
+            demand_score = min(demand_score, 55)
+            conf = "LOW"
+        elif bucket["verified_rfq_count"] == 0:
+            demand_score = min(demand_score, 69)
+            if conf == "HIGH":
+                conf = "MEDIUM"
         if bucket["verified_rfq_count"]:
             action = "Run proof-aware deep-read and supplier-proof checks; external action still requires approval."
         elif bucket["low_competition_count"]:

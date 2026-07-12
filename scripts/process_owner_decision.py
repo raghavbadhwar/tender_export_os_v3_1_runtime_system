@@ -10,7 +10,12 @@ import json
 import shutil
 from pathlib import Path
 
-from event_ledger import append_event
+try:
+    from event_ledger import append_event
+    from approval_lifecycle import classify_approval
+except ModuleNotFoundError:  # pragma: no cover - package import path used by pytest
+    from scripts.event_ledger import append_event
+    from scripts.approval_lifecycle import classify_approval
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -21,6 +26,7 @@ RUN_LOG = DATA_DIR / "agent_run_log.csv"
 RECEIPTS_DIR = PROJECT_ROOT / "receipts" / "owner_decisions"
 
 FINAL_ACTIONS = {
+    "send_buyer_introductory_outreach",
     "send_export_quotation",
     "submit_tender_bid",
     "upload_tender_documents",
@@ -78,6 +84,7 @@ def load_case(rows: list[dict], case_id: str) -> dict | None:
 
 
 def next_case_status(current: str, action: str, decision: str) -> str:
+    decision = decision.replace("-", "_")
     if decision == "ask_changes":
         return "CHANGES_REQUESTED" if current == "APPROVAL_REQUIRED" else current
     if decision == "reject":
@@ -154,6 +161,10 @@ def main() -> int:
     if approval.get("approval_status") != "PENDING":
         print(f"Approval is not pending: {approval.get('approval_status')}")
         return 1
+    lifecycle = classify_approval(approval)
+    if lifecycle.get("expired") or lifecycle.get("requires_reissue"):
+        print(f"Approval cannot be decided in its current lifecycle state: {lifecycle.get('state')}")
+        return 1
 
     card_path = approval.get("approval_card_path", "")
     if card_path and not (PROJECT_ROOT / card_path).exists():
@@ -163,21 +174,22 @@ def main() -> int:
     now = dt.datetime.now().replace(microsecond=0)
     receipt_id = f"ODR-{now.strftime('%Y%m%d%H%M%S')}-{approval.get('approval_id')}"
     receipt_path = RECEIPTS_DIR / f"{case_id}_{approval.get('approval_id')}_{now.strftime('%Y%m%d%H%M%S')}.json"
+    decision_key = args.decision.replace("-", "_")
     decision_status = {
         "approve": "APPROVED",
         "reject": "REJECTED",
-        "ask-changes": "CHANGES_REQUESTED",
-    }[args.decision]
+        "ask_changes": "CHANGES_REQUESTED",
+    }[decision_key]
     action = approval.get("action_approved", "")
-    new_case_status = next_case_status(case.get("status", ""), action, args.decision)
-    external_effect = "PENDING_APPROVED_EXECUTION" if args.decision == "approve" else "NONE_DECISION_ONLY"
+    new_case_status = next_case_status(case.get("status", ""), action, decision_key)
+    external_effect = "PENDING_APPROVED_EXECUTION" if decision_key == "approve" else "NONE_DECISION_ONLY"
 
     approval_updates = {
         "approval_status": decision_status,
-        "approved_by": args.owner if args.decision == "approve" else "",
-        "approved_at": now.isoformat() if args.decision == "approve" else "",
-        "rejection_reason": args.reason if args.decision == "reject" else "",
-        "changes_requested": args.changes if args.decision == "ask-changes" else "",
+        "approved_by": args.owner if decision_key == "approve" else "",
+        "approved_at": now.isoformat() if decision_key == "approve" else "",
+        "rejection_reason": args.reason if decision_key == "reject" else "",
+        "changes_requested": args.changes if decision_key == "ask_changes" else "",
         "receipt_id": receipt_id,
         "receipt_path": str(receipt_path.relative_to(PROJECT_ROOT)),
         "external_effect": external_effect,
@@ -185,8 +197,8 @@ def main() -> int:
     case_updates = {
         "status": new_case_status,
         "approval_status": decision_status,
-        "approved_by": args.owner if args.decision == "approve" else "",
-        "approved_at": now.date().isoformat() if args.decision == "approve" else "",
+        "approved_by": args.owner if decision_key == "approve" else "",
+        "approved_at": now.date().isoformat() if decision_key == "approve" else "",
         "updated_at": now.date().isoformat(),
     }
 
@@ -194,7 +206,7 @@ def main() -> int:
         "receipt_id": receipt_id,
         "case_id": case_id,
         "approval_id": approval.get("approval_id"),
-        "decision": args.decision,
+        "decision": decision_key,
         "decision_status": decision_status,
         "owner": args.owner,
         "decided_at": now.isoformat(),
@@ -225,7 +237,7 @@ def main() -> int:
     receipt_path.write_text(json.dumps(receipt, indent=2), encoding="utf-8")
     write_csv(APPROVALS, approval_headers, approvals)
     write_csv(CASES, case_headers, cases)
-    append_run_log(case_id, approval.get("approval_id", ""), args.decision, str(receipt_path.relative_to(PROJECT_ROOT)), False)
+    append_run_log(case_id, approval.get("approval_id", ""), decision_key, str(receipt_path.relative_to(PROJECT_ROOT)), False)
     append_event(
         "approval.owner_decision_recorded",
         "process_owner_decision",

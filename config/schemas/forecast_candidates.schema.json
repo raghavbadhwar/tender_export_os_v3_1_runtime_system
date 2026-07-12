@@ -16,6 +16,12 @@
     "source_url",
     "forecast_score",
     "confidence",
+    "prediction_target",
+    "predicted_probability",
+    "probability_status",
+    "model_version",
+    "eligible_for_backtest_at",
+    "feature_snapshot_json",
     "repeat_probability",
     "low_competition_score",
     "supplier_readiness_score",
@@ -31,14 +37,16 @@
     "forecast_type": ["ACTIVE_CASE", "RESEARCH_LANE", "LOW_COMPETITION", "BUYER_REPEAT", "CATEGORY_DEMAND"],
     "workflow_type": ["", "GOV", "EXPORT", "MIXED", "EXPORT_RESEARCH", "LOW_COMP_RADAR"],
     "confidence": ["HIGH", "MEDIUM", "LOW"],
-    "approval_required_before_external_action": ["TRUE", "FALSE"]
+    "approval_required_before_external_action": ["TRUE", "FALSE"],
+    "probability_status": ["", "PRIOR_UNCALIBRATED", "CALIBRATED"]
   },
-  "date_fields": ["forecast_date", "created_at"],
+  "date_fields": ["forecast_date", "eligible_for_backtest_at", "created_at"],
   "numeric_fields": [
     "forecast_score",
     "repeat_probability",
     "low_competition_score",
-    "supplier_readiness_score"
+    "supplier_readiness_score",
+    "predicted_probability"
   ],
   "url_fields": ["source_url"]
 }

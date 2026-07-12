@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import csv,html,json,subprocess,datetime as dt
+import csv,html,json,subprocess,datetime as dt,sys
 from pathlib import Path
 PROJECT_ROOT=Path(__file__).resolve().parents[1]
 def exists(p): return (PROJECT_ROOT/p).exists()
@@ -8,8 +8,12 @@ def rows(path):
     p=PROJECT_ROOT/path
     if not p.exists(): return []
     with p.open(newline='',encoding='utf-8') as f: return list(csv.DictReader(f))
-def cmd_ok(args):
-    return subprocess.run(args,cwd=PROJECT_ROOT,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True).returncode==0
+def cmd_ok(args, timeout=180):
+    cmd=[sys.executable,*args] if args and args[0]=='python3' else args
+    try:
+        return subprocess.run(cmd,cwd=PROJECT_ROOT,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,timeout=timeout).returncode==0
+    except subprocess.TimeoutExpired:
+        return False
 
 def core_checks_ok():
     py_files=[str(p) for p in sorted((PROJECT_ROOT/'scripts').glob('*.py'))]

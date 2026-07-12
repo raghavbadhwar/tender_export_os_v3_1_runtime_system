@@ -1,7 +1,7 @@
 # Tender Export OS v4.1 - Final Architecture
 
 ## Version
-Tender Export OS v4.1 - Event-Ledger Hardened Hermes-Native Control Plane + Codex Plugin Runtime
+Tender Export OS v4.1 - Event-Ledger Hardened Hermes-Native Control Plane + Supervised Prediction Tracking + Codex Plugin Runtime
 
 ## Core Principle
 Do not build unnecessary external orchestration unless Hermes cannot do it.
@@ -9,6 +9,12 @@ Do not build unnecessary external orchestration unless Hermes cannot do it.
 Hermes is the resident operating brain and control plane. Codex is the plugin-powered artifact factory inside the Hermes operating rhythm. ChatGPT Project is the deep research and strategy boardroom. Google Drive is the shared source of truth. Paperclip is not part of the default v4 setup.
 
 v4.1 adds an append-only local event ledger as the canonical state record. CSV registers, Hermes Kanban cards, Google Drive manifests, daily briefs, approval cards, and artifact manifests are projections from or citations back to this ledger.
+
+The Hermes control plane runs in isolated profile `tender-export-os`, with a launchd-supervised gateway, durable Kanban dispatcher, privacy-safe lifecycle hook, governed memory/skill writes, deterministic no-agent cron jobs routed through a receipt-producing supervisor, and one allowlisted FastMCP service whose calls are authorized by local Open Policy Agent.
+
+Forecasting is a tracked decision-support subsystem, not an oracle. Ranking scores remain separate from explicitly uncalibrated probabilities. Forecasts preserve feature snapshots and maturity dates; historical backtests and calibration reports accumulate without overwriting prior dates.
+
+The buyer-acquisition lane uses ChatGPT Deep Research for broad foreign-market and retailer discovery, the read-only agent-browser plus Python/Playwright for exact GeM/core-source/catalogue/contact evidence, repo staging for demand signals and target accounts, and the Gmail plugin for owner-approved sends and reply receipts. Catalogue fit remains a hypothesis until a buyer reply or RFQ provides stronger evidence.
 
 ## Control Plane
 | Layer | System | Role |
@@ -19,6 +25,8 @@ v4.1 adds an append-only local event ledger as the canonical state record. CSV r
 | Deep research boardroom | ChatGPT Project | Cited public research, strategy, category analysis, weekly reviews |
 | Knowledge bus | Google Drive | Shared registers, packs, approvals, receipts, snapshots, artifacts |
 | Founder learning layer | Obsidian/local notes | Qualitative playbook, lessons, founder thinking |
+| Bounded tool gateway | FastMCP | Nine typed internal/read-only/evidence tools exposed to Hermes |
+| Infrastructure policy | Open Policy Agent | Fail-closed T0–T5 decisions backed by local approval artifacts |
 
 ## Canonical State Model
 `data/events.jsonl` is the append-only canonical state stream.
@@ -30,6 +38,9 @@ CSV registers remain operational projections:
 - `data/quote_master.csv`
 - `data/source_health.csv`
 - `data/plugin_health.csv`
+- `data/buyer_demand_signals.csv`
+- `data/outreach_queue.csv`
+- `data/communication_log.csv`
 
 Use these scripts to maintain the state model:
 - `scripts/initialize_event_ledger.py` seeds the ledger from reviewed registers.
@@ -66,6 +77,7 @@ ChatGPT handles:
 - dashboard interpretation
 - source landscape review
 - business-model-level opportunity ranking
+- foreign retailer assortment, importer/distributor, and target-account discovery with official citations
 
 Google Drive stores:
 - synced control-center registers
@@ -86,6 +98,8 @@ Google Drive stores:
 
 ## Approval Boundary
 No system may execute an external, financial, legal, DSC, final classification, origin, final price, supplier commitment, or delivery commitment action without explicit owner approval and a receipt.
+
+The MCP server intentionally exposes no external execution tool. OPA can verify whether a scoped approval would satisfy policy, but that read-only decision does not send, upload, submit, pay, sign, or commit anything. Every actual execution lane remains separately owner-gated and receipt-backed.
 
 ## Default Paperclip Decision
 Paperclip is optional later and excluded by default. Hermes already supplies the required primitives for this one-founder operating system: Kanban, cron, gateway delivery, skills, memory, MCP, toolsets, terminal backends, Codex App-Server Runtime, code execution, and session recall.

@@ -1,0 +1,222 @@
+version: 1
+profile: tender-export-os
+purpose: "Hermes chief operating profile for evidence-backed tender and export-RFQ operations"
+workspace: /Users/raghav/Downloads/tender_export_os_v3_1_runtime_system
+
+runtime:
+  minimum_verified_hermes_version: 0.18.2
+  profile_home: /Users/raghav/.hermes/profiles/tender-export-os
+  gateway_service_label: ai.hermes.gateway-tender-export-os
+  gateway_supervision_required: launchd
+  canonical_state: data/events.jsonl
+  default_delivery: local
+  external_business_actions: approval_gated
+  security_audit_status: clean
+  security_audit_components_at_last_run: 117
+  security_patch_record: docs/HERMES_RUNTIME_SECURITY_PATCH_20260712.md
+  desktop_source_commit: 4281151ae859241351ba14d8c7682dc67ff4c126
+
+reasoning_and_context:
+  reasoning_effort: high
+  max_turns: 80
+  verify_on_stop: true
+  compression_threshold: 0.70
+  compression_target_ratio: 0.35
+  protect_last_turns: 30
+  terminal_timeout_seconds: 600
+  code_execution_timeout_seconds: 600
+  code_execution_max_tool_calls: 80
+
+governed_learning:
+  memory_write_approval: true
+  skill_write_approval: true
+  guard_agent_created_skills: true
+  durable_pattern_minimum_observations: 2
+  built_in_memory_enabled: true
+  recovered_context_mode: read_only_on_demand
+  recovered_context_config: config/recovered_context.yaml
+  recovered_context_search: scripts/search_recovered_ares_context.py
+  recovered_context_archive: /Users/raghav/.hermes/profiles/tender-export-os/recovered-context/ares-v014/state.db
+  prohibited_memory:
+    - credentials
+    - cookies
+    - DSC material
+    - bank details
+    - raw tender or RFQ dumps
+    - unverified supplier or buyer claims
+
+kanban:
+  board: tender-export-os
+  dispatcher_in_gateway: true
+  default_assignee: tender-export-os
+  orchestrator_profile: tender-export-os
+  max_in_progress: 2
+  max_in_progress_per_profile: 1
+  failure_limit: 2
+  stale_timeout_seconds: 14400
+  auto_decompose: false
+  auto_promote_children: false
+  approval_wait_block_kind: needs_input
+  generic_block_is_not_an_approval_gate: true
+
+local_skills:
+  bundle: teos-ops
+  members:
+    - teos-chief-operator
+    - teos-evidence-verifier
+    - teos-prediction-calibration
+    - teos-buyer-acquisition
+    - teos-recovered-context
+    - teos-public-web-scraping
+
+local_capabilities:
+  model_resilience:
+    fallback_chain:
+      - {provider: openai-codex, model: gpt-5.5}
+    credential_reuse: openai_codex_oauth
+    activation_conditions: [rate_limit, overload, service_error, connection_failure]
+  filesystem_checkpoints:
+    enabled: true
+    max_snapshots: 12
+    max_total_size_mb: 300
+    max_file_size_mb: 10
+    auto_prune: true
+    retention_days: 7
+    delete_orphans: true
+    min_interval_hours: 24
+  deterministic_security:
+    website_blocklist_enabled: true
+    website_blocklist_domains: [mail.google.com, gmail.com]
+    terminal_deny_globs:
+      - "git push --force*"
+      - "git push -f *"
+      - "gws *"
+      - "*/gws *"
+      - "himalaya *"
+      - "*/himalaya *"
+  behavioral_evaluation:
+    spec: config/hermes_behavioral_eval.yaml
+    runner: scripts/evaluate_hermes_behavioral_contracts.py
+    statistical_repeats: 3
+    minimum_case_pass_rate: 1.0
+    toolsets: clarify
+    latest_report_glob: outputs/hermes_behavioral_eval/HBEVAL-*/report.json
+    required_status: PASS
+    max_age_hours: 168
+  web_search:
+    backend: ddgs
+    api_key_required: false
+    extraction_support: false
+    fallback_for: broad_public_discovery
+  browser:
+    engine: agent-browser
+    mode: read_only_public_evidence
+  web_scraping:
+    config: config/public_web_scraping.yaml
+    static_batch: scripts/public_web_evidence_scraper.py
+    javascript_rendered: scripts/agent_browser_capture.py
+    robots_enforced: true
+    public_https_only: true
+  governed_mcp:
+    server_name: tender_os
+    transport: stdio
+    command: /Users/raghav/Downloads/tender_export_os_v3_1_runtime_system/.venv/bin/python
+    server_script: scripts/tender_os_mcp_server.py
+    runtime_requirements: requirements-mcp.txt
+    supports_parallel_tool_calls: false
+    sampling_enabled: false
+    elicitation_enabled: false
+    resources_enabled: false
+    prompts_enabled: false
+    tools:
+      - capability_status
+      - get_case
+      - search_cases
+      - assess_opportunity
+      - get_source_health
+      - parse_local_documents
+      - capture_public_web
+      - get_approval_status
+      - evaluate_business_action
+    external_execution_tools_exposed: false
+    policy_engine: opa
+    policy_binary: opa
+    policy_config: config/tender_tool_policy.yaml
+    policy_file: policies/tender_os_authorization.rego
+    result_schema: config/schemas/mcp_tool_result.schema.json
+    decision_event_type: policy.decision_recorded
+    decision_event_source: opa_local
+    decision_event_file: data/events.jsonl
+  computer_use:
+    driver: cua-driver
+    installed_version: 0.7.1
+    readiness: ready
+    required_permissions: [accessibility, screen_recording]
+  plugins:
+    enabled:
+      - security-guidance
+    policy: focused_opt_in_only
+
+gateway_hooks:
+  - name: teos-event-bridge
+    events: [gateway:startup, agent:start, agent:step, agent:end]
+    privacy_contract: "metadata allowlist only; exclude messages, responses, user IDs, raw tool arguments, and secrets"
+    evidence_event_type: hermes.gateway_started
+    evidence_event_source: hermes_gateway_hook
+    evidence_event_file: data/events.jsonl
+
+scheduled_jobs:
+  - {name: Core Source Agent-Browser Radar, schedule: "30 5 * * *", mode: no_agent_supervised}
+  - {name: Morning Opportunity Intelligence, schedule: "0 6 * * *", mode: no_agent_supervised}
+  - {name: V5 Prediction Shadow and Calibration, schedule: "15 7 * * *", mode: no_agent_supervised}
+  - {name: Morning Operator Brief, schedule: "30 8 * * *", mode: no_agent_supervised}
+  - {name: Midday Opportunity Radar, schedule: "0 13 * * *", mode: no_agent_supervised}
+  - {name: Supplier Follow-up Review, schedule: "0 17 * * *", mode: no_agent_supervised}
+  - {name: Buyer Reply Monitor, schedule: "*/30 9-21 * * *", mode: no_agent_supervised}
+  - {name: Evening Execution Close, schedule: "30 20 * * *", mode: no_agent_supervised}
+  - {name: Weekly Learning Review, schedule: "0 18 * * 5", mode: no_agent_supervised}
+
+prediction_contract:
+  prioritization_score_is_probability: false
+  target: operational_progress_or_justified_kill_within_horizon
+  current_model_version: teos-expert-prior-v1
+  current_probability_status: PRIOR_UNCALIBRATED
+  minimum_mature_calibration_sample: 30
+  required_tracking:
+    - forecast_date
+    - eligible_for_backtest_at
+    - feature_snapshot_json
+    - predicted_probability
+    - model_version
+    - observed_outcome
+    - maturity_status
+    - brier_component
+
+optional_capabilities_not_enabled:
+  messaging_gateway: "No owner-approved Telegram/Slack/etc credentials are configured; delivery remains local."
+  web_extract_api: "No supported extraction API credential is configured; use browser/public source adapters where allowed."
+  cross_provider_fallback: "The verified same-account gpt-5.5 fallback is active; a cross-provider fallback still requires an owner-approved provider and cost envelope."
+  temporal: "Not justified at the current workflow volume; Hermes cron, the job supervisor, checkpoints, and the event ledger already provide the needed continuity."
+  postgres_pgvector: "Not justified for the current small rebuildable ledgers; add only after a measured query or retrieval bottleneck."
+  langfuse_remote_tracing: "Not justified while local events, receipts, capability audits, and repeated behavioral evaluations remain sufficient."
+  browsertrix_and_changedetection: "Existing hashed public capture, screenshots, source adapters, and scheduled corrigenda checks already cover the present evidence/monitoring need."
+  docling_and_paddleocr: "Heavy local models are deferred until real scan/layout failures exceed the current PyMuPDF/pdfplumber/OCR fallback lane."
+
+buyer_acquisition:
+  broad_market_discovery: "ChatGPT Deep Research"
+  exact_public_capture: "agent-browser read-only evidence lane plus Python/Playwright adapters"
+  target_state: "data/buyer_demand_signals.csv and data/buyer_master.csv"
+  outreach_state: "data/outreach_queue.csv"
+  reply_state: "data/communication_log.csv"
+  email_connector: "Gmail plugin only"
+  owner_gate: "Every first contact, follow-up, quote, price, delivery, payment, classification, and origin claim"
+
+approval_boundaries:
+  - external sends
+  - portal submissions or uploads
+  - payments, EMD, security, or advances
+  - DSC use
+  - final price or delivery commitment
+  - final HSN or ITC-HS classification
+  - origin or legal/compliance claims
+  - supplier purchase orders or permanent blacklists

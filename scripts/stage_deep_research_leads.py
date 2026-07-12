@@ -72,27 +72,102 @@ def load_schema(path: Path = DEFAULT_SCHEMA) -> dict[str, Any]:
         return _minimal_yaml(path)
 
 
+def extract_json_from_report(text: str) -> dict[str, Any] | list[dict[str, Any]] | None:
+    """Extract the JSON appendix from a Markdown/Docs export."""
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+
+    fenced = re.search(r"```json\s*(.*?)```", text, flags=re.S | re.I)
+    if fenced:
+        return json.loads(fenced.group(1))
+
+    start = text.find("{")
+    while start != -1:
+        depth = 0
+        in_string = False
+        escape = False
+        for index in range(start, len(text)):
+            char = text[index]
+            if in_string:
+                if escape:
+                    escape = False
+                elif char == "\\":
+                    escape = True
+                elif char == '"':
+                    in_string = False
+                continue
+            if char == '"':
+                in_string = True
+            elif char == "{":
+                depth += 1
+            elif char == "}":
+                depth -= 1
+                if depth == 0:
+                    candidate = text[start : index + 1]
+                    try:
+                        return json.loads(candidate)
+                    except json.JSONDecodeError:
+                        break
+        start = text.find("{", start + 1)
+    return None
+
+
+def research_item_to_lead(item: dict[str, Any], meta: dict[str, Any], index: int) -> dict[str, Any]:
+    sample_urls = item.get("sample_urls") or item.get("source_urls") or []
+    if isinstance(sample_urls, str):
+        sample_urls = [sample_urls]
+    source_category = str(item.get("source_category") or item.get("category") or item.get("lead_title") or "Source/category scout item")
+    missing = item.get("missing_info") or item.get("missing_information") or item.get("missing_proof") or []
+    risks = item.get("risks") or ["Advisory source/category thesis only; no operational evidence captured."]
+    lead = dict(item)
+    lead.setdefault("lead_id", f"{meta.get('research_report_id', 'DR')}-ITEM-{index:03d}")
+    lead.setdefault("research_report_id", meta.get("research_report_id", "UNKNOWN"))
+    lead.setdefault("source_url", item.get("source_url") or (sample_urls[0] if sample_urls else ""))
+    lead.setdefault("source_name", item.get("source_name") or source_category)
+    lead.setdefault("buyer_name", item.get("buyer_name") or "UNKNOWN")
+    lead.setdefault("buyer_type", item.get("buyer_type") or "UNKNOWN")
+    lead.setdefault("workflow_type", item.get("workflow_type") or "RESEARCH")
+    lead.setdefault("category", source_category)
+    lead.setdefault("lead_title", item.get("lead_title") or source_category)
+    lead.setdefault("location", item.get("location") or "UNKNOWN")
+    lead.setdefault("deadline", item.get("deadline") or "UNKNOWN")
+    lead.setdefault("evidence_level", item.get("evidence_level") or "PUBLIC_LISTING_ONLY")
+    lead.setdefault("why_interesting", item.get("why_interesting") or item.get("why_monitor") or "Source/category pattern worth monitoring.")
+    lead.setdefault("why_low_competition", item.get("why_low_competition") or "Potential under-watched source/category; requires operational validation.")
+    lead.setdefault("fulfilment_hypothesis", item.get("fulfilment_hypothesis") or "TenderOS can monitor this source/category and capture evidence before any case creation.")
+    lead.setdefault("risks", risks)
+    lead.setdefault("missing_info", missing)
+    lead.setdefault("recommended_repo_action", item.get("recommended_repo_action") or "WATCH")
+    lead.setdefault("owner_review_required", item.get("owner_review_required", True))
+    return lead
+
+
 def parse_input(path: Path) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     text = path.read_text(encoding="utf-8")
-    try:
-        data = json.loads(text)
-    except json.JSONDecodeError:
-        fenced = re.search(r"```json\s*(.*?)```", text, flags=re.S | re.I)
-        if fenced:
-            data = json.loads(fenced.group(1))
-        else:
-            return [], {
-                "raw_report_path": display_path(path),
-                "parse_note": "No structured JSON leads found. Save a JSON lead appendix before staging.",
-            }
+    data = extract_json_from_report(text)
+    if data is None:
+        return [], {
+            "raw_report_path": display_path(path),
+            "parse_note": "No structured JSON leads found. Save a JSON lead appendix before staging.",
+        }
     if isinstance(data, list):
         return [item for item in data if isinstance(item, dict)], {"raw_report_path": display_path(path)}
     if isinstance(data, dict):
-        leads = data.get("leads", [])
-        if isinstance(leads, list):
-            meta = {key: value for key, value in data.items() if key != "leads"}
-            meta.setdefault("raw_report_path", display_path(path))
-            return [item for item in leads if isinstance(item, dict)], meta
+        if "leads" in data:
+            leads = data["leads"]
+            if isinstance(leads, list):
+                meta = {key: value for key, value in data.items() if key != "leads"}
+                meta.setdefault("raw_report_path", display_path(path))
+                return [item for item in leads if isinstance(item, dict)], meta
+        elif "items" in data:
+            items = data["items"]
+            if isinstance(items, list):
+                meta = {key: value for key, value in data.items() if key != "items"}
+                meta.setdefault("raw_report_path", display_path(path))
+                meta.setdefault("parse_note", "Converted JSON appendix items[] into lead records for staging.")
+                return [research_item_to_lead(item, meta, index) for index, item in enumerate(items, 1) if isinstance(item, dict)], meta
     return [], {"raw_report_path": display_path(path), "parse_note": "Input JSON did not contain a lead list."}
 
 
@@ -132,7 +207,7 @@ def validate_lead(lead: dict[str, Any], schema: dict[str, Any]) -> list[str]:
     required = schema.get("required_fields", [])
     for field in required:
         value = lead.get(field)
-        if field not in lead or value in {"", None} or value == []:
+        if field not in lead or value is None or value == "" or value == []:
             errors.append(f"{lead.get('lead_id', '<unknown>')}: missing required field {field}")
 
     action = normalized_action(str(lead.get("recommended_repo_action", "")))
@@ -232,9 +307,10 @@ def build_payload(
     warnings: list[str],
     mode: str,
 ) -> dict[str, Any]:
-    staged_at = dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat()
+    now = dt.datetime.now(dt.timezone.utc)
+    staged_at = now.replace(microsecond=0).isoformat()
     return {
-        "staging_id": f"DRSTAGE-{dt.datetime.now().strftime('%Y%m%d%H%M%S')}",
+        "staging_id": f"DRSTAGE-{now.strftime('%Y%m%d%H%M%S%f')}",
         "mode": mode,
         "staged_at": staged_at,
         "input_path": display_path(input_path),
@@ -250,7 +326,7 @@ def build_payload(
 
 
 def write_payload(payload: dict[str, Any], output_dir: Path) -> Path:
-    stamp = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
+    stamp = dt.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     target_dir = output_dir / f"{stamp}_{payload['staging_id']}"
     target_dir.mkdir(parents=True, exist_ok=True)
     path = target_dir / "staged_leads.json"

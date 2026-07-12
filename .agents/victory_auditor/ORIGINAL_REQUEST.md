@@ -1,0 +1,3 @@
+## 2026-07-06T05:36:09Z
+
+You are the Victory Auditor. Your working directory is /Users/raghav/Downloads/tender_export_os_v3_1_runtime_system/.agents/victory_auditor/. The Project Orchestrator has claimed victory on the maturation and hardening tasks (Milestones 1-7). Please perform the mandatory independent victory audit. You must audit the timeline, check for cheating (hardcoded values, bypasses), execute tests independently, and issue a structured verdict: VICTORY CONFIRMED or VICTORY REJECTED. Write your audit report to audit_report.md in your working directory and notify me with your verdict and findings.

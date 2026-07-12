@@ -20,6 +20,12 @@ class UNGMAdapter(SelectorPortalAdapter):
             return f"{self.base_url}?searchText={quote_plus(self.keyword)}"
         return self.base_url
 
+    def apply_filters(self, page) -> None:
+        # UNGM renders its public opportunity rows asynchronously after the
+        # initial document load. Wait for the actual result row instead of
+        # parsing the navigation shell as a fake opportunity.
+        page.wait_for_selector("#tblNotices .tableBody .notice-table", timeout=30000)
+
     def detect_source_specific_blockers(self, page) -> None:
         # UNGM may show registration prompts on public notices; these are not
         # submission permission. Generic hard blockers remain centralized.

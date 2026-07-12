@@ -196,13 +196,13 @@ def diagram_state_registers() -> str:
 def diagram_approval_safety() -> str:
     body = "\n".join(
         [
-            box(70, 150, 470, 215, "Mode A - Allowed Internal Work", ["scan sources, extract fields, score opportunities", "create case IDs, fast-kill, deep-read", "draft pricing/compliance, case reports, briefs", "standing-authorized supplier outreach with receipts"], "agent"),
+            box(70, 150, 470, 215, "Mode A - Allowed Internal Work", ["scan sources, extract fields, score opportunities", "create case IDs, fast-kill, deep-read", "draft pricing/compliance, case reports, briefs", "no external supplier or portal action"], "agent"),
             box(665, 150, 470, 215, "Mode B - Per-Case Approval Gates", ["buyer RFQ reply, export quotation, tender bid", "document upload, DSC use, payments", "final price, HSN/ITC-HS, origin, delivery", "purchase order or payment-term acceptance"], "approval"),
             box(1260, 150, 470, 215, "Mode C - Execution Tracking", ["track supplier/buyer replies after approval", "track quote validity and deadlines", "record receipts and case status", "internal reminders only"], "hermes"),
             arrow(540, 258, 665, 258, "#f16e7f"),
             arrow(1135, 258, 1260, 258, "#f16e7f"),
             box(90, 485, 440, 235, "Approval Card Required Fields", ["case_id, workflow, proposed action", "business object and amount", "benefit, concrete risk, recovery path", "sources, confidence, missing info, options"], "projection"),
-            box(680, 485, 440, 235, "Standing Authorization Limits", ["supplier quote/availability requests allowed", "portal login/signup for research allowed", "secrets only in Keychain/approved store", "OTP/CAPTCHA pauses for owner help"], "owner"),
+            box(680, 485, 440, 235, "Approval-Gated Portal/Supplier Actions", ["supplier quote/availability requires approval", "portal login/signup requires approval", "secrets only in Keychain/approved store", "OTP/CAPTCHA pauses for owner help"], "owner"),
             box(1270, 485, 440, 235, "Hard Stop Conditions", ["required evidence missing", "SCOMET/prohibited suspicion", "Codex/plugin/auth unavailable", "Drive connector unavailable for sync"], "approval"),
             box(90, 835, 440, 190, "Receipts", ["receipts/approvals", "receipts/supplier_quotes", "receipts/submissions", "receipts/owner_decisions"], "projection"),
             box(680, 835, 440, 190, "Memory Discipline", ["memory writes require approval", "raw tenders/RFQs and supplier tables excluded", "credentials, DSC, bank details never saved"], "validate"),
@@ -210,7 +210,7 @@ def diagram_approval_safety() -> str:
             footer(),
         ]
     )
-    return shell("Detail 04 - Approval, Safety, and Execution Boundaries", "The current approval policy and safety model, including standing authorizations and hard gates.", body)
+    return shell("Detail 04 - Approval, Safety, and Execution Boundaries", "The current approval policy and safety model, including internal work allowances and hard gates.", body)
 
 
 def diagram_codex_runtime() -> str:

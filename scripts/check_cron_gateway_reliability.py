@@ -105,15 +105,36 @@ def stale_run_findings(config: dict[str, Any], run_rows: list[dict[str, str]], t
     findings: list[dict[str, Any]] = []
     if not run_rows:
         return findings
-    latest_success = max((parse_date(row.get("run_date", "")) for row in run_rows if row.get("status") == "SUCCESS"), default=None)
     for job in config.get("jobs", []) or []:
         if job.get("enabled") is False:
             continue
         cadence = str(job.get("cadence", "")).lower()
         if "daily" not in cadence and "* * *" not in cadence:
             continue
+        selectors = [
+            str(job.get("run_log_agent", "") or "").strip(),
+            str(job.get("run_log_trigger", "") or "").strip(),
+            str(job.get("id", "") or "").strip(),
+        ]
+        selectors = [selector.lower() for selector in selectors if selector]
+        matching_rows = []
+        for row in run_rows:
+            haystack = " ".join(
+                str(row.get(field, "") or "")
+                for field in ("agent_name", "trigger_type", "actions_taken", "run_id", "notes")
+            ).lower()
+            if selectors and any(selector in haystack for selector in selectors):
+                matching_rows.append(row)
+        latest_success = max(
+            (
+                parse_date(row.get("run_date", ""))
+                for row in matching_rows
+                if str(row.get("status", "")).startswith("SUCCESS")
+            ),
+            default=None,
+        )
         if latest_success is None:
-            findings.append({"job_id": job.get("id", ""), "status": "NO_SUCCESS_RECORDS", "detail": "run log exists but has no SUCCESS rows"})
+            findings.append({"job_id": job.get("id", ""), "status": "NO_SUCCESS_RECORDS", "detail": "no matching SUCCESS row for this job"})
         elif (today - latest_success).days > 1:
             findings.append(
                 {
@@ -127,6 +148,7 @@ def stale_run_findings(config: dict[str, Any], run_rows: list[dict[str, str]], t
 
 def run_hermes_cron_status(
     runner: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run,
+    profile_name: str = "tender-export-os",
 ) -> dict[str, Any]:
     """Return parsed `hermes cron status` output without mutating scheduler state."""
     hermes_path = shutil.which("hermes")
@@ -135,7 +157,7 @@ def run_hermes_cron_status(
     command_path = hermes_path or "hermes"
     try:
         completed = runner(
-            [command_path, "cron", "status"],
+            [command_path, "-p", profile_name, "cron", "status"],
             capture_output=True,
             text=True,
             timeout=12,
@@ -156,6 +178,7 @@ def run_hermes_cron_status(
         "gateway_running": gateway_running,
         "active_jobs": int(active_match.group(1)) if active_match else None,
         "next_run": next_run_match.group(1).strip() if next_run_match else "",
+        "profile": profile_name,
     }
 
 
@@ -191,7 +214,9 @@ def build_report(
         if cron_status.get("next_run"):
             detail += f"; next_run={cron_status['next_run']}"
         findings.append({"severity": "BLOCKER", "code": "GATEWAY_NOT_RUNNING", "detail": detail})
-    elif owner_gateway and not gateway_connected:
+    if cron_status.get("active_jobs") == 0:
+        findings.append({"severity": "BLOCKER", "code": "NO_ACTIVE_CRON_JOBS", "detail": "Hermes reports zero active jobs"})
+    elif owner_gateway not in {"", "local"} and not gateway_connected:
         findings.append({"severity": "WARN", "code": "GATEWAY_CONNECTION_NOT_CONFIRMED", "detail": f"owner_gateway={owner_gateway}; no gateway env marker visible"})
     for item in duplicates:
         findings.append({"severity": "WARN", "code": "DUPLICATE_JOB_ID", "detail": f"{item['job_id']} in {', '.join(item['profiles'])}"})
@@ -265,7 +290,7 @@ def main() -> int:
     write_markdown(md_path, report)
     payload = {"status": report["status"], "json": display_path(json_path), "markdown": display_path(md_path)}
     print(json.dumps(payload, indent=2) if args.json else f"Cron gateway reliability {report['status']}: {display_path(md_path)}")
-    return 0
+    return 0 if report["status"] == "PASS" else 1
 
 
 if __name__ == "__main__":

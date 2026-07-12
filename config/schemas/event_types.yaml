@@ -61,6 +61,7 @@ events:
   drive.lock_released: {object_type: drive_lock}
   drive.lock_timeout: {object_type: drive_lock, required_payload_fields: [lock_name]}
   kanban.reconciliation_planned: {object_type: kanban_reconciliation, citation_required: true}
+  kanban.reconciliation_applied: {object_type: kanban_reconciliation, citation_required: true}
   kanban.task_graph_created: {object_type: kanban_task_graph, citation_required: true}
   source_adapter.mock_ran: {object_type: source_adapter, citation_required: true}
   source_adapter.external_probe_ran: {object_type: source_adapter, citation_required: true}
@@ -81,6 +82,8 @@ events:
   evidence.url_captured: {object_type: evidence, citation_required: true}
   evidence.file_hashed: {object_type: evidence, citation_required: true}
   evidence.extraction_completed: {object_type: evidence, citation_required: true}
+  browser.capture_completed: {object_type: browser_capture, citation_required: true, required_payload_fields: [capture_id, status, receipt_path]}
+  browser.capture_failed: {object_type: browser_capture, citation_required: true, required_payload_fields: [capture_id, status, receipt_path]}
   buyer.snapshot_imported: {object_type: buyer, citation_required: true}
   buyer.created: {object_type: buyer, citation_required: true}
   buyer.updated: {object_type: buyer, citation_required: true}
@@ -93,6 +96,16 @@ events:
   demand_research.snapshot_imported: {object_type: demand_research, citation_required: true}
   demand_research.created: {object_type: demand_research, citation_required: true}
   demand_research.updated: {object_type: demand_research, citation_required: true}
+  buyer_demand_signal.snapshot_imported: {object_type: buyer_demand_signal, citation_required: true}
+  buyer_demand_signal.created: {object_type: buyer_demand_signal, citation_required: true}
+  buyer_demand_signal.updated: {object_type: buyer_demand_signal, citation_required: true}
+  outreach.snapshot_imported: {object_type: outreach, citation_required: true}
+  outreach.created: {object_type: outreach, citation_required: true}
+  outreach.updated: {object_type: outreach, citation_required: true}
+  outreach.gmail_handoff_prepared: {object_type: outreach, citation_required: true, required_payload_fields: [outreach_id, approval_id, outbox_path]}
+  communication.snapshot_imported: {object_type: communication, citation_required: true}
+  communication.created: {object_type: communication, citation_required: true}
+  buyer_reply.monitor_completed: {object_type: reply_monitor, citation_required: true, required_payload_fields: [run_id, report_path, new_reply_count, connector_status]}
   pricing.draft_created: {object_type: pricing_draft, citation_required: true}
   pricing.waterfall_drafted: {object_type: pricing, citation_required: true}
   pricing.working_capital_drafted: {object_type: pricing, citation_required: true}
@@ -108,6 +121,19 @@ events:
   buyer.repeat_purchase_analyzed: {object_type: buyer_repeat_purchase, citation_required: true, required_payload_fields: [run_id, report_path, records_analyzed, top_candidates_count, created_at]}
   supplier_ready.categories_matched: {object_type: supplier_ready_category, citation_required: true, required_payload_fields: [run_id, report_path, records_analyzed, top_candidates_count, created_at]}
   deep_research.leads_staged: {object_type: deep_research_lead, citation_required: true, required_payload_fields: [staging_id, lead_count, output_path]}
+  system.intraday_monitor_completed: {object_type: system, citation_required: true, required_payload_fields: [run_id, schedule_id]}
   intraday_monitor.completed: {object_type: monitor_run, citation_required: true, required_payload_fields: [schedule_id, report_path, status]}
   memory.proposal_staged: {object_type: memory_proposal, citation_required: true}
   skill.proposal_staged: {object_type: skill_proposal, citation_required: true}
+  job.started: {object_type: job_run, citation_required: true, required_payload_fields: [run_id, job_id, command, started_at]}
+  job.completed: {object_type: job_run, citation_required: true, required_payload_fields: [run_id, job_id, receipt_path, exit_code, status]}
+  job.failed: {object_type: job_run, citation_required: true, required_payload_fields: [run_id, job_id, receipt_path, exit_code, status]}
+  job.skipped: {object_type: job_run, citation_required: true, required_payload_fields: [run_id, job_id, reason]}
+  hermes.gateway_started: {object_type: hermes_run, citation_required: true, required_payload_fields: [profile, status]}
+  hermes.agent_started: {object_type: hermes_run, citation_required: true, required_payload_fields: [profile, session_id, status]}
+  hermes.agent_step: {object_type: hermes_run, citation_required: true, required_payload_fields: [profile, session_id, iteration, status]}
+  hermes.agent_completed: {object_type: hermes_run, citation_required: true, required_payload_fields: [profile, session_id, status]}
+  policy.decision_recorded: {object_type: policy_decision, citation_required: true, required_payload_fields: [decision_id, action, tier, allowed, status, reason_code, approval_required, receipt_path, policy_sha256]}
+  forecast.generated: {object_type: forecast_run, citation_required: true, required_payload_fields: [run_id, forecast_count, model_version, report_path]}
+  forecast.backtest_evaluated: {object_type: forecast_backtest, citation_required: true, required_payload_fields: [review_date, evaluated_count, mature_count, output_path]}
+  forecast.calibration_evaluated: {object_type: forecast_calibration, citation_required: true, required_payload_fields: [review_date, status, mature_sample_size, report_path]}

@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import yaml
@@ -65,3 +66,55 @@ def test_public_listing_only_cannot_become_bid_ready() -> None:
     assert normalized[0]["case_candidate_allowed"] is False
     assert normalized[0]["operational_stage"] == "LEAD_STAGING"
     assert any("PUBLIC_LISTING_ONLY is a lead" in warning for warning in warnings)
+
+
+def test_required_field_validation_accepts_non_empty_lists() -> None:
+    schema = load_schema()
+    leads, _meta = parse_input(FIXTURES / "good_leads.json")
+    leads[0]["missing_info"] = ["Full tender document", "BOQ", "EMD"]
+    _normalized, errors, _warnings = validate_leads(leads, schema)
+    assert errors == []
+
+
+def test_markdown_unfenced_json_appendix_parses(tmp_path) -> None:
+    source = json.loads((FIXTURES / "good_leads.json").read_text(encoding="utf-8"))
+    report = tmp_path / "deep_research_report.md"
+    report.write_text("# Report\n\n## JSON appendix\n\n" + json.dumps(source), encoding="utf-8")
+    leads, meta = parse_input(report)
+    assert len(leads) == 2
+    assert meta["research_report_id"] == "DR-20260701-LOWCOMP-RADAR"
+
+
+def test_weekly_items_appendix_converts_to_stageable_leads(tmp_path) -> None:
+    report = tmp_path / "weekly_source_scout.md"
+    report.write_text(
+        "# Weekly Scout\n\n```json\n"
+        + json.dumps(
+            {
+                "research_report_id": "DR-20260704-weekly-source-category-expansion-scout",
+                "job_name": "TEOS Weekly Source & Category Expansion Scout",
+                "items": [
+                    {
+                        "lead_id": "DR-20260704-SRC-GOV-001",
+                        "workflow_type": "GOV",
+                        "source_category": "CPPP public tender source family",
+                        "sample_urls": ["https://eprocure.gov.in/eprocure/app"],
+                        "why_monitor": "National radar for boring maintenance and institutional procurement.",
+                        "missing_proof": ["detail page", "NIT/BOQ", "EMD"],
+                        "evidence_level": "PUBLIC_LISTING_ONLY",
+                        "recommended_repo_action": "WATCH",
+                        "owner_review_required": True,
+                    }
+                ],
+            }
+        )
+        + "\n```\n",
+        encoding="utf-8",
+    )
+    schema = load_schema()
+    leads, meta = parse_input(report)
+    _normalized, errors, _warnings = validate_leads(leads, schema)
+    assert errors == []
+    assert meta["parse_note"].startswith("Converted")
+    assert leads[0]["source_url"] == "https://eprocure.gov.in/eprocure/app"
+    assert leads[0]["lead_title"] == "CPPP public tender source family"

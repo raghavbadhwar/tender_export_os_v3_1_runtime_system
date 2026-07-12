@@ -1,4 +1,4 @@
-"""GeM BidPlus deep source adapter MVP."""
+"""Proposed GeM BidPlus deep source adapter with regex and text-based fallback."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from urllib.parse import quote_plus, urljoin
 
 try:
     from scripts.source_adapters.base import DeepSourceOpportunity, SourceBlocked, SourceDocument, SourceOpportunity
-except ModuleNotFoundError:  # pragma: no cover
+except ModuleNotFoundError:
     from base import DeepSourceOpportunity, SourceBlocked, SourceDocument, SourceOpportunity  # type: ignore
 
 from scripts.source_runtime.browser_manager import BrowserManager
@@ -104,7 +104,14 @@ class GeMAdapter:
                 )
             )
         if selector_opportunities:
-            return selector_opportunities[: self.limit]
+            # Check if all opportunities have required fields populated (not default/fallbacks)
+            is_valid = all(
+                opt.external_reference and opt.buyer_name and opt.deadline_date
+                for opt in selector_opportunities
+                if "GEM-LISTING-" not in opt.external_reference
+            )
+            if is_valid:
+                return selector_opportunities[: self.limit]
 
         text = html_to_text(html)
         links = re.findall(r'href=["\']([^"\']+)["\']', html, flags=re.I)
@@ -122,14 +129,55 @@ class GeMAdapter:
         opportunities: list[SourceOpportunity] = []
         chunks = [chunk for chunk in re.split(r"\n{2,}|(?=GEM/\d{4}/B/)", text) if chunk.strip()]
         for idx, chunk in enumerate(chunks):
-            if self.keyword and self.keyword.lower() not in chunk.lower() and idx > 0:
+            if self.keyword and self.keyword.lower() not in chunk.lower():
                 continue
             bid = re.search(r"GEM/\d{4}/B/\d+", chunk, flags=re.I)
+            if not bid:
+                continue
+
+            lines = [line.strip() for line in chunk.splitlines() if line.strip()]
+            tender_id = bid.group(0)
+            deadline = ""
+            buyer = ""
+            val = ""
+
+            for line in lines:
+                if re.search(r"\d{2}-\d{2}-\d{4}", line) or re.search(r"\d{4}-\d{2}-\d{2}", line):
+                    if ":" in line:
+                        deadline = line.split(":", 1)[1].strip()
+                    else:
+                        deadline = line
+                elif ("INR" in line or re.search(r"\b\d{5,}\b", line)) and tender_id not in line:
+                    if ":" in line:
+                        val = line.split(":", 1)[1].strip()
+                    else:
+                        val = line
+                elif any(word in line.lower() for word in ["organisation", "buyer", "authority", "ministry", "department", "exporter"]):
+                    if ":" in line:
+                        buyer = line.split(":", 1)[1].strip()
+                    else:
+                        buyer = line
+
+            other_lines = []
+            for line in lines:
+                if tender_id in line:
+                    continue
+                if deadline and deadline in line:
+                    continue
+                if val and val in line:
+                    continue
+                if buyer and buyer in line:
+                    continue
+                if any(word in line.lower() for word in ["download", "document", "nit", "corrigendum"]):
+                    continue
+                other_lines.append(line)
+
             title = ""
-            for line in chunk.splitlines():
-                if len(line.strip()) > 20 and "GEM/" not in line:
-                    title = line.strip()
-                    break
+            if len(other_lines) >= 1:
+                title = other_lines[0]
+            else:
+                title = f"GeM Bid {tender_id}"
+
             source_url = unique_links[min(len(opportunities), len(unique_links) - 1)] if unique_links else current_url
             opportunities.append(
                 SourceOpportunity(
@@ -137,10 +185,12 @@ class GeMAdapter:
                     source_type=self.source_type,
                     workflow_type=self.workflow_type,
                     source_url=source_url,
-                    external_reference=bid.group(0) if bid else f"GEM-LISTING-{idx + 1}",
-                    opportunity_title=title or f"GeM listing match {idx + 1}",
+                    external_reference=tender_id,
+                    opportunity_title=title,
+                    buyer_name=buyer,
                     product_or_service=self.keyword,
-                    blocker_status="",
+                    deadline_date=deadline,
+                    estimated_value_inr=val,
                     citations=[source_url],
                     notes="Listing extracted from GeM page text; verify detail evidence before action.",
                 )

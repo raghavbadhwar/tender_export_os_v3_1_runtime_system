@@ -23,6 +23,9 @@ REGISTER_SPECS = [
     ("buyer", "buyer_id", "data/buyer_master.csv", "buyer.snapshot_imported"),
     ("rfq", "rfq_id", "data/rfq_master.csv", "rfq.snapshot_imported"),
     ("demand_research", "research_id", "data/demand_research.csv", "demand_research.snapshot_imported"),
+    ("buyer_demand_signal", "signal_id", "data/buyer_demand_signals.csv", "buyer_demand_signal.snapshot_imported"),
+    ("outreach", "outreach_id", "data/outreach_queue.csv", "outreach.snapshot_imported"),
+    ("communication", "communication_id", "data/communication_log.csv", "communication.snapshot_imported"),
 ]
 
 

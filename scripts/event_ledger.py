@@ -11,6 +11,11 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - Windows fallback for portable fixtures
+    fcntl = None  # type: ignore[assignment]
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 EVENTS_FILE = Path(os.environ.get("TENDER_OS_EVENTS_FILE", PROJECT_ROOT / "data" / "events.jsonl"))
@@ -28,6 +33,7 @@ REQUIRED_EVENT_FIELDS = {
     "payload",
     "citations",
 }
+EVENT_SCHEMA_VERSION = "1.1"
 
 
 def _as_list(value: Any) -> list[Any]:
@@ -175,10 +181,14 @@ def build_event(
     source: str = "local_runtime",
     payload: dict[str, Any] | None = None,
     citations: list[str] | None = None,
+    correlation_id: str = "",
+    causation_id: str = "",
+    idempotency_key: str = "",
 ) -> dict[str, Any]:
-    return {
+    event = {
         "event_id": new_event_id(),
         "event_time": now_iso(),
+        "schema_version": EVENT_SCHEMA_VERSION,
         "event_type": event_type,
         "actor": actor,
         "case_id": case_id or "",
@@ -188,6 +198,13 @@ def build_event(
         "payload": payload or {},
         "citations": normalize_citations(citations),
     }
+    if correlation_id:
+        event["correlation_id"] = correlation_id
+    if causation_id:
+        event["causation_id"] = causation_id
+    if idempotency_key:
+        event["idempotency_key"] = idempotency_key
+    return event
 
 
 def validate_event(event: dict[str, Any]) -> list[str]:
@@ -210,6 +227,14 @@ def validate_event(event: dict[str, Any]) -> list[str]:
         dt.datetime.fromisoformat(str(event.get("event_time", "")).replace("Z", "+00:00"))
     except ValueError:
         errors.append("event_time must be ISO-8601")
+
+    if "stream_position" in event:
+        position = event.get("stream_position")
+        if not isinstance(position, int) or isinstance(position, bool) or position < 1:
+            errors.append("stream_position must be a positive integer")
+    for field in ("schema_version", "correlation_id", "causation_id", "idempotency_key"):
+        if field in event and (not isinstance(event[field], str) or not event[field].strip()):
+            errors.append(f"{field} must be a non-empty string when present")
 
     event_type = str(event.get("event_type", ""))
     policy = effective_event_policy(event_type)
@@ -261,6 +286,9 @@ def append_event(
     source: str = "local_runtime",
     payload: dict[str, Any] | None = None,
     citations: list[str] | None = None,
+    correlation_id: str = "",
+    causation_id: str = "",
+    idempotency_key: str = "",
     events_file: Path = EVENTS_FILE,
 ) -> dict[str, Any]:
     event = build_event(
@@ -272,13 +300,50 @@ def append_event(
         source=source,
         payload=payload,
         citations=citations,
+        correlation_id=correlation_id,
+        causation_id=causation_id,
+        idempotency_key=idempotency_key,
     )
-    errors = validate_event(event)
-    if errors:
-        raise ValueError(f"Invalid event: {'; '.join(errors)}")
     events_file.parent.mkdir(parents=True, exist_ok=True)
-    with events_file.open("a", encoding="utf-8") as f:
-        f.write(json.dumps(event, ensure_ascii=False, sort_keys=True) + "\n")
+    with events_file.open("a+", encoding="utf-8") as f:
+        if fcntl is not None:
+            fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+        try:
+            f.seek(0)
+            existing_events: list[dict[str, Any]] = []
+            max_position = 0
+            for line_number, line in enumerate(f, start=1):
+                if not line.strip():
+                    continue
+                try:
+                    existing = json.loads(line)
+                except json.JSONDecodeError as exc:
+                    raise ValueError(f"Cannot append to corrupt event ledger at line {line_number}: {exc}") from exc
+                existing_events.append(existing)
+                position = existing.get("stream_position")
+                if isinstance(position, int) and not isinstance(position, bool):
+                    max_position = max(max_position, position)
+
+            if idempotency_key:
+                for existing in existing_events:
+                    if existing.get("idempotency_key") != idempotency_key:
+                        continue
+                    identity = ("event_type", "object_type", "object_id")
+                    if any(existing.get(field) != event.get(field) for field in identity):
+                        raise ValueError(f"Idempotency key collision: {idempotency_key}")
+                    return existing
+
+            event["stream_position"] = max(max_position, len(existing_events)) + 1
+            errors = validate_event(event)
+            if errors:
+                raise ValueError(f"Invalid event: {'; '.join(errors)}")
+            f.seek(0, os.SEEK_END)
+            f.write(json.dumps(event, ensure_ascii=False, sort_keys=True) + "\n")
+            f.flush()
+            os.fsync(f.fileno())
+        finally:
+            if fcntl is not None:
+                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
     return event
 
 

@@ -164,7 +164,10 @@ def main() -> int:
                 status = "FAILED"
                 errors = 1
         except subprocess.TimeoutExpired as exc:
-            stdout_file.write_text((exc.stdout or "") + "\nTIMEOUT\n", encoding="utf-8")
+            partial_stdout = exc.stdout or ""
+            if isinstance(partial_stdout, bytes):
+                partial_stdout = partial_stdout.decode("utf-8", errors="replace")
+            stdout_file.write_text(partial_stdout + "\nTIMEOUT\n", encoding="utf-8")
             status = "TIMEOUT"
             errors = 1
         except Exception as exc:  # noqa: BLE001

@@ -1,0 +1,18 @@
+source: indian_trade_portal
+start_url: https://www.indiantradeportal.in
+listing_card:
+  - ".opportunity-card"
+  - ".trade-lead-card"
+  - ".card"
+  - "tr"
+fields:
+  tender_id: [".lead-id", ".id", "td:nth-child(1)"]
+  title: [".lead-title", ".title", "td:nth-child(2)"]
+  buyer: [".buyer", ".organisation", "td:nth-child(3)"]
+  deadline: [".deadline", ".expiry-date", "td:nth-child(4)"]
+  value: [".value", ".amount", "td:nth-child(5)"]
+  detail_link: ["a.detail-link", "a[href*='lead']", "a[href*='opportunity']"]
+  document_link: ["a.document-link", "a[href$='.pdf']", "a[href*='download']"]
+  corrigendum_link: ["a.corrigendum-link", "a[href*='corrigendum']"]
+  boq_link: ["a.boq-link", "a[href*='boq']"]
+unsafe_actions: [submit, upload, pay, declaration]

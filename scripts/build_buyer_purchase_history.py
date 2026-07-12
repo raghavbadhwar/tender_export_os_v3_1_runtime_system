@@ -168,14 +168,26 @@ def category_code(category_name: str, workflow: str) -> str:
     return f"{prefix}-{slugify(category_name).upper()[:40]}"
 
 
+def observation_date(row: dict[str, str]) -> dt.date | None:
+    """Return one observation date per case, never several lifecycle dates."""
+    for field in ("created_at", "updated_at", "last_corrigenda_date", "deadline_date"):
+        parsed = parse_date(row.get(field))
+        if parsed:
+            return parsed
+    return None
+
+
 def seen_dates(rows: list[dict[str, str]]) -> list[dt.date]:
-    dates: list[dt.date] = []
-    for row in rows:
-        for field in ("created_at", "updated_at", "deadline_date", "last_corrigenda_date"):
-            parsed = parse_date(row.get(field))
-            if parsed:
-                dates.append(parsed)
-    return sorted(set(dates))
+    return sorted({date for row in rows if (date := observation_date(row)) is not None})
+
+
+def distinct_case_count(rows: list[dict[str, str]]) -> int:
+    keys = {
+        str(row.get("case_id") or "").strip()
+        or f"anonymous:{index}:{row.get('source_url', '')}:{row.get('opportunity_title', '')}"
+        for index, row in enumerate(rows)
+    }
+    return len(keys)
 
 
 def repeat_interval_days(dates: list[dt.date]) -> int | None:
@@ -210,6 +222,7 @@ def build_rows(cases: list[dict[str, str]], run_date: dt.date) -> list[dict[str,
         buyer = first.get("buyer_name", "")
         category = first.get("product_or_service") or first.get("opportunity_title") or "Unknown category"
         workflow = workflow_type(rows)
+        case_count = distinct_case_count(rows)
         dates = seen_dates(rows)
         first_seen = dates[0] if dates else None
         last_seen = dates[-1] if dates else None
@@ -220,12 +233,12 @@ def build_rows(cases: list[dict[str, str]], run_date: dt.date) -> list[dict[str,
         ]
         emds = [safe_float(row.get("emd_amount_inr")) for row in rows if safe_float(row.get("emd_amount_inr"))]
         interval = repeat_interval_days(dates)
-        category_repeat_bonus = 20 if len(rows) >= 2 else 0
+        category_repeat_bonus = 20 if case_count >= 2 else 0
         recent_seen_bonus = 0
         if last_seen and (run_date - last_seen).days <= 60:
             recent_seen_bonus = 15
-        repeat_score = min(100, len(rows) * 20 + category_repeat_bonus + recent_seen_bonus)
-        window_start = last_seen + dt.timedelta(days=interval) if last_seen and interval else None
+        repeat_score = min(100, case_count * 20 + category_repeat_bonus + recent_seen_bonus)
+        window_start = last_seen + dt.timedelta(days=interval) if case_count >= 2 and last_seen and interval else None
         window_end = window_start + dt.timedelta(days=max(14, interval or 30)) if window_start else None
         country_or_state = (
             first.get("buyer_country")
@@ -244,18 +257,18 @@ def build_rows(cases: list[dict[str, str]], run_date: dt.date) -> list[dict[str,
             "category_code": category_code(category, workflow),
             "category_name": category,
             "source_names": "; ".join(sorted({r.get("source_name", "") for r in rows if r.get("source_name")})),
-            "past_case_count": str(len(rows)),
+            "past_case_count": str(case_count),
             "last_seen_date": date_text(last_seen),
             "first_seen_date": date_text(first_seen),
             "avg_estimated_value": fmt_number(sum(values) / len(values)) if values else "",
             "median_estimated_value": fmt_number(median(values)) if values else "",
             "avg_emd": fmt_number(sum(emds) / len(emds)) if emds else "",
-            "repeat_interval_days": str(interval) if interval is not None and len(rows) > 1 else "",
+            "repeat_interval_days": str(interval) if interval is not None and case_count > 1 else "",
             "next_likely_window_start": date_text(window_start),
             "next_likely_window_end": date_text(window_end),
             "buyer_repeat_score": fmt_number(repeat_score),
             "evidence_level": best_evidence(rows),
-            "confidence": confidence(len(rows), dates),
+            "confidence": confidence(case_count, dates),
             "notes": "Generated from local case registers; forecast only, not proof of future demand.",
             "created_at": run_date.isoformat(),
             "updated_at": run_date.isoformat(),

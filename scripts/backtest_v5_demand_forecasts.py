@@ -16,6 +16,11 @@ import re
 from pathlib import Path
 from typing import Any
 
+try:
+    from scripts.event_ledger import append_event
+except ModuleNotFoundError:  # pragma: no cover - direct script execution
+    from event_ledger import append_event
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "data"
@@ -32,6 +37,12 @@ COLUMNS = [
     "predicted_action",
     "observed_outcome",
     "outcome_label",
+    "predicted_probability",
+    "binary_outcome",
+    "is_mature",
+    "brier_component",
+    "model_version",
+    "eligible_for_backtest_at",
     "score_delta",
     "false_positive_reason",
     "false_negative_reason",
@@ -92,6 +103,15 @@ def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
             writer.writerow({column: row.get(column, "") for column in COLUMNS})
 
 
+def write_backtest_rows(path: Path, rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Upsert review receipts while preserving all prior review dates."""
+    merged = {row.get("backtest_id", ""): row for row in load_csv(path) if row.get("backtest_id")}
+    merged.update({row["backtest_id"]: row for row in rows if row.get("backtest_id")})
+    history = sorted(merged.values(), key=lambda row: (row.get("review_date", ""), row.get("backtest_id", "")))
+    write_csv(path, history)
+    return rows
+
+
 def horizon_days(value: str) -> int:
     text = str(value or "").lower()
     if "0-7" in text:
@@ -120,18 +140,26 @@ def label_forecast(forecast: dict[str, str], case: dict[str, str] | None, review
     if case:
         status = str(case.get("status", "")).upper()
         kill_reason = case.get("kill_reason", "")
-        if status in ADVANCED_STATUSES and stronger_evidence(case, evidence):
+        transition_date = parse_date(case.get("updated_at") or case.get("created_at"))
+        observed_after_forecast = elapsed > 0 and (transition_date is None or transition_date > forecast_date)
+        if status in ADVANCED_STATUSES and stronger_evidence(case, evidence) and observed_after_forecast:
             return "HIT", f"Case advanced to {status} with stronger evidence.", "", ""
-        if status == "REJECTED" and kill_reason:
+        if status == "REJECTED" and kill_reason and observed_after_forecast:
             return "KILLED_CORRECTLY", f"Case rejected with kill reason: {kill_reason}", "", ""
+        eligible_at = parse_date(forecast.get("eligible_for_backtest_at"))
+        if (eligible_at and review_date < eligible_at) or (
+            not eligible_at and elapsed < horizon_days(forecast.get("horizon", ""))
+        ):
+            return "NOT_ENOUGH_TIME", f"Only {elapsed} day(s) elapsed within forecast horizon.", "", ""
         current_evidence = str(case.get("evidence_level") or "").upper()
         if evidence in WEAK_EVIDENCE or current_evidence in WEAK_EVIDENCE or "proof" in proof_gap.lower():
             return "BLOCKED_BY_PROOF", "Case remains constrained by missing RFQ/document/supplier proof.", "", ""
-        if elapsed < horizon_days(forecast.get("horizon", "")):
-            return "NOT_ENOUGH_TIME", f"Only {elapsed} day(s) elapsed within forecast horizon.", "", ""
         return "MISS", "No progress, proof gain, or justified kill after the forecast window.", "No observed progress after horizon.", ""
 
-    if elapsed < horizon_days(forecast.get("horizon", "")):
+    eligible_at = parse_date(forecast.get("eligible_for_backtest_at"))
+    if (eligible_at and review_date < eligible_at) or (
+        not eligible_at and elapsed < horizon_days(forecast.get("horizon", ""))
+    ):
         return "NOT_ENOUGH_TIME", f"Only {elapsed} day(s) elapsed; no source-register mutation expected.", "", ""
     if evidence in WEAK_EVIDENCE or "proof" in proof_gap.lower():
         return "BLOCKED_BY_PROOF", "Research or low-competition lead still lacks buyer-specific proof.", "", "No verified case emerged from the forecast lane."
@@ -148,6 +176,11 @@ def build_rows(forecasts: list[dict[str, str]], cases: list[dict[str, str]], rev
         case = case_by_id.get(case_id)
         outcome, observed, false_positive, false_negative = label_forecast(forecast, case, review_date)
         forecast_date = parse_date(forecast.get("forecast_date")) or review_date
+        predicted_probability = safe_float(forecast.get("predicted_probability"))
+        outcome_map = {"HIT": 1, "PARTIAL_HIT": 1, "KILLED_CORRECTLY": 1, "MISS": 0}
+        binary_outcome: int | str = outcome_map.get(outcome, "")
+        is_mature = binary_outcome != ""
+        brier = (predicted_probability - int(binary_outcome)) ** 2 if is_mature and predicted_probability else ""
         rows.append(
             {
                 "backtest_id": f"FBT-{review_date.strftime('%Y%m%d')}-{slugify(forecast_id)[:72]}-{forecast_digest}",
@@ -159,6 +192,12 @@ def build_rows(forecasts: list[dict[str, str]], cases: list[dict[str, str]], rev
                 "predicted_action": forecast.get("next_safe_action", ""),
                 "observed_outcome": observed,
                 "outcome_label": outcome,
+                "predicted_probability": f"{predicted_probability:.4f}" if predicted_probability else "",
+                "binary_outcome": binary_outcome,
+                "is_mature": "TRUE" if is_mature else "FALSE",
+                "brier_component": f"{brier:.6f}" if brier != "" else "",
+                "model_version": forecast.get("model_version", ""),
+                "eligible_for_backtest_at": forecast.get("eligible_for_backtest_at", ""),
                 "score_delta": "0",
                 "false_positive_reason": false_positive,
                 "false_negative_reason": false_negative,
@@ -188,7 +227,26 @@ def main(argv: list[str] | None = None) -> int:
     review_date = parse_date(args.review_date) or dt.date.today()
     rows = build_rows(load_csv(forecast_path), load_csv(DATA_DIR / "master_cases.csv"), review_date)
     if args.write:
-        write_csv(output, rows)
+        write_backtest_rows(output, rows)
+        mature_count = sum(1 for row in rows if row.get("is_mature") == "TRUE")
+        evaluation_digest = hashlib.sha256(
+            json.dumps(rows, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        ).hexdigest()[:16]
+        append_event(
+            "forecast.backtest_evaluated",
+            "V5 Forecast Backtest",
+            object_type="forecast_backtest",
+            object_id=f"FBT-RUN-{review_date.strftime('%Y%m%d')}",
+            source="local_prediction_runtime",
+            payload={
+                "review_date": review_date.isoformat(),
+                "evaluated_count": len(rows),
+                "mature_count": mature_count,
+                "output_path": rel(output),
+            },
+            citations=[rel(forecast_path), rel(output), "scripts/backtest_v5_demand_forecasts.py"],
+            idempotency_key=f"forecast.backtest:{review_date.isoformat()}:{evaluation_digest}",
+        )
     summary = {
         "ok": True,
         "mode": "write" if args.write else "dry-run",

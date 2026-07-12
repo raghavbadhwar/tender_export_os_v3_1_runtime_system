@@ -1,0 +1,49 @@
+{
+  "file": "data/buyer_demand_signals.csv",
+  "primary_key": "signal_id",
+  "required_columns": [
+    "signal_id",
+    "research_report_id",
+    "category_code",
+    "category_name",
+    "company_name",
+    "country",
+    "company_type",
+    "website_url",
+    "catalog_url",
+    "matching_products",
+    "assortment_evidence",
+    "price_positioning",
+    "contact_page_url",
+    "public_contact",
+    "contact_scope",
+    "contact_status",
+    "evidence_level",
+    "market_fit_score",
+    "demand_confidence",
+    "source_citations",
+    "next_safe_action",
+    "case_id",
+    "buyer_id",
+    "created_at",
+    "updated_at"
+  ],
+  "required_fields": [
+    "signal_id",
+    "category_name",
+    "company_name",
+    "country",
+    "catalog_url",
+    "evidence_level",
+    "next_safe_action",
+    "created_at"
+  ],
+  "enums": {
+    "contact_status": ["MISSING", "PUBLIC_GENERAL_CONTACT", "VERIFIED_BUYING_CONTACT", "OPTED_OUT"],
+    "evidence_level": ["CATALOG_OBSERVED", "COMPANY_AND_CATALOG_VERIFIED", "CONTACT_PATH_VERIFIED", "BUYER_RESPONSE", "RFQ_VERIFIED"],
+    "demand_confidence": ["LOW", "MEDIUM", "HIGH"]
+  },
+  "date_fields": ["created_at", "updated_at"],
+  "numeric_fields": ["market_fit_score"],
+  "url_fields": ["website_url", "catalog_url", "contact_page_url"]
+}

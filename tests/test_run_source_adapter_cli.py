@@ -9,6 +9,17 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
+def test_document_event_citations_fall_back_to_result_evidence() -> None:
+    from scripts.run_source_adapter import document_event_citations
+
+    citations = document_event_citations(
+        {"local_path": "", "source_url": "", "extracted_text_path": ""},
+        ["https://example.test/tender"],
+    )
+
+    assert citations == ["https://example.test/tender"]
+
+
 def run_cmd(*args: str, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
     merged = os.environ.copy()
     if env:

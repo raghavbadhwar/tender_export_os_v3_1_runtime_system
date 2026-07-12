@@ -6,11 +6,17 @@ from __future__ import annotations
 import argparse
 import csv
 import datetime as dt
+import hashlib
 import html
 import json
 from pathlib import Path
 
-from event_ledger import append_event
+try:
+    from approval_lifecycle import approval_timeout_at as calculate_approval_timeout_at
+    from event_ledger import append_event
+except ModuleNotFoundError:  # pragma: no cover - package import path used by pytest
+    from scripts.approval_lifecycle import approval_timeout_at as calculate_approval_timeout_at
+    from scripts.event_ledger import append_event
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "data"
@@ -86,6 +92,31 @@ def approval_options() -> list[str]:
     return ["Approve", "Reject", "Ask Changes"]
 
 
+def approval_timing(approval: dict) -> tuple[str, str]:
+    requested_at = text_value(approval.get("requested_at")) or text_value(approval.get("created_at"))
+    if not requested_at:
+        requested_at = dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat()
+    timeout_at = text_value(approval.get("approval_timeout_at")) or calculate_approval_timeout_at(requested_at)
+    return requested_at, timeout_at
+
+
+def approval_scope(approval: dict, case: dict) -> dict[str, str]:
+    action = get_action(approval)
+    return {
+        "case_id": text_value(approval.get("case_id") or case.get("case_id")),
+        "workflow_type": text_value(approval.get("workflow_type") or case.get("workflow_type") or "UNKNOWN"),
+        "proposed_action": action,
+        "business_object": text_value(case.get("buyer_name") or case.get("opportunity_title") or action),
+        "amount_or_price": get_amount(approval, case),
+        "external_party": text_value(case.get("buyer_name")),
+    }
+
+
+def approval_scope_hash(approval: dict, case: dict) -> str:
+    serialized = json.dumps(approval_scope(approval, case), sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+
+
 def expected_benefit_text(approval: dict) -> str:
     return (
         text_value(approval.get("expected_benefit"))
@@ -110,6 +141,12 @@ def concrete_risk_text(approval: dict, case: dict) -> str:
         return (
             f"A buyer-facing quotation or reply for {case_id} can be treated as a commercial price/delivery signal. "
             "If buyer proof, supplier quote proof, final price, payment terms, delivery terms, HSN/ITC-HS, or origin evidence is incomplete, the external message could be inaccurate or create an unintended commitment."
+        )
+    if "buyer_introductory_outreach" in action:
+        return (
+            f"First-contact outreach for {case_id} is externally visible and is based on catalogue fit, not a confirmed RFQ. "
+            "The contact may be general rather than a buying contact, and the recipient may decline or opt out. "
+            "The message must not imply confirmed demand, supplier availability, price, delivery, certification, classification, or origin."
         )
     if "submit" in action or "upload" in action or "dsc" in action or "emd" in action or "payment" in action or "purchase_order" in action:
         return (
@@ -136,6 +173,12 @@ def recovery_rollback_text(approval: dict, case: dict) -> str:
         return (
             f"If rejected or ask-changes, keep the quotation/reply for {case_id} as an internal draft and mark the card superseded or changes-requested. "
             "If a message was already sent under a valid approval, log a correction/withdrawal plan and obtain fresh owner approval before any external correction, final price, delivery, payment, HSN/ITC-HS, origin, invoice, PO, or follow-up commitment."
+        )
+    if "buyer_introductory_outreach" in action:
+        return (
+            f"If rejected or ask-changes, keep {case_id} and its draft internal-only. If sent under valid approval, "
+            "log the Gmail-plugin receipt, honor any opt-out immediately, and require fresh approval before any follow-up, "
+            "catalogue, sample, price, delivery, payment, certification, classification, or origin response."
         )
     if "submit" in action or "upload" in action or "dsc" in action or "emd" in action or "payment" in action or "purchase_order" in action:
         return (
@@ -198,6 +241,8 @@ def render_card(template: str, approval: dict, case: dict) -> str:
     recovery = recovery_rollback_text(approval, case)
     confidence = approval.get("confidence_score") or "60"
     business_object = case.get("buyer_name") or case.get("opportunity_title") or action
+    requested_at, timeout_at = approval_timing(approval)
+    scope_hash = approval_scope_hash(approval, case)
     replacements = {
         "{{CASE_ID}}": esc(case_id),
         "{{WORKFLOW_TYPE}}": esc(workflow),
@@ -215,6 +260,9 @@ def render_card(template: str, approval: dict, case: dict) -> str:
         "{{CONFIDENCE_SCORE}}": esc(confidence),
         "{{MISSING_ITEMS}}": missing_items(approval, case),
         "{{DOCUMENTS_SOURCES}}": documents_sources(approval, case),
+        "{{REQUESTED_AT}}": esc(requested_at),
+        "{{APPROVAL_TIMEOUT_AT}}": esc(timeout_at),
+        "{{SCOPE_HASH}}": esc(scope_hash),
     }
     html_text = template
     for placeholder, value in replacements.items():
@@ -230,6 +278,8 @@ def structured_card(approval: dict, case: dict, html_path: Path, json_path: Path
     risk = concrete_risk_text(approval, case)
     recovery = recovery_rollback_text(approval, case)
     decisions = approval_options()
+    requested_at, timeout_at = approval_timing(approval)
+    scope = approval_scope(approval, case)
     try:
         confidence = int(float(approval.get("confidence_score") or 60))
     except ValueError:
@@ -252,6 +302,10 @@ def structured_card(approval: dict, case: dict, html_path: Path, json_path: Path
         "approval_options": decisions,
         "allowed_decisions": decisions,
         "approval_status": approval.get("approval_status", ""),
+        "requested_at": requested_at,
+        "approval_timeout_at": timeout_at,
+        "scope": scope,
+        "scope_hash": approval_scope_hash(approval, case),
         "created_at": dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat(),
         "created_by": "generate_approval_cards",
         "html_path": rel(html_path),

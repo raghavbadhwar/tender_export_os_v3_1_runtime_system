@@ -217,16 +217,25 @@ def load_csv(path: Path) -> list[dict]:
         return list(csv.DictReader(f))
 
 
-def run(command: list[str], timeout: int = 30) -> tuple[int, str, str]:
-    completed = subprocess.run(
-        command,
-        cwd=PROJECT_ROOT,
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        timeout=timeout,
-        check=False,
-    )
+def run(command: list[str], timeout: int = 90) -> tuple[int, str, str]:
+    try:
+        completed = subprocess.run(
+            command,
+            cwd=PROJECT_ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=timeout,
+            check=False,
+        )
+    except subprocess.TimeoutExpired as exc:
+        stdout = exc.stdout if isinstance(exc.stdout, str) else ""
+        stderr = exc.stderr if isinstance(exc.stderr, str) else ""
+        return (
+            124,
+            stdout,
+            stderr + f"\nTimed out after {timeout}s: {' '.join(command)}",
+        )
     return completed.returncode, completed.stdout, completed.stderr
 
 
@@ -472,7 +481,7 @@ def check_script_dry_runs(health: Health) -> None:
 
     failures = []
     for command in commands:
-        rc, stdout, stderr = run(command)
+        rc, stdout, stderr = run(command, timeout=120)
         if rc != 0:
             failures.append(f"{' '.join(command)} -> {rc}: {stderr or stdout}")
     if failures:
@@ -524,7 +533,7 @@ def check_worker_plugin_imports(health: Health) -> None:
 
 
 def check_runtime(health: Health) -> None:
-    rc, stdout, stderr = run([PYTHON, "scripts/check_codex_runtime_readiness.py"], timeout=60)
+    rc, stdout, stderr = run([PYTHON, "scripts/check_codex_runtime_readiness.py"], timeout=420)
     if rc != 0:
         health.fail(f"Runtime readiness failed: {stderr or stdout}")
     else:

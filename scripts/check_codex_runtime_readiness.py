@@ -100,9 +100,50 @@ def summarize_plugin_inventory(raw_stdout: str) -> dict:
     }
 
 
+def check_healthy(check: dict) -> bool:
+    return bool(
+        check.get("available")
+        and check.get("returncode") == 0
+        and check.get("timed_out") is False
+    )
+
+
+def evaluate_readiness(checks: dict[str, dict]) -> dict[str, bool]:
+    ready = {
+        "hermes_available": check_healthy(checks.get("hermes_path", {})),
+        "hermes_doctor_healthy": check_healthy(checks.get("hermes_doctor", {})),
+        "hermes_kanban_healthy": check_healthy(checks.get("hermes_kanban_help", {})),
+        "hermes_cron_healthy": check_healthy(checks.get("hermes_cron_help", {})),
+        "codex_available": check_healthy(checks.get("codex_help", {})),
+        "codex_doctor_healthy": check_healthy(checks.get("codex_doctor", {})),
+        "codex_app_server_healthy": check_healthy(checks.get("codex_app_server_help", {})),
+        "codex_plugin_inventory_json": (
+            check_healthy(checks.get("codex_plugin_inventory", {}))
+            and checks.get("codex_plugin_inventory", {}).get("summary", {}).get("valid_json") is True
+        ),
+    }
+    ready["codex_app_server_command_present"] = ready["codex_app_server_healthy"]
+    ready["hermes_kanban_command_present"] = ready["hermes_kanban_healthy"]
+    ready["hermes_cron_command_present"] = ready["hermes_cron_healthy"]
+    ready["preferred_runtime_ready"] = all(
+        ready[key]
+        for key in (
+            "hermes_available",
+            "hermes_doctor_healthy",
+            "hermes_kanban_healthy",
+            "hermes_cron_healthy",
+            "codex_available",
+            "codex_doctor_healthy",
+            "codex_app_server_healthy",
+            "codex_plugin_inventory_json",
+        )
+    )
+    return ready
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Check Hermes/Codex runtime readiness")
-    parser.add_argument("--timeout", type=int, default=12, help="Per-command timeout in seconds")
+    parser.add_argument("--timeout", type=int, default=45, help="Per-command timeout in seconds")
     parser.add_argument("--json", action="store_true", help="Print full JSON report")
     args = parser.parse_args()
 
@@ -124,24 +165,7 @@ def main() -> int:
                 keyword: keyword.lower() in text for keyword in KEYWORDS[name]
             }
 
-    ready = {
-        "hermes_available": bool(checks["hermes_path"].get("available")),
-        "codex_available": bool(checks["codex_help"].get("available")),
-        "codex_app_server_command_present": checks["codex_help"].get("available")
-        and "app-server" in checks["codex_help"].get("stdout", ""),
-        "codex_plugin_inventory_json": checks["codex_plugin_inventory"].get("summary", {}).get("valid_json") is True,
-        "hermes_kanban_command_present": "kanban" in checks["hermes_path"].get("stdout", ""),
-        "hermes_cron_command_present": "cron" in checks["hermes_path"].get("stdout", ""),
-    }
-    ready["preferred_runtime_ready"] = all(
-        [
-            ready["hermes_available"],
-            ready["codex_available"],
-            ready["codex_app_server_command_present"],
-            ready["hermes_kanban_command_present"],
-            ready["hermes_cron_command_present"],
-        ]
-    )
+    ready = evaluate_readiness(checks)
 
     report = {
         "generated_at": started,

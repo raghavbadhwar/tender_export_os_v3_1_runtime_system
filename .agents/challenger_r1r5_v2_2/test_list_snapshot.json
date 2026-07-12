@@ -1,0 +1,172 @@
+{
+  "tasks": [
+    {
+      "case_id": "GOV-20260630-001",
+      "title": "Supply of Office Stationery Q2 2026",
+      "workflow_type": "GOV",
+      "status": "running",
+      "case_status": "SUPPLIER_SEARCH",
+      "assignee": "gov-tender-radar",
+      "updated_at": "2026-07-06T03:32:09",
+      "deadline": "2026-07-15",
+      "owner_approval_needed": false,
+      "next_action": "Complete supplier proof; do not price until two quote proofs exist."
+    },
+    {
+      "case_id": "GOV-20260630-002",
+      "title": "Supply of Safety Helmets and PPE Kit",
+      "workflow_type": "GOV",
+      "status": "archived",
+      "case_status": "REJECTED",
+      "assignee": "gov-tender-radar",
+      "updated_at": "2026-07-06T03:32:09",
+      "deadline": "2026-07-05",
+      "owner_approval_needed": false,
+      "next_action": "Archive or keep for weekly learning review."
+    },
+    {
+      "case_id": "EXP-20260630-001",
+      "title": "Organic Turmeric Powder - 5MT Monthly",
+      "workflow_type": "EXPORT",
+      "status": "running",
+      "case_status": "SUPPLIER_SEARCH",
+      "assignee": "export-rfq-radar",
+      "updated_at": "2026-07-06T03:32:09",
+      "deadline": "2026-07-10",
+      "owner_approval_needed": false,
+      "next_action": "Complete supplier proof; do not price until two quote proofs exist."
+    },
+    {
+      "case_id": "EXP-20260630-002",
+      "title": "Brass Decorative Items - Mixed Set",
+      "workflow_type": "EXPORT",
+      "status": "ready",
+      "case_status": "APPROVED",
+      "assignee": "export-rfq-radar",
+      "updated_at": "2026-07-06T03:32:09",
+      "deadline": "",
+      "owner_approval_needed": false,
+      "next_action": "Route to next valid workflow stage."
+    },
+    {
+      "case_id": "EXP-20260630-003",
+      "title": "Supply Inquiry for Rice",
+      "workflow_type": "EXPORT",
+      "status": "todo",
+      "case_status": "WATCHLIST",
+      "assignee": "export-rfq-radar",
+      "updated_at": "2026-07-06T03:32:09",
+      "deadline": "",
+      "owner_approval_needed": false,
+      "next_action": "Route to next valid workflow stage."
+    },
+    {
+      "case_id": "EXP-20260630-004",
+      "title": "Purchase Inquiry for Juniper Oils",
+      "workflow_type": "EXPORT",
+      "status": "todo",
+      "case_status": "WATCHLIST",
+      "assignee": "export-rfq-radar",
+      "updated_at": "2026-07-06T03:32:09",
+      "deadline": "",
+      "owner_approval_needed": false,
+      "next_action": "Route to next valid workflow stage."
+    },
+    {
+      "case_id": "EXP-20260630-005",
+      "title": "131-2026-RFQ-UNDP-GF \u201cSupply of food kits\u201d",
+      "workflow_type": "EXPORT",
+      "status": "running",
+      "case_status": "DEEP_READ",
+      "assignee": "export-rfq-radar",
+      "updated_at": "2026-07-06T03:32:09",
+      "deadline": "2026-07-13",
+      "owner_approval_needed": false,
+      "next_action": "Route to next valid workflow stage."
+    },
+    {
+      "case_id": "EXP-20260630-006",
+      "title": "Long-Term Agreement for Supply and Delivery of Hygiene Supplies",
+      "workflow_type": "EXPORT",
+      "status": "running",
+      "case_status": "DEEP_READ",
+      "assignee": "export-rfq-radar",
+      "updated_at": "2026-07-06T03:32:09",
+      "deadline": "2026-07-21",
+      "owner_approval_needed": false,
+      "next_action": "Route to next valid workflow stage."
+    },
+    {
+      "case_id": "GOV-20260630-003",
+      "title": "GeM bid GEM/2026/B/7723994 \u2014 Register (V2),Satin Ribbon (V3),Plain Copier Paper (V3) ISI Marked to IS 14490,Glue Stick (V3),Pres",
+      "workflow_type": "GOV",
+      "status": "todo",
+      "case_status": "WATCHLIST",
+      "assignee": "gov-tender-radar",
+      "updated_at": "2026-07-06T03:32:09",
+      "deadline": "2026-07-10",
+      "owner_approval_needed": false,
+      "next_action": "Route to next valid workflow stage."
+    },
+    {
+      "case_id": "GOV-20260630-004",
+      "title": "GeM bid GEM/2026/B/7704338 \u2014 Facility Management Service- Manpower based (Version 2) - Hospitality; Housekeeping; Skilled,Facili",
+      "workflow_type": "GOV",
+      "status": "todo",
+      "case_status": "WATCHLIST",
+      "assignee": "gov-tender-radar",
+      "updated_at": "2026-07-06T03:32:09",
+      "deadline": "2026-07-21",
+      "owner_approval_needed": false,
+      "next_action": "Route to next valid workflow stage."
+    },
+    {
+      "case_id": "GOV-20260630-005",
+      "title": "GeM bid GEM/2026/B/7710556 \u2014 batteries,mine buzzer battery,soldering station,Flux,PPE kit",
+      "workflow_type": "GOV",
+      "status": "todo",
+      "case_status": "WATCHLIST",
+      "assignee": "gov-tender-radar",
+      "updated_at": "2026-07-06T03:32:09",
+      "deadline": "2026-07-06",
+      "owner_approval_needed": false,
+      "next_action": "Route to next valid workflow stage."
+    },
+    {
+      "case_id": "GOV-20260630-006",
+      "title": "GeM bid GEM/2026/B/7499813 \u2014 Wooden Shelf / Case / Rack / Credenza / Modular Storage (V2),Chair or Bench or Stool (Handicraft) (",
+      "workflow_type": "GOV",
+      "status": "todo",
+      "case_status": "WATCHLIST",
+      "assignee": "gov-tender-radar",
+      "updated_at": "2026-07-06T03:32:09",
+      "deadline": "2026-07-10",
+      "owner_approval_needed": false,
+      "next_action": "Route to next valid workflow stage."
+    },
+    {
+      "case_id": "GOV-20260630-007",
+      "title": "Wakhari Palkhi Tal Purush va Mahila Kamgar Marfat Jhadlot karne Kachra Uchalne va Shauchalay Swachhata Karne Prati Kamgar Seva, Safai Sahityasah Dar Dene] [PNP_HEALTH_2026-27_2_2",
+      "workflow_type": "GOV",
+      "status": "archived",
+      "case_status": "REJECTED",
+      "assignee": "gov-tender-radar",
+      "updated_at": "2026-07-06T03:32:09",
+      "deadline": "2026-06-30",
+      "owner_approval_needed": false,
+      "next_action": "Archive or keep for weekly learning review."
+    },
+    {
+      "case_id": "EXP-20260630-007",
+      "title": "Wanted: Agarbatti Incense Sticks",
+      "workflow_type": "EXPORT",
+      "status": "todo",
+      "case_status": "WATCHLIST",
+      "assignee": "export-rfq-radar",
+      "updated_at": "2026-07-06T03:32:09",
+      "deadline": "",
+      "owner_approval_needed": false,
+      "next_action": "Route to next valid workflow stage."
+    }
+  ]
+}

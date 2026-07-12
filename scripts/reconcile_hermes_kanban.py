@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create a plan to reconcile local case state with Hermes Kanban."""
+"""Create and optionally apply a plan to reconcile local case state with Hermes Kanban."""
 
 from __future__ import annotations
 
@@ -9,10 +9,14 @@ import datetime as dt
 import json
 from pathlib import Path
 
-from event_ledger import append_event
-
-
+# Add project root to path to resolve imports correctly
+import sys
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from scripts.event_ledger import append_event
+
+
 DEFAULT_OUTPUT = PROJECT_ROOT / "outputs" / "system_health" / "hermes_kanban_reconciliation_plan.json"
 ACTIVE_STATUSES = {
     "NEW",
@@ -89,7 +93,10 @@ def load_snapshot(path: Path | None) -> dict[str, dict]:
     if not path.exists():
         raise FileNotFoundError(path)
     data = json.loads(path.read_text(encoding="utf-8"))
-    tasks = data.get("tasks", data if isinstance(data, list) else [])
+    if isinstance(data, list):
+        tasks = data
+    else:
+        tasks = data.get("tasks", [])
     return {task.get("case_id"): task for task in tasks if task.get("case_id")}
 
 
@@ -120,11 +127,19 @@ def build_plan(cases: list[dict], current_tasks: dict[str, dict]) -> dict:
     }
 
 
+def safe_relative_path(path: Path) -> str:
+    try:
+        return str(path.relative_to(PROJECT_ROOT))
+    except ValueError:
+        return str(path)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Plan Hermes Kanban reconciliation")
     parser.add_argument("--snapshot", help="Optional current Hermes Kanban JSON snapshot")
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT), help="Plan output path")
     parser.add_argument("--record-event", action="store_true", help="Append kanban.reconciliation_planned event")
+    parser.add_argument("--apply", action="store_true", help="Apply reconciliation and update the snapshot")
     args = parser.parse_args()
 
     snapshot = Path(args.snapshot) if args.snapshot else None
@@ -140,17 +155,56 @@ def main() -> int:
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(plan, indent=2), encoding="utf-8")
     print(f"Wrote reconciliation plan with {len(plan['actions'])} actions to {output}")
-    print("Plan-only mode: no Hermes Kanban writes performed.")
 
-    if args.record_event:
-        append_event(
-            "kanban.reconciliation_planned",
-            "reconcile_hermes_kanban",
-            object_type="kanban_reconciliation",
-            object_id=str(output.relative_to(PROJECT_ROOT)),
-            payload={"actions": len(plan["actions"]), "output": str(output.relative_to(PROJECT_ROOT))},
-            citations=[str(output.relative_to(PROJECT_ROOT)), "data/master_cases.csv"],
-        )
+    if args.apply:
+        plan["mode"] = "applied"
+        if snapshot:
+            # Reconstruct the task list to sync with the local register
+            desired = {case.get("case_id"): desired_task(case) for case in cases if case.get("case_id")}
+            reconciled_tasks = []
+            for case_id, task in desired.items():
+                reconciled_tasks.append({
+                    "case_id": case_id,
+                    "title": task["title"],
+                    "workflow_type": task["workflow_type"],
+                    "status": task["board_status"],
+                    "case_status": task["case_status"],
+                    "assignee": current_tasks.get(case_id, {}).get("assignee") or (
+                        "gov-tender-radar" if task["workflow_type"] == "GOV" else "export-rfq-radar"
+                    ),
+                    "updated_at": dt.datetime.now().replace(microsecond=0).isoformat(),
+                    "deadline": task["deadline"],
+                    "owner_approval_needed": task["owner_approval_needed"],
+                    "next_action": task["next_action"]
+                })
+            snapshot.write_text(json.dumps({"tasks": reconciled_tasks}, indent=2), encoding="utf-8")
+            print(f"Applied reconciliation: Overwrote/updated snapshot at {snapshot}")
+        else:
+            print("Warning: --apply specified but no --snapshot file provided to update.")
+
+        if args.record_event:
+            append_event(
+                "kanban.reconciliation_applied",
+                "reconcile_hermes_kanban",
+                object_type="kanban_reconciliation",
+                object_id=safe_relative_path(output),
+                payload={"actions_applied": len(plan["actions"]), "output": safe_relative_path(output)},
+                citations=[safe_relative_path(output), "data/master_cases.csv"],
+            )
+            print("Recorded kanban.reconciliation_applied event in ledger.")
+    else:
+        print("Plan-only mode: no Hermes Kanban writes performed.")
+        if args.record_event:
+            append_event(
+                "kanban.reconciliation_planned",
+                "reconcile_hermes_kanban",
+                object_type="kanban_reconciliation",
+                object_id=safe_relative_path(output),
+                payload={"actions": len(plan["actions"]), "output": safe_relative_path(output)},
+                citations=[safe_relative_path(output), "data/master_cases.csv"],
+            )
+            print("Recorded kanban.reconciliation_planned event in ledger.")
+
     return 0
 
 

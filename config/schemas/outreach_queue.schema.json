@@ -1,0 +1,38 @@
+{
+  "file": "data/outreach_queue.csv",
+  "primary_key": "outreach_id",
+  "required_columns": [
+    "outreach_id",
+    "case_id",
+    "buyer_id",
+    "signal_id",
+    "channel",
+    "verified_contact",
+    "contact_scope",
+    "subject",
+    "draft_path",
+    "approval_id",
+    "approval_status",
+    "send_status",
+    "sent_at",
+    "external_message_id",
+    "external_thread_id",
+    "reply_status",
+    "last_reply_at",
+    "next_follow_up_at",
+    "follow_up_count",
+    "stop_reason",
+    "created_at",
+    "updated_at"
+  ],
+  "required_fields": ["outreach_id", "case_id", "buyer_id", "signal_id", "channel", "approval_status", "send_status", "created_at"],
+  "enums": {
+    "channel": ["EMAIL", "CONTACT_FORM", "PORTAL"],
+    "approval_status": ["PENDING", "APPROVED", "REJECTED", "CHANGES_REQUESTED", "SUPERSEDED"],
+    "send_status": ["DRAFT_ONLY", "READY_AFTER_APPROVAL", "SENT", "FAILED", "STOPPED"],
+    "reply_status": ["", "NO_REPLY", "REPLIED", "OPTED_OUT", "BOUNCED"]
+  },
+  "date_fields": ["sent_at", "last_reply_at", "next_follow_up_at", "created_at", "updated_at"],
+  "numeric_fields": ["follow_up_count"],
+  "url_fields": []
+}

@@ -59,17 +59,19 @@ def append_source_health_event(source_name: str, updates: dict[str, Any], citati
     )
 
 
-def upsert_source_health_csv(source_name: str, updates: dict[str, Any]) -> None:
+def upsert_source_health_csv(source_name: str, updates: dict[str, Any]) -> str:
     if not SOURCE_HEALTH_CSV.exists():
-        return
+        return source_name
     with SOURCE_HEALTH_CSV.open("r", encoding="utf-8", newline="") as f:
         reader = csv.DictReader(f)
         headers = reader.fieldnames or []
         rows = list(reader)
     found = False
+    canonical_name = source_name
     for row in rows:
         if source_name_matches(row.get("source_name", ""), source_name):
             found = True
+            canonical_name = row.get("source_name", "") or source_name
             for key, value in updates.items():
                 if key in headers:
                     row[key] = str(value)
@@ -92,3 +94,28 @@ def upsert_source_health_csv(source_name: str, updates: dict[str, Any]) -> None:
         writer = csv.DictWriter(f, fieldnames=headers)
         writer.writeheader()
         writer.writerows(rows)
+    return canonical_name
+
+
+def materialize_updates(updates: dict[str, Any]) -> dict[str, Any]:
+    """Create the exact state payload shared by the CSV and event ledger."""
+    materialized = dict(updates)
+    materialized.setdefault("last_checked_date", today())
+    if "health_status" in materialized:
+        materialized["health_status"] = normalize_status(str(materialized["health_status"]))
+    return materialized
+
+
+def update_source_health(
+    source_name: str,
+    updates: dict[str, Any],
+    *,
+    record_event: bool = False,
+    citations: list[str] | None = None,
+) -> tuple[str, dict[str, Any]]:
+    """Update the source register and optionally append the identical event."""
+    materialized = materialize_updates(updates)
+    canonical_name = upsert_source_health_csv(source_name, materialized)
+    if record_event:
+        append_source_health_event(canonical_name, materialized, citations=citations)
+    return canonical_name, materialized

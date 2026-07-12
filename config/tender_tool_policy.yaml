@@ -1,0 +1,260 @@
+version: 1
+policy_name: tender-os-hermes-tool-authorization
+default_effect: deny
+opa_package: data.tenderos.authz.decision
+approval_register: data/approvals_receipts.csv
+approval_max_age_hours: 48
+require_owner_decision_receipt: true
+require_scope_hash: true
+reject_reused_approval_after_external_effect: true
+
+# T0-T2 are the only capabilities exposed by the MCP server. T3-T5 exist here
+# so Hermes can ask for a deterministic policy decision and prepare an approval
+# packet, but no execution tool is registered for those actions.
+actions:
+  mcp.capability_status:
+    tier: 0
+    mode: internal_read
+    external_effect: false
+    approval_required: false
+  mcp.get_case:
+    tier: 0
+    mode: internal_read
+    external_effect: false
+    approval_required: false
+  mcp.search_cases:
+    tier: 0
+    mode: internal_read
+    external_effect: false
+    approval_required: false
+  mcp.get_source_health:
+    tier: 0
+    mode: internal_read
+    external_effect: false
+    approval_required: false
+  mcp.get_approval_status:
+    tier: 0
+    mode: internal_read
+    external_effect: false
+    approval_required: false
+  mcp.evaluate_business_action:
+    tier: 0
+    mode: internal_read
+    external_effect: false
+    approval_required: false
+  mcp.capture_public_web:
+    tier: 1
+    mode: public_read_only
+    external_effect: false
+    approval_required: false
+  mcp.assess_opportunity:
+    tier: 2
+    mode: advisory
+    external_effect: false
+    approval_required: false
+  mcp.parse_local_documents:
+    tier: 2
+    mode: internal_evidence_write
+    external_effect: false
+    approval_required: false
+
+  portal_login_for_research:
+    tier: 3
+    mode: credentialed_prepare
+    external_effect: true
+    approval_required: true
+  portal_signup_for_research:
+    tier: 3
+    mode: credentialed_prepare
+    external_effect: true
+    approval_required: true
+  portal_credential_creation:
+    tier: 3
+    mode: credentialed_prepare
+    external_effect: true
+    approval_required: true
+  portal_session_refresh_for_research:
+    tier: 3
+    mode: credentialed_prepare
+    external_effect: true
+    approval_required: true
+
+  send_supplier_quote_request:
+    tier: 4
+    mode: external_message
+    external_effect: true
+    approval_required: true
+    aliases: [send_supplier_quote_requests]
+  send_supplier_clarification_request:
+    tier: 4
+    mode: external_message
+    external_effect: true
+    approval_required: true
+  send_supplier_follow_up:
+    tier: 4
+    mode: external_message
+    external_effect: true
+    approval_required: true
+  request_supplier_price_and_availability:
+    tier: 4
+    mode: external_message
+    external_effect: true
+    approval_required: true
+  send_buyer_rfq_reply:
+    tier: 4
+    mode: external_message
+    external_effect: true
+    approval_required: true
+  send_buyer_introductory_outreach:
+    tier: 4
+    mode: external_message
+    external_effect: true
+    approval_required: true
+  send_export_quotation:
+    tier: 4
+    mode: external_commercial_commitment
+    external_effect: true
+    approval_required: true
+  upload_tender_documents:
+    tier: 4
+    mode: portal_mutation
+    external_effect: true
+    approval_required: true
+  commit_final_price:
+    tier: 4
+    mode: external_commercial_commitment
+    external_effect: true
+    approval_required: true
+  commit_delivery_timeline:
+    tier: 4
+    mode: external_commercial_commitment
+    external_effect: true
+    approval_required: true
+  accept_payment_terms:
+    tier: 4
+    mode: external_commercial_commitment
+    external_effect: true
+    approval_required: true
+  send_invoice_externally:
+    tier: 4
+    mode: external_financial_document
+    external_effect: true
+    approval_required: true
+  blacklist_supplier_permanently:
+    tier: 4
+    mode: internal_high_impact_mutation
+    external_effect: false
+    approval_required: true
+  patch_pricing_or_compliance_skill:
+    tier: 4
+    mode: governed_runtime_mutation
+    external_effect: false
+    approval_required: true
+  enable_network_or_credential_heavy_plugin:
+    tier: 4
+    mode: governed_runtime_mutation
+    external_effect: true
+    approval_required: true
+  expose_hermes_or_codex_service_publicly:
+    tier: 4
+    mode: public_service_exposure
+    external_effect: true
+    approval_required: true
+  purchase_paid_subscription_or_portal_plan:
+    tier: 5
+    mode: payment
+    external_effect: true
+    approval_required: true
+    required_controls: [fresh_owner_command]
+  make_legal_tax_origin_certification:
+    tier: 5
+    mode: legal_compliance_claim
+    external_effect: true
+    approval_required: true
+    required_controls: [fresh_owner_command, expert_review]
+
+  submit_tender_bid:
+    tier: 5
+    mode: binding_submission
+    external_effect: true
+    approval_required: true
+    required_controls: [fresh_owner_command, dsc_owner_present]
+  use_dsc:
+    tier: 5
+    mode: legal_signature
+    external_effect: true
+    approval_required: true
+    required_controls: [fresh_owner_command, dsc_owner_present]
+  pay_emd_or_bid_security:
+    tier: 5
+    mode: payment
+    external_effect: true
+    approval_required: true
+    required_controls: [fresh_owner_command]
+  pay_security_deposit:
+    tier: 5
+    mode: payment
+    external_effect: true
+    approval_required: true
+    required_controls: [fresh_owner_command]
+  pay_advance_to_supplier:
+    tier: 5
+    mode: payment
+    external_effect: true
+    approval_required: true
+    required_controls: [fresh_owner_command]
+  place_supplier_purchase_order:
+    tier: 5
+    mode: binding_purchase
+    external_effect: true
+    approval_required: true
+    required_controls: [fresh_owner_command]
+  confirm_hsn_itchs_classification:
+    tier: 5
+    mode: legal_compliance_claim
+    external_effect: true
+    approval_required: true
+    required_controls: [fresh_owner_command, expert_review]
+  claim_country_of_origin:
+    tier: 5
+    mode: legal_compliance_claim
+    external_effect: true
+    approval_required: true
+    required_controls: [fresh_owner_command, expert_review]
+
+  captcha_bypass:
+    tier: 5
+    mode: prohibited
+    external_effect: true
+    approval_required: false
+    prohibited: true
+  otp_bypass:
+    tier: 5
+    mode: prohibited
+    external_effect: true
+    approval_required: false
+    prohibited: true
+  credential_exfiltration:
+    tier: 5
+    mode: prohibited
+    external_effect: true
+    approval_required: false
+    prohibited: true
+  unrestricted_browser_execution:
+    tier: 5
+    mode: prohibited
+    external_effect: true
+    approval_required: false
+    prohibited: true
+  rewrite_event_ledger:
+    tier: 5
+    mode: prohibited
+    external_effect: false
+    approval_required: false
+    prohibited: true
+  self_promote_runtime_policy:
+    tier: 5
+    mode: prohibited
+    external_effect: false
+    approval_required: false
+    prohibited: true

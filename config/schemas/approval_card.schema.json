@@ -15,6 +15,10 @@
     "confidence_score",
     "missing_information",
     "approval_options",
+    "requested_at",
+    "approval_timeout_at",
+    "scope",
+    "scope_hash",
     "created_at",
     "created_by"
   ],
@@ -36,6 +40,13 @@
     "approval_options": {"type": "array", "items": {"type": "string"}},
     "allowed_decisions": {"type": "array", "items": {"type": "string"}},
     "approval_status": {"type": "string"},
+    "requested_at": {"type": "string"},
+    "approval_timeout_at": {"type": "string"},
+    "scope": {
+      "type": "object",
+      "required": ["case_id", "workflow_type", "proposed_action", "business_object", "amount_or_price", "external_party"]
+    },
+    "scope_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
     "created_at": {"type": "string"},
     "created_by": {"type": "string"},
     "html_path": {"type": "string"},

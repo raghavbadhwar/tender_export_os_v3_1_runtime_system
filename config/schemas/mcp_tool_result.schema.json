@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tender-export-os.local/schemas/mcp_tool_result.schema.json",
+  "title": "Tender Export OS MCP Tool Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "status",
+    "evidence_ids",
+    "source_urls",
+    "source_hashes",
+    "confidence",
+    "missing_information",
+    "recommended_next_action",
+    "approval_required",
+    "policy_decision_id",
+    "policy_receipt_path",
+    "external_side_effects",
+    "data"
+  ],
+  "properties": {
+    "status": {"enum": ["success", "partial", "blocked", "failed"]},
+    "evidence_ids": {"type": "array", "items": {"type": "string"}},
+    "source_urls": {"type": "array", "items": {"type": "string"}},
+    "source_hashes": {"type": "array", "items": {"type": "string"}},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "missing_information": {"type": "array", "items": {"type": "string"}},
+    "recommended_next_action": {"type": "string"},
+    "approval_required": {"type": "boolean"},
+    "policy_decision_id": {"type": "string", "minLength": 1},
+    "policy_receipt_path": {"type": "string"},
+    "external_side_effects": {"const": false},
+    "data": {"type": "object"}
+  }
+}

@@ -14,10 +14,9 @@ workflow the founder described:
 
 Safety: this report script itself never sends buyer/supplier messages, submits
 bids/RFQs, logs in to portals, uploads documents, pays money, uses DSC, confirms
-HSN/ITC-HS/origin, or commits final prices/terms. Supplier outreach and portal
-login/signup are now standing-authorized in `config/approval_policy.yaml`, but
-this script only reports/routes them; execution scripts must still write receipts
-and keep buyer/bid/payment/final-commitment gates intact.
+HSN/ITC-HS/origin, or commits final prices/terms. Supplier outreach and
+credentialed portal actions remain approval-gated in `config/approval_policy.yaml`;
+this script only reports/routes them.
 """
 
 from __future__ import annotations
@@ -40,6 +39,11 @@ try:
     from event_ledger import append_event
 except Exception:  # pragma: no cover - report should still render if ledger import breaks
     append_event = None  # type: ignore[assignment]
+
+try:
+    from scripts.quote_proof import classify_quote_proof
+except ModuleNotFoundError:  # pragma: no cover - direct script execution path
+    from quote_proof import classify_quote_proof
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "data"
@@ -348,11 +352,12 @@ def quote_counts(case_quotes: list[dict[str, str]]) -> dict[str, int]:
     any_price = 0
     for quote in case_quotes:
         has_price = any(quote.get(field) for field in ["unit_price_inr", "unit_price_usd", "total_price_inr", "total_price_usd", "fob_price_usd", "cif_price_usd"])
+        is_formal = classify_quote_proof(quote)["is_strict_quote_proof"]
         if has_price:
             any_price += 1
-        if quote.get("quote_request_sent_at") and quote.get("quote_received_at"):
+        if is_formal:
             formal += 1
-        if has_price and not quote.get("quote_request_sent_at"):
+        if has_price and not is_formal:
             public_price += 1
     return {"formal_quote_proofs": formal, "public_price_proofs": public_price, "price_proofs_total": any_price}
 
@@ -381,7 +386,7 @@ def requirements_for_case(case: dict[str, str], rfqs_by_case: dict[str, dict[str
     if workflow == "GOV":
         reqs.extend([
             "GOV docs/checks: tender notice/PDF/BOQ, eligibility clauses, GST/PAN/MSME/Udyam if applicable, GeM/portal registration, EMD exemption/payment path, delivery/penalty clauses.",
-            "Do not upload bid documents, use DSC, or pay EMD without a separate approval card. Supplier quote/availability outreach is standing-authorized when receipts are logged.",
+            "Do not upload bid documents, use DSC, pay EMD, contact suppliers, or use credentialed portal access without a matching approval card and receipt.",
         ])
     elif workflow == "EXPORT":
         rfq = rfqs_by_case.get(case.get("case_id", ""), {})
@@ -389,7 +394,7 @@ def requirements_for_case(case: dict[str, str], rfqs_by_case: dict[str, dict[str
             reqs.append(f"Buyer/RFQ evidence stage: {rfq.get('rfq_stage')} / {rfq.get('evidence_status')}; missing: {rfq.get('missing_evidence')}")
         reqs.extend([
             "EXPORT docs/checks: buyer-specific RFQ proof, buyer identity verification, IEC/export readiness, draft ITC-HS only, product spec/COA/MSDS if relevant, packing list, proforma invoice draft, logistics/incoterms assumptions.",
-            "Do not confirm HSN/ITC-HS, origin, Incoterms, delivery, payment terms, or final quote externally without separate approval. Supplier quote/availability outreach and portal login/signup are standing-authorized when receipts are logged.",
+            "Do not confirm HSN/ITC-HS, origin, Incoterms, delivery, payment terms, final quote, supplier outreach, or credentialed portal access without separate approval and receipts.",
         ])
     if not case.get("source_url"):
         reqs.append("Evidence gap: original source URL missing; recover/source before any external action.")
@@ -420,7 +425,7 @@ def routing_for_case(
         if len(case_suppliers) < 5 or source_type_count(case_suppliers) < 3:
             routes.append("Route to Supplier Engine: need 5 candidates across 3 source types.")
         if counts["price_proofs_total"] < 2:
-            routes.append("Pricing blocked: need 2 quote/price proofs; supplier quote/availability outreach is standing-authorized, but final buyer quote remains approval-gated.")
+            routes.append("Pricing blocked: need 2 quote/price proofs; supplier quote/availability outreach and final buyer quotes remain approval-gated.")
     if workflow == "EXPORT":
         rfq = rfqs_by_case.get(case.get("case_id", ""), {})
         if rfq and rfq.get("evidence_status") != "RFQ_VERIFIED":
@@ -537,7 +542,7 @@ def supply_chain_lines(
         "- Buyer/tender requirement document, BOQ/specification, delivery schedule, penalty/payment clauses.",
         "- Compliance documents: GST/PAN/Udyam/GEM/IEC/certificates as applicable; ITC-HS/origin only as draft until approved.",
         "- Logistics checklist: pickup, packing, insurance, freight, delivery timeline, inspection/proof of delivery.",
-        "- Standing authorization covers supplier RFQ/follow-up and portal login/signup for research; log receipts and secret aliases only. Separate approval remains required before buyer sends, bid uploads, payments, DSC, POs, final classifications/origin claims, or final price/terms.",
+        "- Supplier RFQ/follow-up and credentialed portal login/signup require explicit owner approval and receipts. Separate approval also remains required before buyer sends, bid uploads, payments, DSC, POs, final classifications/origin claims, or final price/terms.",
         "",
         "## 6. Routing / blockers",
     ])
@@ -731,7 +736,7 @@ code { color:#c4b5fd; white-space:pre-wrap; }
 <section class="hero">
   <div class="kicker">Tender Export OS · Morning Opportunity Intelligence</div>
   <h1>Daily opportunity pipeline — {esc(today_iso())}</h1>
-  <p class="muted">Generated {esc(now_local().isoformat(timespec='seconds'))}. Internal intelligence report; supplier RFQ/follow-up and portal login/signup are standing-authorized, while buyer/bid/payment/DSC/final commitment actions remain approval-gated.</p>
+  <p class="muted">Generated {esc(now_local().isoformat(timespec='seconds'))}. Internal intelligence report; supplier RFQ/follow-up, credentialed portal actions, buyer/bid/payment/DSC, and final commitments remain approval-gated.</p>
   <div class="flow"><span>Radar</span><span>Requirements deep pass</span><span>Supplier 5-3-2</span><span>Supply-chain docs</span><span>Pricing assistance</span><span>Blind-spot routing</span><span>HTML report</span></div>
 </section>
 <div class="tiles">
@@ -742,11 +747,11 @@ code { color:#c4b5fd; white-space:pre-wrap; }
   <div class="tile"><span class="muted">Pending approvals</span><b>{len(pending_approvals)}</b></div>
   <div class="tile"><span class="muted">Source issues</span><b>{len(source_issues)}</b></div>
 </div>
-<section class="warnbox"><strong>Guardrails:</strong> this report run did not execute messages, portal logins, submissions, document uploads, payments, DSC use, final HSN/ITC-HS/origin claims, or final price/terms. Standing authorization now covers supplier quote/availability outreach and portal login/signup for research when receipts and secret aliases are logged.</section>
+<section class="warnbox"><strong>Guardrails:</strong> this report run did not execute messages, portal logins, submissions, document uploads, payments, DSC use, final HSN/ITC-HS/origin claims, or final price/terms. Supplier quote/availability outreach and credentialed portal access require explicit owner approval and receipts.</section>
 <section class="case-card">
   <h2>Morning source/radar handoff</h2>
   <p>Safe public probe checked <strong>{esc(external_summary.get('sources_checked', 'n/a'))}</strong> source(s), reachable <strong>{esc(external_summary.get('reachable', 'n/a'))}</strong>, blocked/login-like <strong>{esc(external_summary.get('blocked', 'n/a'))}</strong>, failed/errors <strong>{esc(external_summary.get('failed', 'n/a'))}</strong>.</p>
-  <p class="muted">Deep portal coverage improves as standing-authorized login/signup flows are connected. The pipeline still avoids paywalls, CAPTCHA/OTP, and legal/payment commitments without the required live step or separate approval.</p>
+  <p class="muted">Deep portal coverage improves only after approved login/signup flows are connected. The pipeline still avoids paywalls, CAPTCHA/OTP, and legal/payment commitments without the required live step or separate approval.</p>
 </section>
 <section class="case-card">
   <h2>Pending approvals</h2>
@@ -816,6 +821,15 @@ def run_refresh_steps(args: argparse.Namespace) -> list[dict[str, Any]]:
     return results
 
 
+def pipeline_outcome(command_results: list[dict[str, Any]]) -> dict[str, Any]:
+    errors = sum(1 for step in command_results if not step.get("ok"))
+    return {
+        "errors": errors,
+        "status": "SUCCESS" if errors == 0 else "PARTIAL_FAILURE",
+        "exit_code": 0 if errors == 0 else 1,
+    }
+
+
 def build_payload(analyzed: list[dict[str, Any]], command_results: list[dict[str, Any]], latest_artifacts: dict[str, str]) -> dict[str, Any]:
     serializable_cases = []
     for item in analyzed:
@@ -833,7 +847,7 @@ def build_payload(analyzed: list[dict[str, Any]], command_results: list[dict[str
         })
     return {
         "generated_at": now_local().isoformat(timespec="seconds"),
-        "safety": "internal_report_only_supplier_outreach_and_portal_access_standing_authorized_no_buyer_bid_payment_final_commitment",
+        "safety": "internal_report_only_supplier_outreach_and_portal_access_approval_gated_no_buyer_bid_payment_final_commitment",
         "cases": serializable_cases,
         "steps": command_results,
         "latest_artifacts": latest_artifacts,
@@ -894,7 +908,8 @@ def main() -> int:
     payload["json_report"] = rel(json_path)
     json_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
 
-    errors = sum(1 for step in command_results if not step["ok"])
+    outcome = pipeline_outcome(command_results)
+    errors = outcome["errors"]
     warnings = errors
     for item in analyzed:
         if item["pricing"]["status"] != "INTERNAL_PRICING_ASSIST_READY_NOT_FINAL":
@@ -904,7 +919,7 @@ def main() -> int:
     external_summary = external_intake.get("summary") or {}
     sources_checked = external_summary.get("sources_checked", 0) or 0
     sources_failed = external_summary.get("failed", 0) or 0
-    status = "SUCCESS" if errors == 0 else "SUCCESS_WITH_WARNINGS"
+    status = outcome["status"]
 
     if not args.no_log:
         n = now_local()
@@ -956,10 +971,10 @@ def main() -> int:
     print(f"HTML report: {abs_html}")
     print(f"JSON report: {json_path.resolve()}")
     print(f"Supply-chain docs: {SUPPLY_CHAIN_DIR.resolve()}")
-    print("Safety: report-only run. Supplier outreach and portal login/signup are standing-authorized by policy, but this run did not execute them; buyer sends, submissions, uploads, payments, DSC, final classification/origin claims, and final price commitments remain approval-gated.")
+    print("Safety: report-only run. Supplier outreach and credentialed portal actions require explicit owner approval and receipts; this run did not execute them. Buyer sends, submissions, uploads, payments, DSC, final classification/origin claims, and final price commitments remain approval-gated.")
     if not args.no_media_line:
         print(f"MEDIA:{abs_html}")
-    return 0 if errors == 0 else 0
+    return outcome["exit_code"]
 
 
 if __name__ == "__main__":

@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import csv
 import datetime as dt
+import hashlib
 import html
 import json
 import re
@@ -18,11 +19,18 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
+try:
+    from scripts.event_ledger import append_event
+except ModuleNotFoundError:  # pragma: no cover - direct script execution
+    from event_ledger import append_event
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "data"
 OUTPUT_DIR = PROJECT_ROOT / "outputs" / "demand_forecasting"
 LOW_COMP_DIR = PROJECT_ROOT / "outputs" / "low_competition_radar"
 FORECAST_CANDIDATES_PATH = DATA_DIR / "forecast_candidates.csv"
+PREDICTION_TARGET = "operational_progress_or_justified_kill_within_horizon"
+PREDICTION_MODEL_VERSION = "teos-expert-prior-v1"
 
 
 def display_path(path: Path) -> str:
@@ -87,6 +95,12 @@ FORECAST_CANDIDATE_COLUMNS = [
     "source_url",
     "forecast_score",
     "confidence",
+    "prediction_target",
+    "predicted_probability",
+    "probability_status",
+    "model_version",
+    "eligible_for_backtest_at",
+    "feature_snapshot_json",
     "repeat_probability",
     "low_competition_score",
     "supplier_readiness_score",
@@ -200,6 +214,66 @@ def confidence(score: float, evidence_score: float = 0.0, source_count: int = 1)
     if score >= 60:
         return "MEDIUM"
     return "LOW"
+
+
+def estimate_operational_probability(item: dict[str, Any]) -> tuple[float, dict[str, Any]]:
+    """Return a conservative expert prior, explicitly not a calibrated probability."""
+    evidence_label = norm_upper(item.get("evidence_label") or item.get("evidence_level"))
+    evidence_score = PROOF_LEVEL_SCORE.get(evidence_label, 15) / 100
+    source_text = norm(item.get("source") or item.get("source_name"))
+    source_count = len({part.strip().lower() for part in re.split(r"[;,]", source_text) if part.strip()})
+    priority_score = clamp(safe_float(item.get("forecast_score"))) / 100
+    supplier_score = clamp(safe_float(item.get("supplier_readiness_score"))) / 100
+    repeat_score = clamp(safe_float(item.get("repeat_probability"))) / 100
+    low_competition_score = clamp(
+        safe_float(item.get("low_competition_signal_score") or item.get("low_competition_score"))
+    ) / 100
+    features = {
+        "evidence_level": evidence_label or "UNKNOWN",
+        "evidence_score": round(evidence_score, 4),
+        "source_count": source_count,
+        "priority_score": round(priority_score, 4),
+        "supplier_readiness_score": round(supplier_score, 4),
+        "repeat_signal_score": round(repeat_score, 4),
+        "low_competition_score": round(low_competition_score, 4),
+    }
+    probability = (
+        0.05
+        + 0.25 * evidence_score
+        + 0.10 * min(1.0, source_count / 3)
+        + 0.15 * supplier_score
+        + 0.12 * repeat_score
+        + 0.08 * low_competition_score
+        + 0.10 * priority_score
+    )
+    if evidence_label in WEAK_EVIDENCE_LEVELS:
+        probability *= 0.55
+    if evidence_label in {"CATEGORY_HISTORY", "RESEARCH_ONLY_NOT_RFQ"}:
+        probability *= 0.70
+    return round(max(0.03, min(0.78, probability)), 4), features
+
+
+def horizon_days(value: Any) -> int:
+    text = norm(value).lower()
+    if "0-7" in text:
+        return 7
+    if "7-30" in text:
+        return 30
+    if "30-60" in text:
+        return 60
+    if "60-90" in text or "30-90" in text:
+        return 90
+    if text == "active order":
+        return 14
+    return 30
+
+
+def eligible_for_backtest(forecast_date: str, horizon: Any) -> str:
+    base = dt.date.fromisoformat(forecast_date)
+    explicit_dates = re.findall(r"\d{4}-\d{2}-\d{2}", norm(horizon))
+    if explicit_dates:
+        return max(dt.date.fromisoformat(value) for value in explicit_dates).isoformat()
+    return (base + dt.timedelta(days=horizon_days(horizon))).isoformat()
 
 
 def forecast_horizon(days_to_deadline: float | None, research_only: bool = False) -> str:
@@ -561,6 +635,18 @@ def low_competition_candidates(path: Path | None) -> list[dict[str, Any]]:
     return sorted(unique.values(), key=lambda item: item["forecast_score"], reverse=True)
 
 
+def filter_terminal_candidates(
+    candidates: list[dict[str, Any]], cases: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    """Drop stale radar rows for cases already terminal before forecast creation."""
+    terminal_ids = {
+        norm_upper(row.get("case_id"))
+        for row in cases
+        if norm_upper(row.get("status")) in TERMINAL_STATUSES
+    }
+    return [row for row in candidates if not norm_upper(row.get("case_id")) or norm_upper(row.get("case_id")) not in terminal_ids]
+
+
 def choose_recommended_actions(low_comp: list[dict[str, Any]], case_forecasts: list[dict[str, Any]], research: list[dict[str, Any]]) -> list[dict[str, Any]]:
     actions: list[dict[str, Any]] = []
     for item in low_comp:
@@ -725,12 +811,14 @@ def forecast_candidate_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
         proof_gap = item.get("proof_gap", "")
         evidence = item.get("evidence_label", "")
         next_action = internal_safe_action(item.get("next_safe_action", ""), evidence, proof_gap)
+        predicted_probability, features = estimate_operational_probability(item)
+        horizon = item.get("horizon", "")
         rows.append(
             {
                 "forecast_id": f"FC-{payload['date']}-{forecast_type}-{slugify(case_id)[:80]}",
                 "run_id": payload["run_id"],
                 "forecast_date": forecast_date,
-                "horizon": item.get("horizon", ""),
+                "horizon": horizon,
                 "forecast_type": forecast_type,
                 "case_or_research_id": case_id,
                 "workflow_type": item.get("workflow_type", ""),
@@ -741,6 +829,12 @@ def forecast_candidate_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
                 "source_url": item.get("source_url", ""),
                 "forecast_score": item.get("forecast_score", ""),
                 "confidence": item.get("confidence", "LOW"),
+                "prediction_target": PREDICTION_TARGET,
+                "predicted_probability": f"{predicted_probability:.4f}",
+                "probability_status": "PRIOR_UNCALIBRATED",
+                "model_version": PREDICTION_MODEL_VERSION,
+                "eligible_for_backtest_at": eligible_for_backtest(forecast_date, horizon),
+                "feature_snapshot_json": json.dumps(features, sort_keys=True, separators=(",", ":")),
                 "repeat_probability": item.get("repeat_probability", 0),
                 "low_competition_score": item.get("low_competition_signal_score", 0),
                 "supplier_readiness_score": item.get("supplier_readiness_score", 0),
@@ -756,9 +850,12 @@ def forecast_candidate_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def write_forecast_candidates(path: Path, payload: dict[str, Any]) -> list[dict[str, Any]]:
-    rows = forecast_candidate_rows(payload)
-    write_csv(path, rows, FORECAST_CANDIDATE_COLUMNS)
-    return rows
+    new_rows = forecast_candidate_rows(payload)
+    merged = {row.get("forecast_id", ""): row for row in load_csv(path) if row.get("forecast_id")}
+    merged.update({row["forecast_id"]: row for row in new_rows})
+    history = sorted(merged.values(), key=lambda row: (row.get("forecast_date", ""), row.get("forecast_id", "")))
+    write_csv(path, history, FORECAST_CANDIDATE_COLUMNS)
+    return new_rows
 
 
 def table_md(rows: list[dict[str, Any]], limit: int = 10) -> list[str]:
@@ -986,7 +1083,7 @@ def build_payload(date_str: str) -> dict[str, Any]:
     low_path = latest_low_comp_json()
     active = active_case_forecasts(cases)
     research = demand_research_forecasts(demand_rows)
-    low_comp = low_competition_candidates(low_path)
+    low_comp = filter_terminal_candidates(low_competition_candidates(low_path), cases)
     buyer_predictions = buyer_repeat_predictions(buyer_history)
     category_predictions = category_demand_predictions(category_history)
     forecast_rows = active + research + low_comp + buyer_predictions + category_predictions
@@ -1050,6 +1147,26 @@ def main() -> int:
     if not candidates_path.is_absolute():
         candidates_path = PROJECT_ROOT / candidates_path
     candidate_rows = write_forecast_candidates(candidates_path, payload) if args.write_candidates else []
+    if args.write_candidates:
+        candidate_digest = hashlib.sha256(
+            json.dumps(candidate_rows, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        ).hexdigest()[:16]
+        append_event(
+            "forecast.generated",
+            "V5 Demand Forecast Engine",
+            object_type="forecast_run",
+            object_id=payload["run_id"],
+            source="local_prediction_runtime",
+            payload={
+                "run_id": payload["run_id"],
+                "forecast_count": len(candidate_rows),
+                "model_version": PREDICTION_MODEL_VERSION,
+                "report_path": display_path(json_path),
+                "probability_status": "PRIOR_UNCALIBRATED",
+            },
+            citations=[display_path(json_path), display_path(candidates_path), "HERMES.md"],
+            idempotency_key=f"forecast.generated:{payload['run_id']}:{candidate_digest}",
+        )
 
     print(json.dumps({
         "ok": True,

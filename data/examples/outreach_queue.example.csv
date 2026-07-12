@@ -1,0 +1,2 @@
+outreach_id,case_id,buyer_id,signal_id,channel,verified_contact,contact_scope,subject,draft_path,approval_id,approval_status,send_status,sent_at,external_message_id,external_thread_id,reply_status,last_reply_at,next_follow_up_at,follow_up_count,stop_reason,created_at,updated_at
+OUT-EXAMPLE-001,EXP-20990101-T0001,BUY-TARGET-EXAMPLE-001,SIG-EXAMPLE-001,EMAIL,public@example.com,GENERAL_CONTACT,Indian artisan homeware sourcing introduction,outputs/examples/outreach/OUT-EXAMPLE-001.md,APR-EXAMPLE-OUT-001,PENDING,DRAFT_ONLY,,,,NO_REPLY,,2099-01-08,0,,2099-01-01,2099-01-01
