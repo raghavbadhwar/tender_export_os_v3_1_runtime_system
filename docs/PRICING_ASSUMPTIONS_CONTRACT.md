@@ -33,4 +33,3 @@ For EXPORT commercial readiness, every non-supplier-base landed-cost component m
 ## Boundary
 
 Assumptions are internal draft pricing inputs. They do not authorize final bid price, export quotation, tax treatment, HSN/ITC-HS, origin, delivery, payment terms, supplier commitment, buyer contact, or any external action.
-

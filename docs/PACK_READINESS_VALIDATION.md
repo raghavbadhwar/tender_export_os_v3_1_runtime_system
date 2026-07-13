@@ -38,4 +38,3 @@ Pack manifests should include:
 ## Boundary
 
 Passing pack readiness only means the internal pack is ready for owner review or approval-card routing. It does not send, submit, upload, commit price, confirm compliance, claim origin, accept payment terms, or perform any external action.
-

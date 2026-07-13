@@ -53,4 +53,3 @@ from scripts.quote_proof import strict_quote_proofs
 ```
 
 Pricing-ready GOV and EXPORT states require two distinct supplier-specific strict quote proofs unless a separately documented specialized-category exception is added and approved. This contract does not authorize supplier contact, quote requests, purchase orders, final price commitments, delivery commitments, or external sends.
-

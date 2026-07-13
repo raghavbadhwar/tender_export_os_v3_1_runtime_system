@@ -21,4 +21,3 @@ def test_export_scomet_requires_current_primary_official_source() -> None:
     assert validate_citation(good, workflow_type="EXPORT", requirement_type="scomet", generated_at="2026-07-13T00:00:00+00:00", policy=policy) == []
     assert any("stale by policy" in error for error in validate_citation(stale, workflow_type="EXPORT", requirement_type="scomet", generated_at="2026-07-13T00:00:00+00:00", policy=policy))
     assert any("source_kind public_blog is not allowed" in error for error in validate_citation(wrong_kind, workflow_type="EXPORT", requirement_type="scomet", generated_at="2026-07-13T00:00:00+00:00", policy=policy))
-

@@ -31,6 +31,57 @@ NEEDS_INPUT_REASONS = {
     "ambiguous_compliance",
     "portal_human_challenge",
 }
+SUPPORTED_COMPLETION_VALIDATORS = frozenset(
+    {
+        "fast_kill_decision",
+        "deep_read_report",
+        "supplier_532",
+        "pricing_readiness",
+        "compliance_matrix",
+        "artifact_manifest",
+        "owner_approval_receipt",
+        "execution_receipt",
+        "buyer_verification",
+        "learning_proposal",
+        "evidence_bundle",
+        "deterministic_fast_kill",
+        "fast_kill_critic",
+        "historical_commercial_intelligence",
+        "bid_pack_verification",
+        "evaluation_award_evidence",
+        "delivery_payment_evidence",
+        "export_demand_thesis",
+        "buyer_target_hypothesis",
+        "contact_path_proof",
+        "gmail_plugin_handoff",
+        "reply_classification",
+        "rfq_verification",
+        "export_quote_pack_verification",
+        "negotiation_draft",
+        "order_evidence",
+        "shipment_payment_evidence",
+        "repeat_buyer_learning",
+    }
+)
+VALIDATOR_ALIASES = {
+    "deterministic_fast_kill": "fast_kill_decision",
+    "fast_kill_critic": "evidence_bundle",
+    "historical_commercial_intelligence": "evidence_bundle",
+    "bid_pack_verification": "artifact_manifest",
+    "evaluation_award_evidence": "evidence_bundle",
+    "delivery_payment_evidence": "evidence_bundle",
+    "export_demand_thesis": "evidence_bundle",
+    "buyer_target_hypothesis": "evidence_bundle",
+    "contact_path_proof": "evidence_bundle",
+    "gmail_plugin_handoff": "evidence_bundle",
+    "reply_classification": "evidence_bundle",
+    "rfq_verification": "evidence_bundle",
+    "export_quote_pack_verification": "artifact_manifest",
+    "negotiation_draft": "evidence_bundle",
+    "order_evidence": "evidence_bundle",
+    "shipment_payment_evidence": "evidence_bundle",
+    "repeat_buyer_learning": "learning_proposal",
+}
 
 
 def _resolve(path: str, project_root: Path) -> Path:
@@ -132,6 +183,9 @@ def validate_parent_results(
 
 def _validate_stage(validator: str, result: dict[str, Any]) -> list[str]:
     errors: list[str] = []
+    if validator not in SUPPORTED_COMPLETION_VALIDATORS:
+        return [f"unknown completion validator: {validator or '<empty>'}"]
+    validator = VALIDATOR_ALIASES.get(validator, validator)
     if validator == "fast_kill_decision":
         if result.get("decision") not in {"FAST_KILL", "REJECTED", "WATCHLIST", "PROMOTE"}:
             errors.append("fast-kill decision is missing or invalid")
@@ -158,7 +212,18 @@ def _validate_stage(validator: str, result: dict[str, Any]) -> list[str]:
         if not statuses or not statuses <= allowed:
             errors.append("compliance clause statuses are missing or invalid")
     elif validator == "artifact_manifest":
-        if result.get("render_verified") is not True or result.get("parse_verified") is not True:
+        checks = result.get("artifact_checks")
+        if isinstance(checks, list) and checks:
+            if any(not isinstance(check, dict) for check in checks):
+                errors.append("artifact verification checks must be objects")
+            elif any(
+                check.get("open_verified") is not True
+                or check.get("render_verified") is not True
+                or check.get("parse_verified") is not True
+                for check in checks
+            ):
+                errors.append("artifact render/open/parse verification is incomplete")
+        elif result.get("render_verified") is not True or result.get("parse_verified") is not True:
             errors.append("artifact render/open/parse verification is incomplete")
     elif validator == "owner_approval_receipt":
         if result.get("approval_status") not in {"APPROVED", "REJECTED", "CHANGES_REQUESTED"}:

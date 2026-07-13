@@ -71,4 +71,3 @@ def test_write_pricing_scenarios_creates_internal_event(tmp_path: Path) -> None:
     event = json.loads(events.read_text(encoding="utf-8").strip())
     assert event["event_type"] == "pricing.scenarios_drafted"
     assert event["payload"]["scenario_count"] == 4
-

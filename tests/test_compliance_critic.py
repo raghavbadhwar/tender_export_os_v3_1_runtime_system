@@ -109,4 +109,3 @@ def test_write_compliance_critic_creates_internal_event(tmp_path: Path) -> None:
     event = json.loads(events.read_text(encoding="utf-8").strip())
     assert event["event_type"] == "compliance.critic_reviewed"
     assert event["payload"]["critic_required"] is False
-

@@ -63,4 +63,3 @@ def test_zero_amount_requires_assumption_zero_reason() -> None:
     errors = validate_assumption_config(config, as_of="2026-07-13")
 
     assert any("zero_value_reason is required" in error for error in errors)
-

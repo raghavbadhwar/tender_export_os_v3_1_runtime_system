@@ -46,4 +46,3 @@ def test_artifact_champion_report_writes_under_output_path(tmp_path: Path) -> No
     assert output.is_file()
     saved = json.loads(output.read_text(encoding="utf-8"))
     assert saved["status"] == "PASS"
-

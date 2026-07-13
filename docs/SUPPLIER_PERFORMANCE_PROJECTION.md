@@ -44,4 +44,3 @@ When run with `--write`, it appends a `supplier.performance_projected` event to 
 ## Boundary
 
 Supplier score changes remain proposals. Do not promote supplier memory, ranking rules, default supplier choices, or blacklist/watchlist changes without owner-approved learning promotion and rollback evidence.
-

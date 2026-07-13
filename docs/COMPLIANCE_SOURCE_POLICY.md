@@ -36,4 +36,3 @@ EXPORT compliance clauses must cite current primary sources by requirement type:
 ## Boundary
 
 Passing source freshness means only that the draft cites current primary evidence. It does not finalize compliance, classification, origin, tax treatment, certificates, destination-country requirements, bid readiness, or export quotation readiness.
-

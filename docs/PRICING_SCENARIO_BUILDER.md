@@ -44,4 +44,3 @@ Use `--write` only when the base cost comes from a validated GOV pricing draft o
 ## Boundary
 
 Scenario reports are internal only. They do not authorize final price, export quotation, bid submission, buyer/supplier contact, delivery commitment, payment-term acceptance, or any external action.
-

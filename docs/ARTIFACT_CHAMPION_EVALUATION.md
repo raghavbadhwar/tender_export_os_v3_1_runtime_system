@@ -20,4 +20,3 @@ outputs/artifact_evaluations/current_champion_evaluation.json
 ## Boundary
 
 This is an internal quality gate only. Passing it does not approve packs, final prices, compliance, bid submission, export quotation, or any external action.
-

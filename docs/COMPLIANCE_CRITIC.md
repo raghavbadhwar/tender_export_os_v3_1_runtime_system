@@ -31,4 +31,3 @@ The critic is required for clauses involving:
 The critic cannot write final compliance state. It cannot approve classification, origin, tax treatment, certificates, destination-country compliance, bid submission, export quotation, or any external action.
 
 When run with `--write`, it writes only an internal critic report and appends a `compliance.critic_reviewed` event.
-
