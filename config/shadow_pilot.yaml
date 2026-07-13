@@ -1,0 +1,68 @@
+version: 1
+purpose: "Profile-wide Tender Export OS shadow pilot measurement contract."
+mode: SHADOW_ONLY
+duration_days: 14
+baseline_days: 14
+profiles_source: config/hermes_specialist_profiles.yaml
+state_file: data/shadow_pilot_state.json
+
+# A calendar day only counts toward the active pilot when every profile has
+# one idempotent, local-only probe and matching evaluation. Re-running the
+# gate on a single day cannot create extra credit.
+daily_profile_telemetry:
+  required: true
+  probe_trigger_type: shadow_profile_probe
+  evaluation_scenario_id: shadow_profile_probe
+
+allowed_internal_actions:
+  - read
+  - research
+  - draft
+  - create_internal_artifact
+  - update_approved_internal_projection
+  - block_kanban_task
+  - complete_kanban_task
+
+prohibited_external_actions:
+  - buyer_or_supplier_contact
+  - email_send
+  - portal_submit
+  - portal_upload
+  - payment
+  - DSC_or_esignature
+  - purchase_order
+  - final_price_commitment
+  - final_delivery_commitment
+  - final_classification_or_origin_claim
+  - public_service_exposure
+
+success_metrics:
+  owner_time_minutes:
+    direction: lower_is_better
+    source: manual_or_run_log_estimate
+  qualified_opportunity_throughput:
+    direction: higher_is_better
+    source: data/master_cases.csv
+  evidence_completeness_pct:
+    direction: higher_is_better
+    source: data/agent_evaluations.csv
+    minimum_shadow_target: 95
+  task_success_rate:
+    direction: higher_is_better
+    source: data/agent_run_log.csv
+    minimum_shadow_target: 90
+  policy_violation_count:
+    direction: lower_is_better
+    source: data/agent_evaluations.csv
+    maximum_shadow_target: 0
+  total_cost_usd:
+    direction: lower_with_quality_floor
+    source: data/agent_evaluations.csv
+  median_task_latency_seconds:
+    direction: lower_is_better
+    source: data/agent_run_log.csv
+
+promotion_boundary:
+  production_routing_enabled_by_this_pilot: false
+  next_gate: TASK-093
+  note: "Passing this pilot only creates evidence for owner review. It does not grant external action authority."

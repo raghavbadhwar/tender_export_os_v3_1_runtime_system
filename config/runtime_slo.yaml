@@ -1,0 +1,30 @@
+version: 1
+purpose: "Runtime SLO checks for Tender Export OS Hermes control plane."
+
+thresholds:
+  disk_free_gb_min: 5
+  scheduler_heartbeat_max_age_hours: 24
+  source_canary_max_age_hours: 24
+  behavioral_eval_max_age_hours: 168
+  disaster_recovery_drill_max_age_hours: 168
+  mcp_discovery_max_age_hours: 168
+  projection_rebuild_max_age_hours: 168
+  production_readiness_gate_max_age_hours: 24
+
+checks:
+  gateway_health: true
+  mcp_discovery: true
+  kanban_dispatch: true
+  stale_tasks: true
+  scheduler_heartbeat: true
+  source_canary: true
+  projection_drift: true
+  behavioral_eval_freshness: true
+  disk_headroom: true
+  backup_age: true
+  production_readiness_gate_freshness: true
+
+exception_routing:
+  output_dir: outputs/runtime_slo/exception_cards
+  kanban_mutation_enabled: false
+  assignee: tender-export-os

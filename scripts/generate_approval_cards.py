@@ -13,9 +13,13 @@ from pathlib import Path
 
 try:
     from approval_lifecycle import approval_timeout_at as calculate_approval_timeout_at
+    from codex_bid_pack_contract import verify_bid_pack_approval_ready
+    from codex_export_quote_pack_contract import verify_export_quote_pack_approval_ready
     from event_ledger import append_event
 except ModuleNotFoundError:  # pragma: no cover - package import path used by pytest
     from scripts.approval_lifecycle import approval_timeout_at as calculate_approval_timeout_at
+    from scripts.codex_bid_pack_contract import verify_bid_pack_approval_ready
+    from scripts.codex_export_quote_pack_contract import verify_export_quote_pack_approval_ready
     from scripts.event_ledger import append_event
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -211,6 +215,48 @@ def missing_items(approval: dict, case: dict) -> str:
     return "\n".join(f'<div class="missing-item">{esc(item)}</div>' for item in missing_items_list(approval, case))
 
 
+def gov_bid_pack_ready(approval: dict, case: dict) -> tuple[bool, list[str]]:
+    """GOV approval cards require a fresh, recorded internal pack verification."""
+    workflow = text_value(approval.get("workflow_type") or case.get("workflow_type")).upper()
+    if workflow != "GOV":
+        return True, []
+    case_id = text_value(approval.get("case_id") or case.get("case_id"))
+    if not case_id:
+        return False, ["GOV approval requires case_id for bid-pack verification"]
+    pack_root = PROJECT_ROOT / "outputs" / "bid_packs" / case_id
+    report = verify_bid_pack_approval_ready(
+        pack_root / "artifact_manifest.json",
+        pack_root / "verification_receipt.json",
+        expected_case_id=case_id,
+    )
+    return report["status"] == "PASS", list(report.get("errors") or [])
+
+
+def requires_export_quote_pack(approval: dict, case: dict) -> bool:
+    """Return whether this card would authorize a buyer-facing commercial quote."""
+    workflow = text_value(approval.get("workflow_type") or case.get("workflow_type")).upper()
+    if workflow != "EXPORT":
+        return False
+    action = get_action(approval).casefold().replace(" ", "_")
+    return any(marker in action for marker in ("export_quotation", "buyer_rfq_reply", "send_quotation"))
+
+
+def export_quote_pack_ready(approval: dict, case: dict) -> tuple[bool, list[str]]:
+    """Buyer-facing EXPORT quote cards require a fresh internal quote-pack receipt."""
+    if not requires_export_quote_pack(approval, case):
+        return True, []
+    case_id = text_value(approval.get("case_id") or case.get("case_id"))
+    if not case_id:
+        return False, ["EXPORT quotation approval requires case_id for quote-pack verification"]
+    pack_root = PROJECT_ROOT / "outputs" / "export_quote_packs" / case_id
+    report = verify_export_quote_pack_approval_ready(
+        pack_root / "artifact_manifest.json",
+        pack_root / "verification_receipt.json",
+        expected_case_id=case_id,
+    )
+    return report["status"] == "PASS", list(report.get("errors") or [])
+
+
 def documents_sources_list(approval: dict, case: dict) -> list[str]:
     sources = [
         "data/approvals_receipts.csv",
@@ -221,6 +267,24 @@ def documents_sources_list(approval: dict, case: dict) -> list[str]:
         sources.append(approval["approval_card_path"])
     if case.get("source_url"):
         sources.append(case["source_url"])
+    workflow = text_value(approval.get("workflow_type") or case.get("workflow_type")).upper()
+    case_id = text_value(approval.get("case_id") or case.get("case_id"))
+    if workflow == "GOV" and case_id:
+        sources.extend(
+            [
+                f"outputs/bid_packs/{case_id}/artifact_manifest.json",
+                f"outputs/bid_packs/{case_id}/verification_receipt.json",
+                f"receipts/plugin_runs/{case_id}_bid_pack.json",
+            ]
+        )
+    if workflow == "EXPORT" and case_id and requires_export_quote_pack(approval, case):
+        sources.extend(
+            [
+                f"outputs/export_quote_packs/{case_id}/artifact_manifest.json",
+                f"outputs/export_quote_packs/{case_id}/verification_receipt.json",
+                f"receipts/plugin_runs/{case_id}_export_quote_pack.json",
+            ]
+        )
     return sources
 
 
@@ -329,6 +393,7 @@ def main() -> int:
 
     generated = 0
     skipped = 0
+    blocked = 0
     for approval in approvals:
         case_id = approval.get("case_id", "")
         if args.case_id and case_id != args.case_id:
@@ -338,11 +403,19 @@ def main() -> int:
         if not case_id:
             skipped += 1
             continue
+        case = cases.get(case_id, {})
+        pack_ready, pack_errors = gov_bid_pack_ready(approval, case)
+        pack_label = "GOV bid-pack" if text_value(approval.get("workflow_type") or case.get("workflow_type")).upper() == "GOV" else "EXPORT quote-pack"
+        if pack_ready:
+            pack_ready, pack_errors = export_quote_pack_ready(approval, case)
+        if not pack_ready:
+            blocked += 1
+            print(f"Blocked {pack_label} approval card for {case_id}: {'; '.join(pack_errors)}")
+            continue
         path, json_path = approval_output_paths(approval, case_id)
         if path.exists() and (not args.json or json_path.exists()) and not args.overwrite:
             skipped += 1
             continue
-        case = cases.get(case_id, {})
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(render_card(template, approval, case), encoding="utf-8")
         citations = [rel(path), "data/approvals_receipts.csv", "data/master_cases.csv"]
@@ -364,6 +437,7 @@ def main() -> int:
 
     print(f"Generated: {generated}")
     print(f"Skipped: {skipped}")
+    print(f"Blocked by governed pack verification: {blocked}")
     return 0
 
 

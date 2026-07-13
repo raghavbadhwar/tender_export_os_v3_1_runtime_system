@@ -19,8 +19,14 @@ from pathlib import Path
 from typing import Any, Callable
 from urllib.parse import urlparse
 
+try:
+    from scripts.source_degradation import apply_degradation_actions, build_degradation_actions
+except ModuleNotFoundError:  # pragma: no cover - direct script execution
+    from source_degradation import apply_degradation_actions, build_degradation_actions
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+DATA_DIR = PROJECT_ROOT / "data"
 DEFAULT_ADAPTERS = ["cppp", "ungm", "gem"]
 Runner = Callable[..., subprocess.CompletedProcess[str]]
 DATEISH = re.compile(
@@ -262,11 +268,22 @@ def write_report(report: dict[str, Any], project_root: Path = PROJECT_ROOT) -> t
     return json_path, markdown_path
 
 
+def load_source_health(path: Path = DATA_DIR / "source_health.csv") -> list[dict[str, str]]:
+    import csv
+
+    if not path.is_file():
+        return []
+    with path.open("r", newline="", encoding="utf-8") as handle:
+        return list(csv.DictReader(handle))
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--adapters", default=",".join(DEFAULT_ADAPTERS), help="Comma-separated non-mock adapter names")
     parser.add_argument("--limit", type=int, default=3)
     parser.add_argument("--timeout", type=int, default=180, help="Per-adapter timeout seconds")
+    parser.add_argument("--degradation-threshold", type=int, default=3)
+    parser.add_argument("--record-degradation", action="store_true", help="Emit deduplicated degradation events and repair cards")
     args = parser.parse_args()
 
     adapters = [item.strip() for item in args.adapters.split(",") if item.strip()]
@@ -275,6 +292,20 @@ def main() -> int:
         return 2
     report = run_canary(adapters, limit=args.limit, timeout_seconds=args.timeout)
     json_path, _ = write_report(report)
+    receipt_path = str(json_path.relative_to(PROJECT_ROOT))
+    actions = build_degradation_actions(
+        load_source_health(),
+        report["results"],
+        threshold=args.degradation_threshold,
+        receipt_path=receipt_path,
+    )
+    report["degradation_threshold"] = args.degradation_threshold
+    report["degradation_actions"] = actions
+    report["degradation_actions_applied"] = (
+        apply_degradation_actions(actions) if args.record_degradation else []
+    )
+    report["kanban_mutated"] = bool(report["degradation_actions_applied"])
+    write_report(report)
     print(f"Live source canary {report['status']}: {json_path}")
     print(f"Healthy adapters: {report['healthy_adapters']}/{report['adapters_checked']}")
     return 1 if report["status"] == "FAIL" else 0

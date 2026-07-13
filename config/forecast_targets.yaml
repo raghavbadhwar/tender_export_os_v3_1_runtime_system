@@ -1,0 +1,365 @@
+version: 1
+module: forecast_target_registry
+safety_boundary: "Internal-only prediction governance. Targets do not authorize external sends, portal actions, bid/RFQ submission, payment, DSC use, final price, delivery, HSN/ITC-HS, origin, tax, or legal/compliance commitments."
+default_probability_status: PRIOR_UNCALIBRATED
+
+allowed_workflow_types:
+  - GOV
+  - EXPORT
+  - SUPPLIER
+  - SOURCE
+
+global_forbidden_use:
+  - final_bid_or_quote_commitment
+  - external_send_or_submission_decision_without_owner_approval
+  - legal_tax_origin_or_classification_confirmation
+  - supplier_purchase_commitment
+  - payment_or_dsc_decision
+  - automatic_blacklist_or_source_removal
+
+global_leakage_exclusions:
+  - post_outcome_status
+  - owner_decision_after_prediction
+  - buyer_or_supplier_reply_after_prediction
+  - final_submitted_price_after_prediction
+  - won_lost_or_payment_result_after_prediction
+  - manual_notes_created_after_prediction
+  - future_corrigenda_or_deadline_change_after_prediction
+
+default_maturity_rule:
+  minimum_mature_observations_for_calibration: 30
+  minimum_mature_observations_for_model_training: 100
+  minimum_positive_class_for_model_training: 20
+  minimum_negative_class_for_model_training: 20
+  time_separated_evaluation_required: true
+  calibration_before_maturity: forbidden
+  champion_promotion_before_training_gate: forbidden
+
+targets:
+  - target_id: GOV_PROGRESS_JUSTIFIED_KILL_30D
+    workflow_type: GOV
+    horizon_days: 30
+    target_family: gov_progress
+    prediction_target: "Will a new/watchlist government opportunity become either DEEP_READ/SUPPLIER_SEARCH/PRICING_READY, or be rejected with a verified justified-kill reason, within 30 days?"
+    positive_label: "progress_or_justified_kill_with_evidence"
+    negative_label: "stalled_unverified_or_wrongly_promoted"
+    label_rule: "Positive when case status reaches DEEP_READ, SUPPLIER_SEARCH, PRICING_READY, APPROVAL_REQUIRED, SENT_OR_SUBMITTED, WON, LOST, or REJECTED with a documented fast-kill/evidence receipt by prediction_timestamp + 30 days. Negative when still NEW/WATCHLIST/MANUAL_SOURCE_CHECK without evidence, or when a rejection lacks a validated reason."
+    eligible_population: "GOV cases created by Radar or staged Deep Research leads that have at least one source receipt and no owner approval/final outcome at prediction time."
+    feature_list:
+      - source_reliability_score_at_prediction
+      - evidence_density_score_at_prediction
+      - document_or_boq_availability_at_prediction
+      - deadline_window_days_at_prediction
+      - low_competition_signal_count_at_prediction
+      - hard_eligibility_blocker_count_at_prediction
+      - category_beginner_fit_score_at_prediction
+      - repeat_buyer_signal_at_prediction
+    leakage_exclusions:
+      - final_case_status_after_prediction
+      - rejection_reason_written_after_prediction
+      - supplier_quote_count_after_prediction
+      - owner_approval_after_prediction
+      - submitted_or_won_lost_after_prediction
+    maturity_rule:
+      label_available_after_days: 30
+      minimum_mature_observations_for_calibration: 30
+      minimum_mature_observations_for_model_training: 100
+      minimum_positive_class_for_model_training: 20
+      minimum_negative_class_for_model_training: 20
+      time_separated_evaluation_required: true
+    business_use: "Prioritize GOV triage work and identify evidence gaps; do not call a case bid-ready."
+    allowed_use:
+      - owner_brief_prioritization
+      - radar_queue_ordering
+      - evidence_collection_gap_detection
+    forbidden_use:
+      - automatic_rejection
+      - bid_submission_decision
+      - final_price_or_delivery_commitment
+
+  - target_id: GOV_L1_COMPETITION_RISK_45D
+    workflow_type: GOV
+    horizon_days: 45
+    target_family: gov_competition
+    prediction_target: "Will a government case face high L1/competition risk or fail price competitiveness by the bid/decision window?"
+    positive_label: "high_l1_or_competition_risk_confirmed"
+    negative_label: "competition_risk_not_confirmed_or_unobserved"
+    label_rule: "Positive when bid result, comparable procurement history, or validated pricing review shows L1 gap, many qualified competitors, restrictive OEM/turnover requirements, or margin below walk-away threshold within 45 days. Negative only when decision evidence matures without those signals."
+    eligible_population: "GOV cases with extracted BOQ/specification, category, estimated quantity, and at least one supplier/pricing signal available before prediction."
+    feature_list:
+      - comparable_award_count_at_prediction
+      - buyer_repeat_purchase_count_at_prediction
+      - category_competitor_density_score_at_prediction
+      - oem_or_turnover_requirement_flag_at_prediction
+      - low_competition_signal_count_at_prediction
+      - supplier_quote_spread_at_prediction
+      - estimated_margin_band_at_prediction
+      - deadline_window_days_at_prediction
+    leakage_exclusions:
+      - actual_l1_price_after_prediction
+      - submitted_price_after_prediction
+      - competitor_identity_after_prediction
+      - won_lost_after_prediction
+      - owner_walkaway_decision_after_prediction
+    maturity_rule:
+      label_available_after_days: 45
+      minimum_mature_observations_for_calibration: 30
+      minimum_mature_observations_for_model_training: 100
+      minimum_positive_class_for_model_training: 20
+      minimum_negative_class_for_model_training: 20
+      time_separated_evaluation_required: true
+    business_use: "Warn pricing and fast-kill agents about likely L1 pressure; never replace owner pricing approval."
+    allowed_use:
+      - pricing_scenario_stress_selection
+      - owner_brief_risk_flag
+      - supplier_quote_collection_priority
+    forbidden_use:
+      - automatic_bid_price_change
+      - final_l1_claim
+      - tender_submission_decision
+
+  - target_id: EXPORT_BUYER_REPLY_21D
+    workflow_type: EXPORT
+    horizon_days: 21
+    target_family: export_reply
+    prediction_target: "Will a verified export buyer/account reply to an approved outreach within 21 days?"
+    positive_label: "buyer_reply_received"
+    negative_label: "no_reply_or_invalid_reply"
+    label_rule: "Positive when an approved, sent outreach receives a buyer reply classified as valid, non-bounce, and non-opt-out within 21 days. Negative when the valid monitoring window closes with no valid reply or only bounces/opt-outs."
+    eligible_population: "EXPORT outreach records with owner approval, verified buyer identity/account stage, approved outbox copy, and send receipt available at prediction time."
+    feature_list:
+      - buyer_verification_score_at_prediction
+      - buyer_demand_signal_count_at_prediction
+      - product_country_fit_score_at_prediction
+      - outreach_personalization_score_at_prediction
+      - channel_type_at_prediction
+      - prior_touch_count_at_prediction
+      - source_confidence_at_prediction
+      - opt_out_or_bounce_history_flag_at_prediction
+    leakage_exclusions:
+      - reply_received_after_prediction
+      - reply_body_or_sentiment_after_prediction
+      - manual_followup_after_prediction
+      - future_bounce_or_optout_after_prediction
+      - owner_review_notes_after_send
+    maturity_rule:
+      label_available_after_days: 21
+      minimum_mature_observations_for_calibration: 30
+      minimum_mature_observations_for_model_training: 100
+      minimum_positive_class_for_model_training: 20
+      minimum_negative_class_for_model_training: 20
+      time_separated_evaluation_required: true
+    business_use: "Prioritize approved export follow-up and improve buyer list quality; never send outreach automatically."
+    allowed_use:
+      - outreach_queue_ordering_after_approval
+      - buyer_research_gap_detection
+      - weekly_reply_quality_review
+    forbidden_use:
+      - sending_without_owner_approval
+      - contacting_unverified_buyers
+      - buying_contact_lists
+
+  - target_id: EXPORT_RFQ_CONVERSION_60D
+    workflow_type: EXPORT
+    horizon_days: 60
+    target_family: export_conversion
+    prediction_target: "Will an export lead/RFQ progress to a verified RFQ, draft quote pack, or qualified buyer opportunity within 60 days?"
+    positive_label: "verified_rfq_or_quote_pack_progress"
+    negative_label: "no_verified_rfq_or_unqualified"
+    label_rule: "Positive when the case reaches buyer.rfq_verified, export quote pack readiness, or qualified buyer opportunity with evidence within 60 days. Negative when the window closes without verified RFQ/account evidence or with disqualification."
+    eligible_population: "EXPORT research lanes or buyer demand signals with product/category/country/source proof but no verified RFQ conversion at prediction time."
+    feature_list:
+      - buyer_demand_signal_strength_at_prediction
+      - public_rfq_or_import_signal_at_prediction
+      - product_country_fit_score_at_prediction
+      - supplier_readiness_score_at_prediction
+      - compliance_readiness_score_at_prediction
+      - margin_potential_band_at_prediction
+      - buyer_account_verification_stage_at_prediction
+      - evidence_level_at_prediction
+    leakage_exclusions:
+      - rfq_verified_after_prediction
+      - quote_pack_created_after_prediction
+      - buyer_reply_after_prediction
+      - supplier_quote_after_prediction
+      - final_compliance_review_after_prediction
+    maturity_rule:
+      label_available_after_days: 60
+      minimum_mature_observations_for_calibration: 30
+      minimum_mature_observations_for_model_training: 100
+      minimum_positive_class_for_model_training: 20
+      minimum_negative_class_for_model_training: 20
+      time_separated_evaluation_required: true
+    business_use: "Choose export research lanes worth staging into repo evidence collection."
+    allowed_use:
+      - deep_research_lane_prioritization
+      - buyer_verification_queue_ordering
+      - supplier_readiness_gap_detection
+    forbidden_use:
+      - treating_public_listing_as_bid_ready
+      - sending_export_quote
+      - confirming_origin_or_hsn_itc_hs
+
+  - target_id: SUPPLIER_QUOTE_RESPONSE_14D
+    workflow_type: SUPPLIER
+    horizon_days: 14
+    target_family: supplier_quote_response
+    prediction_target: "Will a verified supplier provide a strict quote proof within 14 days of an approved quote request?"
+    positive_label: "strict_quote_proof_received"
+    negative_label: "no_strict_quote_or_invalid_quote"
+    label_rule: "Positive when supplier quote proof validation passes for the requested case/spec within 14 days. Negative when no response, stale/generic quote, mismatch, or invalid public listing is the only evidence by maturity."
+    eligible_population: "Approved supplier quote requests where supplier identity, case spec, and request receipt exist at prediction time."
+    feature_list:
+      - supplier_verification_status_at_prediction
+      - prior_quote_response_count_at_prediction
+      - prior_strict_quote_pass_rate_at_prediction
+      - category_supplier_fit_at_prediction
+      - request_specificity_score_at_prediction
+      - channel_type_at_prediction
+      - past_relationship_signal_at_prediction
+      - supplier_public_listing_only_flag_at_prediction
+    leakage_exclusions:
+      - quote_received_after_prediction
+      - quote_validation_result_after_prediction
+      - manual_followup_after_prediction
+      - supplier_performance_outcome_after_prediction
+      - price_or_terms_after_reply
+    maturity_rule:
+      label_available_after_days: 14
+      minimum_mature_observations_for_calibration: 30
+      minimum_mature_observations_for_model_training: 100
+      minimum_positive_class_for_model_training: 20
+      minimum_negative_class_for_model_training: 20
+      time_separated_evaluation_required: true
+    business_use: "Prioritize supplier follow-up and identify low-response suppliers; never commit purchase."
+    allowed_use:
+      - supplier_followup_queue_ordering
+      - quote_collection_gap_detection
+      - supplier_pool_quality_review
+    forbidden_use:
+      - purchase_order_commitment
+      - supplier_blacklist_without_owner_approval
+      - pricing_ready_without_two_strict_quotes
+
+  - target_id: SUPPLIER_RELIABILITY_90D
+    workflow_type: SUPPLIER
+    horizon_days: 90
+    target_family: supplier_reliability
+    prediction_target: "Will a supplier perform reliably on evidence-backed quote, documentation, delivery, and communication obligations within 90 days?"
+    positive_label: "supplier_reliable"
+    negative_label: "supplier_unreliable_or_unproven"
+    label_rule: "Positive when verified outcomes show timely valid quote, documentation support, no material spec mismatch, and no owner-recorded reliability issue within 90 days. Negative when verified late/invalid/mismatched response, failed documentation, delivery issue, or no operational evidence by maturity."
+    eligible_population: "Suppliers with at least one strict quote request, verified identity, and operational interaction started at prediction time."
+    feature_list:
+      - prior_strict_quote_pass_rate_at_prediction
+      - prior_response_latency_days_at_prediction
+      - documentation_support_score_at_prediction
+      - category_match_score_at_prediction
+      - price_stability_signal_at_prediction
+      - verification_status_at_prediction
+      - public_listing_only_flag_at_prediction
+      - owner_correction_count_at_prediction
+    leakage_exclusions:
+      - future_delivery_outcome
+      - future_supplier_quote_validation
+      - future_owner_correction
+      - future_payment_or_dispute_result
+      - future_blacklist_status
+    maturity_rule:
+      label_available_after_days: 90
+      minimum_mature_observations_for_calibration: 30
+      minimum_mature_observations_for_model_training: 100
+      minimum_positive_class_for_model_training: 20
+      minimum_negative_class_for_model_training: 20
+      time_separated_evaluation_required: true
+    business_use: "Rank supplier pool reliability for internal sourcing; keep public listings weak until operational evidence exists."
+    allowed_use:
+      - supplier_shortlist_ordering
+      - supplier_relationship_review
+      - evidence_collection_priority
+    forbidden_use:
+      - permanent_blacklist_without_owner_approval
+      - delivery_commitment
+      - payment_decision
+
+  - target_id: PAYMENT_DELAY_RISK_120D
+    workflow_type: GOV
+    horizon_days: 120
+    target_family: payment_delay
+    prediction_target: "Will an approved/submitted case experience material payment delay beyond agreed or expected terms within 120 days?"
+    positive_label: "payment_delay_observed"
+    negative_label: "payment_on_time_or_not_applicable"
+    label_rule: "Positive when verified execution/payment receipts show payment delay beyond contract/expected terms or unpaid status at 120 days. Negative only when payment is received on time or the case is closed with verified no-payment-obligation status."
+    eligible_population: "GOV execution cases with approval/submission/award/payment-term evidence available before prediction."
+    feature_list:
+      - buyer_payment_history_delay_rate_at_prediction
+      - payment_terms_days_at_prediction
+      - department_or_buyer_type_at_prediction
+      - invoice_or_milestone_complexity_score_at_prediction
+      - working_capital_need_band_at_prediction
+      - documentation_completeness_score_at_prediction
+      - dispute_or_penalty_risk_flag_at_prediction
+      - execution_stage_at_prediction
+    leakage_exclusions:
+      - payment_received_after_prediction
+      - invoice_dispute_after_prediction
+      - owner_payment_followup_after_prediction
+      - post_submission_milestone_after_prediction
+      - final_contract_variation_after_prediction
+    maturity_rule:
+      label_available_after_days: 120
+      minimum_mature_observations_for_calibration: 30
+      minimum_mature_observations_for_model_training: 100
+      minimum_positive_class_for_model_training: 20
+      minimum_negative_class_for_model_training: 20
+      time_separated_evaluation_required: true
+    business_use: "Adjust internal risk buffers and owner briefs; never make final finance/legal commitments."
+    allowed_use:
+      - working_capital_risk_flag
+      - owner_brief_payment_risk
+      - pricing_scenario_stress_selection
+    forbidden_use:
+      - final_price_commitment
+      - payment_terms_acceptance
+      - financing_decision_without_owner_approval
+
+  - target_id: SOURCE_YIELD_30D
+    workflow_type: SOURCE
+    horizon_days: 30
+    target_family: source_yield
+    prediction_target: "Will a source produce at least one evidence-backed, non-duplicate, actionable opportunity within 30 days?"
+    positive_label: "actionable_source_yield_observed"
+    negative_label: "no_actionable_yield_or_degraded_source"
+    label_rule: "Positive when the source creates at least one non-duplicate case or staged lead that passes source proof and evidence requirements within 30 days. Negative when scans produce only duplicates, inaccessible records, public-listing-only leads with no evidence upgrade, or repeated adapter failures."
+    eligible_population: "Configured GOV, EXPORT, supplier, or research sources with scan receipts and source health status available at prediction time."
+    feature_list:
+      - historical_yield_rate_at_prediction
+      - duplicate_rate_at_prediction
+      - adapter_success_rate_at_prediction
+      - source_access_status_at_prediction
+      - evidence_level_distribution_at_prediction
+      - category_fit_score_at_prediction
+      - freshness_days_at_prediction
+      - manual_blocker_count_at_prediction
+    leakage_exclusions:
+      - future_scan_results
+      - future_case_creation_count
+      - future_adapter_failures
+      - future_source_weight_changes
+      - future_owner_override
+    maturity_rule:
+      label_available_after_days: 30
+      minimum_mature_observations_for_calibration: 30
+      minimum_mature_observations_for_model_training: 100
+      minimum_positive_class_for_model_training: 20
+      minimum_negative_class_for_model_training: 20
+      time_separated_evaluation_required: true
+    business_use: "Recommend source allocation and collection gaps; source weight changes remain proposals."
+    allowed_use:
+      - source_scan_priority
+      - source_health_review
+      - weekly_collection_gap_report
+    forbidden_use:
+      - automatic_source_removal
+      - bypassing_portal_access_controls
+      - treating_research_leads_as_confirmed_cases

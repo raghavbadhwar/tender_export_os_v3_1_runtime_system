@@ -1,0 +1,34 @@
+version: 1
+purpose: Approved-design gate for buyer contact-form execution.
+status: APPROVED_DESIGN_EXECUTION_DISABLED
+production_enabled: false
+approved_connector_design:
+  approval_id: CFCD-20260713T191305Z
+  design_doc: config/contact_form_connector_design.yaml
+  approved_at: '2026-07-13T19:13:05+00:00'
+required_controls_before_enable:
+- domain_allowlist
+- exact_form_field_map
+- screenshot_receipt
+- html_receipt
+- content_sha256
+- idempotency_key
+- anti_csrf_session_handling
+- human_captcha_stop
+- post_submit_confirmation
+- owner_approval_receipt
+domain_allowlist: []
+form_field_maps: {}
+runtime_boundaries:
+  unrestricted_form_automation_allowed: false
+  captcha_bypass_allowed: false
+  credential_capture_allowed: false
+  payment_or_purchase_allowed: false
+  final_quote_or_commitment_allowed: false
+  public_service_exposure_allowed: false
+receipt_requirements:
+  screenshot_path_required: true
+  html_path_required: true
+  submitted_content_hash_required: true
+  post_submit_confirmation_required: true
+  external_action_executed_must_be_explicit: true

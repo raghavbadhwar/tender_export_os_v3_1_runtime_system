@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from scripts import generate_intraday_monitor as monitor
+from scripts.event_ledger import build_event
 
 
 def write_csv(path: Path, headers: list[str], rows: list[dict[str, object]]) -> None:
@@ -73,6 +74,18 @@ def seed_monitor_root(root: Path) -> None:
             "quote_received_at",
             "quote_proof_type",
             "quote_proof_path",
+            "quote_proof_sha256",
+            "quote_verification_status",
+            "case_spec_match",
+            "product_description",
+            "quantity",
+            "unit_price_inr",
+            "currency",
+            "gst_rate_pct",
+            "lead_time_days",
+            "delivery_terms",
+            "payment_terms_offered",
+            "validity_days",
             "supplier_specific_quote",
         ],
         [
@@ -80,9 +93,23 @@ def seed_monitor_root(root: Path) -> None:
                 "quote_id": "Q-STRICT",
                 "case_id": "EXP-TEST-001",
                 "supplier_id": "SUP-001",
+                "supplier_name": "Supplier One",
                 "quote_received_at": "2026-07-12T08:00:00+05:30",
                 "quote_proof_type": "supplier_written_quote",
                 "quote_proof_path": "receipts/supplier_quotes/Q-STRICT.pdf",
+                "quote_proof_sha256": "a" * 64,
+                "quote_verification_status": "VERIFIED",
+                "case_spec_match": "TRUE",
+                "product_description": "Turmeric RFQ",
+                "quantity": "100",
+                "unit_price_inr": "100",
+                "currency": "INR",
+                "gst_rate_pct": "0",
+                "lead_time_days": "7",
+                "delivery_terms": "FOB origin",
+                "payment_terms_offered": "30% advance",
+                "validity_days": "30",
+                "supplier_specific_quote": "TRUE",
             },
             {
                 "quote_id": "Q-LISTING",
@@ -143,3 +170,39 @@ def test_write_report_and_record_event_are_auditable(tmp_path: Path) -> None:
     assert events[-1]["event_type"] == "intraday_monitor.completed"
     assert events[-1]["payload"]["report_path"] == "outputs/intraday_monitor/intraday_monitor_20260712T100000Z.json"
     assert "intraday_monitor" in (tmp_path / "data" / "agent_run_log.csv").read_text(encoding="utf-8")
+
+
+def test_canonical_execution_receipt_overrides_stale_approval_projection(tmp_path: Path) -> None:
+    seed_monitor_root(tmp_path)
+    event = build_event(
+        "execution.receipt_ingested",
+        "pytest",
+        case_id="GOV-TEST-001",
+        object_type="execution",
+        object_id="EXE-APPROVED",
+        source="pytest",
+        payload={
+            "receipt_id": "EXE-APPROVED",
+            "approval_id": "APR-APPROVED",
+            "case_id": "GOV-TEST-001",
+            "receipt_path": "receipts/executions/EXE-APPROVED.json",
+            "evidence_sha256": "a" * 64,
+            "execution_status": "EXECUTED_VERIFIED",
+            "external_action_sent": True,
+            "verification_status": "VERIFIED",
+        },
+        citations=["receipts/executions/EXE-APPROVED.json"],
+    )
+    event["stream_position"] = 1
+    (tmp_path / "data" / "events.jsonl").write_text(json.dumps(event) + "\n", encoding="utf-8")
+
+    report = monitor.build_report(
+        project_root=tmp_path,
+        now=dt.datetime(2026, 7, 12, 10, 0, tzinfo=dt.timezone.utc),
+    )
+
+    tracked = report["approved_actions_tracked"][0]
+    assert tracked["approval_external_effect"] == "PENDING_APPROVED_EXECUTION"
+    assert tracked["external_effect"] == "EXECUTED_VERIFIED"
+    assert tracked["execution_receipt_paths"] == ["receipts/executions/EXE-APPROVED.json"]
+    assert all(item["reference"] != "APR-APPROVED" for item in report["owner_decision_blockers"])

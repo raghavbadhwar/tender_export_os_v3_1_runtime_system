@@ -24,6 +24,20 @@ def test_critic_gate_blocks_pricing_ready_without_two_strict_quotes() -> None:
             "quote_received_at": "2026-07-01T10:00:00",
             "quote_proof_type": "quotation_pdf",
             "quote_proof_path": "receipts/supplier_quotes/q1.pdf",
+            "quote_proof_sha256": "a" * 64,
+            "quote_verification_status": "VERIFIED",
+            "case_spec_match": "TRUE",
+            "product_description": "Artisan textile gift set",
+            "quantity": "100",
+            "unit": "set",
+            "unit_price_inr": "100",
+            "currency": "INR",
+            "gst_rate_pct": "18",
+            "lead_time_days": "7",
+            "delivery_terms": "Ex works",
+            "payment_terms_offered": "30 days",
+            "validity_days": "30",
+            "supplier_specific_quote": "TRUE",
         }
     ]
     report = build_critic_report(

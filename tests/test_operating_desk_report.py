@@ -19,7 +19,7 @@ def seed_operating_desk_root(root: Path) -> None:
     data = root / "data"
     write_csv(
         data / "master_cases.csv",
-        ["case_id", "workflow_type", "opportunity_title", "buyer_name", "status", "deadline_date"],
+        ["case_id", "workflow_type", "opportunity_title", "buyer_name", "status", "deadline_date", "source_name", "source_url", "evidence_level", "score_gov", "score_export"],
         [
             {
                 "case_id": "GOV-TEST-001",
@@ -28,6 +28,10 @@ def seed_operating_desk_root(root: Path) -> None:
                 "buyer_name": "Example Department",
                 "status": "SUPPLIER_SEARCH",
                 "deadline_date": "2026-07-05",
+                "source_name": "GeM",
+                "source_url": "https://example.test/gem",
+                "evidence_level": "DOCUMENTS_DOWNLOADED",
+                "score_gov": "88",
             },
             {
                 "case_id": "EXP-TEST-001",
@@ -36,12 +40,16 @@ def seed_operating_desk_root(root: Path) -> None:
                 "buyer_name": "Example Buyer",
                 "status": "WATCHLIST",
                 "deadline_date": "2026-07-20",
+                "source_name": "Alibaba",
+                "source_url": "https://example.test/rfq",
+                "evidence_level": "RFQ_VERIFIED",
+                "score_export": "81",
             },
         ],
     )
     write_csv(
         data / "approvals_receipts.csv",
-        ["approval_id", "case_id", "workflow_type", "action_approved", "approval_status", "approval_card_path", "external_effect", "receipt_path"],
+        ["approval_id", "case_id", "workflow_type", "action_approved", "approval_status", "approval_card_path", "external_effect", "receipt_path", "approval_timeout_at"],
         [
             {
                 "approval_id": "APR-TEST-001",
@@ -50,6 +58,7 @@ def seed_operating_desk_root(root: Path) -> None:
                 "action_approved": "send_export_quotation",
                 "approval_status": "PENDING",
                 "approval_card_path": "receipts/approvals/EXP-TEST-001.html",
+                "approval_timeout_at": "2026-07-04T12:00:00+00:00",
             },
             {
                 "approval_id": "APR-TEST-002",
@@ -145,6 +154,22 @@ def seed_operating_desk_root(root: Path) -> None:
             }
         ],
     )
+    write_csv(
+        data / "case_outcomes.csv",
+        ["outcome_id", "case_id", "workflow_type", "outcome_type", "occurred_at", "evidence_path", "evidence_sha256", "verification_status"],
+        [
+            {
+                "outcome_id": "OUT-PAY-1",
+                "case_id": "GOV-TEST-001",
+                "workflow_type": "GOV",
+                "outcome_type": "PAYMENT_DUE",
+                "occurred_at": "2026-06-29T00:00:00+00:00",
+                "evidence_path": "receipts/payment_due.json",
+                "evidence_sha256": "a" * 64,
+                "verification_status": "VERIFIED",
+            }
+        ],
+    )
 
 
 def test_operating_desk_report_sections_and_health_status(tmp_path: Path) -> None:
@@ -165,6 +190,13 @@ def test_operating_desk_report_sections_and_health_status(tmp_path: Path) -> Non
     assert report["buyer_acquisition"]["owner_action_replies"][0]["classification"] == "POSITIVE_INTEREST"
     assert report["one_smallest_owner_action"].startswith("Review buyer reply COM-TEST-001")
     assert any(queue["agent"] == "supplier_engine_agent" for queue in report["employee_queues"])
+    assert report["top_three_evidenced_opportunities"][0]["case_id"] == "GOV-TEST-001"
+    assert report["expiring_approvals"][0]["approval_id"] == "APR-TEST-001"
+    assert report["substantive_replies"][0]["communication_id"] == "COM-TEST-001"
+    assert report["overdue_payments"][0]["case_id"] == "GOV-TEST-001"
+    assert report["exception_first"]["one_primary_action"] == report["one_smallest_owner_action"]
+    assert report["exception_first"]["top_three_evidenced_opportunities"]
+    assert report["summary"]["exceptions"] >= 1
 
 
 def test_operating_desk_keeps_safety_held_approved_action_blocked(tmp_path: Path) -> None:

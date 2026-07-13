@@ -104,3 +104,7 @@ def test_enabled_hermes_jobs_are_supervised_and_have_valid_tasks() -> None:
     assert find_job(config, "supplier_followup_review")["task_command"] == (
         "python3 scripts/generate_intraday_monitor.py"
     )
+    readiness = find_job(config, "daily_production_readiness_gate")
+    assert readiness["runtime"] == "hermes_no_agent_script"
+    assert readiness["task_command"] == "python3 scripts/run_production_readiness_gate.py --json"
+    assert "no approval" in readiness["stop_condition"].lower()

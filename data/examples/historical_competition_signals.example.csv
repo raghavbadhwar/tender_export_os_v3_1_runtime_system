@@ -1,2 +1,2 @@
-signal_id,notice_id,buyer_name,category_code,signal_type,signal_strength,evidence_level,source_name,source_url,observed_at,created_at
-HCS-EXAMPLE-001,HTN-EXAMPLE-001,Example Municipal Buyer,GOV-OPS-001,retender,80,PUBLIC_LISTING_ONLY,Example Tender Archive,https://example.com/tenders/archive/001,2099-01-01,2099-01-01
+signal_id,notice_id,buyer_name,category_code,signal_type,signal_strength,evidence_level,source_name,source_url,evidence_path,evidence_sha256,observed_at,created_at
+HCS-EXAMPLE-001,HTN-EXAMPLE-001,Example Municipal Buyer,GOV-OPS-001,retender,80,PUBLIC_LISTING_ONLY,Example Tender Archive,https://example.com/tenders/archive/001,data/examples/historical_competition_signals.example.csv,cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc,2099-01-01,2099-01-01

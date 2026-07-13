@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Tender Export OS Clause-by-Clause Compliance Matrix",
+  "schema_version": "compliance_matrix.v1",
+  "required_top_level": [
+    "schema_version",
+    "case_id",
+    "workflow_type",
+    "generated_at",
+    "matrix_status",
+    "clauses",
+    "unresolved_items",
+    "external_actions_executed"
+  ],
+  "workflow_types": ["GOV", "EXPORT"],
+  "positions": ["COMPLIES", "DOES_NOT_COMPLY", "UNKNOWN", "OWNER/EXPERT_REVIEW"],
+  "matrix_statuses": ["DRAFT_READY", "BLOCKED"],
+  "prohibited_keys": ["password", "token", "cookie", "session", "dsc", "raw_document_text", "bank_details"]
+}

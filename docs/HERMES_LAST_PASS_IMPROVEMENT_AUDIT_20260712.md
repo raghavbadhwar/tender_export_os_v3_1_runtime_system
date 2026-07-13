@@ -8,6 +8,13 @@ The architecture remains one local Hermes control plane backed by the append-onl
 
 Subsequent same-day update: the user supplied a project shortlist and asked to add only items with a clear net improvement. One local, allowlisted FastMCP server plus an Open Policy Agent gate was therefore implemented. This supersedes the earlier "no Tender-specific MCP" conclusion without changing the rejection of broad MCP/tool sprawl; see `docs/HERMES_GOVERNED_MCP_OPA_INTEGRATION_20260712.md`.
 
+## Baseline reconciliation
+
+- The Tender profile has local `memories/MEMORY.md` and `memories/USER.md` files. Built-in memory is active; an external memory provider is still intentionally disabled.
+- The former specialist command names are compatibility shell aliases that all route to `tender-export-os`; they are not separate Hermes profiles and currently provide no profile-level isolation.
+- The audit-time safe-regression failure is stale. The regenerated canonical report at `outputs/regression/full_safe_regression_report.json` is `PASS` with 16/16 checks green.
+- MCP cold discovery takes roughly two to three seconds. The profile now has a 20-second bounded discovery timeout, Hermes one-shot waits before its tool snapshot, and the unchanged reliability gate passes 3/3 cold plus 10/10 warm canaries with zero external actions. Evidence: `outputs/upgrade_baseline/mcp_discovery_reliability.json`.
+
 ## Implemented in this pass
 
 1. **Same-account model resilience**

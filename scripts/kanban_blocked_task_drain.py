@@ -68,16 +68,31 @@ def task_id(task: dict[str, Any]) -> str:
 def classify_task(task: dict[str, Any]) -> tuple[str, str, str]:
     text = task_text(task)
     if any(word in text for word in ["rejected", "obsolete", "duplicate", "closed", "done", "archived"]):
-        return "ARCHIVE_OR_CLOSE_REVIEW", "hermes-chief-operator", "Likely obsolete/done-like blocker. Review then archive/close manually if safe."
+        return "ARCHIVE_OR_CLOSE_REVIEW", "tender-export-os", "Likely obsolete/done-like blocker. Review then archive/close manually if safe."
     if any(word in text for word in ["approval", "owner", "decision", "approve", "ask changes"]):
-        return "ESCALATE_OWNER_APPROVAL", "hermes-chief-operator", "Blocked on owner/approval decision. Create or refresh approval card; do not mutate task automatically."
+        return "ESCALATE_OWNER_APPROVAL", "tender-export-os", "Blocked on owner/approval decision. Create or refresh approval card; do not mutate task automatically."
     if any(word in text for word in ["source", "adapter", "portal", "captcha", "paywall", "login", "timeout", "broken"]):
-        return "REASSIGN_SOURCE_HEALTH", "source-health", "Blocked on source/access/runtime health. Route diagnosis to source-health."
+        return "REASSIGN_SOURCE_HEALTH", "gov-tender-intelligence", "Blocked on source/access/runtime health. Route diagnosis to government tender intelligence."
     if any(word in text for word in ["supplier", "quote", "availability", "5-3-2"]):
-        return "REASSIGN_SUPPLIER_SOURCING", "supplier-sourcing", "Blocked on supplier proof or quote availability. Route to supplier-sourcing."
-    if any(word in text for word in ["pricing", "compliance", "hsn", "itc", "origin"]):
-        return "REASSIGN_PRICING_COMPLIANCE", "pricing-compliance", "Blocked on draft pricing/compliance evidence. Route to pricing-compliance; final claims remain gated."
-    return "COMMENT_AND_REVIEW", str(task.get("assignee") or "hermes-chief-operator"), "Stale blocker needs human-readable comment, owner review, or reassignment."
+        return "REASSIGN_SUPPLIER_COMMERCIAL", "supplier-commercial", "Blocked on supplier proof or quote availability. Route to supplier commercial."
+    if any(word in text for word in ["compliance", "hsn", "itc", "origin", "scomet", "legal", "eligibility"]):
+        return "REASSIGN_COMPLIANCE", "compliance-due-diligence", "Blocked on draft compliance evidence. Route to compliance due diligence; final claims remain gated."
+    if any(word in text for word in ["pricing", "price", "margin", "cost", "cash gap", "working capital"]):
+        return "REASSIGN_PRICING", "pricing-risk", "Blocked on pricing evidence or scenarios. Route to pricing risk; final price remains gated."
+    legacy_targets = {
+        "hermes-chief-operator": "tender-export-os",
+        "gov-tender-radar": "gov-tender-intelligence",
+        "export-rfq-radar": "export-buyer-intelligence",
+        "supplier-sourcing": "supplier-commercial",
+        "pricing-compliance": "pricing-risk",
+        "sales-followup": "relationship-ops",
+        "learning-review": "learning-evaluation",
+        "source-health": "gov-tender-intelligence",
+        "codex-artifact-factory": "tender-export-os",
+        "chatgpt-boardroom-handoff": "tender-export-os",
+    }
+    current = str(task.get("assignee") or "tender-export-os")
+    return "COMMENT_AND_REVIEW", legacy_targets.get(current, current), "Stale blocker needs human-readable comment, owner review, or reassignment."
 
 
 def task_age_hours(task: dict[str, Any], now: dt.datetime) -> float | None:

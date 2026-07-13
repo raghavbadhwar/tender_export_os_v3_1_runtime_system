@@ -18,6 +18,8 @@ from scripts.score_opportunity import (
     score_export_opportunity,
     score_gov_opportunity,
 )
+from scripts.gov_fast_kill import evaluate_gov_fast_kill
+from scripts.execution_receipt_status import dispositions_by_approval
 from scripts.source_runtime.document_intelligence import run_document_intelligence_bundle, sha256_file
 from scripts.tender_os_policy import PROJECT_ROOT, TenderPolicyEngine, display_path, load_csv
 
@@ -280,15 +282,25 @@ class TenderOSTools:
                 data={"case_id": case_id},
             )
         workflow = row.get("workflow_type", "GOV").upper()
-        score = score_gov_opportunity(row) if workflow == "GOV" else score_export_opportunity(row)
-        fast_kill = evaluate_trader_specific_kills(row)
-        if fast_kill["status"] == "REJECTED":
+        if workflow == "GOV":
+            # The advisory MCP has only the case projection, not a page-level
+            # evidence packet, so an apparent hard kill remains WATCHLIST until
+            # the deterministic stage receives cited proof.
+            fast_kill = evaluate_gov_fast_kill(row, {})
+            score = fast_kill["score"]
+            kill_status = fast_kill["decision"]
+            missing = [str(value) for value in fast_kill.get("missing_evidence", [])]
+        else:
+            score = score_export_opportunity(row)
+            fast_kill = evaluate_trader_specific_kills(row)
+            kill_status = fast_kill["status"]
+            missing = [str(value) for value in fast_kill.get("missing_evidence", [])]
+        if kill_status == "REJECTED":
             recommendation = "Keep the case rejected unless new evidence directly resolves the hard failure."
-        elif fast_kill["status"] == "WATCHLIST" or score["total"] < 60:
+        elif kill_status == "WATCHLIST" or score["total"] < 60:
             recommendation = "Keep the case on WATCHLIST and obtain the listed missing evidence before Deep Read."
         else:
             recommendation = "Route the evidenced case to Deep Read; this score is advisory, not approval to bid."
-        missing = [str(value) for value in fast_kill.get("missing_evidence", [])]
         confidence = 0.9 if not missing else 0.65
         return self._base(
             decision,
@@ -487,33 +499,40 @@ class TenderOSTools:
         decision = self._authorize("mcp.get_approval_status", case_id=case_id)
         if not decision.get("allow"):
             return self._blocked(decision)
+        approvals = load_csv(APPROVALS)
+        dispositions = dispositions_by_approval(approvals)
         rows = []
-        for row in load_csv(APPROVALS):
+        for row in approvals:
             if case_id and row.get("case_id") != case_id:
                 continue
             if approval_id and row.get("approval_id") != approval_id:
                 continue
-            rows.append(
-                {
-                    key: row.get(key, "")
-                    for key in (
-                        "approval_id",
-                        "case_id",
-                        "workflow_type",
-                        "action_approved",
-                        "approval_status",
-                        "approved_by",
-                        "approved_at",
-                        "requested_at",
-                        "approval_timeout_at",
-                        "scope_hash",
-                        "receipt_id",
-                        "receipt_path",
-                        "approval_card_path",
-                        "external_effect",
-                    )
-                }
-            )
+            projected = {
+                key: row.get(key, "")
+                for key in (
+                    "approval_id",
+                    "case_id",
+                    "workflow_type",
+                    "action_approved",
+                    "approval_status",
+                    "approved_by",
+                    "approved_at",
+                    "requested_at",
+                    "approval_timeout_at",
+                    "scope_hash",
+                    "receipt_id",
+                    "receipt_path",
+                    "approval_card_path",
+                    "external_effect",
+                )
+            }
+            disposition = dispositions.get(row.get("approval_id", ""), {})
+            projected["approval_external_effect"] = projected["external_effect"]
+            projected["external_effect"] = disposition.get("external_effect", projected["external_effect"])
+            projected["execution_receipt_count"] = disposition.get("execution_receipt_count", 0)
+            projected["execution_receipt_ids"] = disposition.get("execution_receipt_ids", [])
+            projected["execution_receipt_paths"] = disposition.get("execution_receipt_paths", [])
+            rows.append(projected)
         return self._base(
             decision,
             confidence=1.0,

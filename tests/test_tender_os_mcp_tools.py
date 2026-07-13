@@ -57,6 +57,7 @@ def test_assessment_is_advisory_and_non_mutating() -> None:
     assert result.status == "success"
     assert result.data["advisory_only"] is True
     assert 0 <= result.data["score"]["total"] <= 100
+    assert result.data["fast_kill"]["schema_version"] == "gov_fast_kill.v1"
     assert result.external_side_effects is False
 
 

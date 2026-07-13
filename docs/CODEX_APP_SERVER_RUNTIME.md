@@ -74,6 +74,36 @@ Create or use the fallback bridge only if app-server runtime is unavailable or c
 
 This bridge is a fallback, not the primary architecture.
 
+## Governed GOV Bid-Pack Receipt
+
+For a government-tender bid pack, Hermes creates a bounded internal Codex packet with:
+
+- `python3 scripts/hermes_create_codex_task.py --case-id <CASE_ID> --bid-pack --input-artifact <path>`
+
+Codex may only create internal draft artifacts. It must not submit, upload, use DSC, contact a party, pay, or make a final commercial or compliance commitment. Before an Approval Desk card is generated, run:
+
+```bash
+python3 scripts/codex_task_runner.py --verify-bid-pack --case-id <CASE_ID> --write-receipt --json
+```
+
+The verifier requires a complete bid-pack manifest, all mandatory artifacts, a separate missing-items list, a successful internal plugin receipt, and open/render/parse checks. It writes `outputs/bid_packs/<CASE_ID>/verification_receipt.json` and a canonical audit event. Approval-card generation independently rechecks that the receipt matches the current manifest, so a stale receipt cannot unlock an approval card.
+
+## Governed EXPORT Quote-Pack Receipt
+
+For a buyer-specific, verified export RFQ, Hermes creates a bounded internal quote-pack task with:
+
+```bash
+python3 scripts/hermes_create_codex_task.py --case-id <CASE_ID> --export-quote-pack --input-artifact <path>
+```
+
+The task may create only draft artifacts: a draft proforma invoice, product specification, supplier summary, pricing waterfall, compliance caveats, Incoterm/payment proposal, validity/delivery assumptions, and missing-items list. It may not send a quotation, contact a buyer, accept an order, ship, invoice, pay, or finalize price, classification, origin, or delivery claims. Verify the finished pack before creating a buyer-facing quotation approval card:
+
+```bash
+python3 scripts/codex_task_runner.py --verify-export-quote-pack --case-id <CASE_ID> --write-receipt --json
+```
+
+The verifier requires a `DRAFT_READY` commercial-readiness report backed by two strict supplier-specific quote proofs, full EXW/FOB/CIF inputs, draft-only classification/origin treatment, and a successful internal plugin receipt. A change to any artifact or readiness input makes the persisted verification receipt stale and blocks the card.
+
 ## Sources
 - Local `codex --help` output, run on 2026-06-30.
 - Local `hermes --help` output, run on 2026-06-30.

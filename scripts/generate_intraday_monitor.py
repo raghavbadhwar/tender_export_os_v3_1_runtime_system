@@ -25,10 +25,12 @@ except ImportError:  # pragma: no cover - Windows development fallback
 try:
     from approval_lifecycle import classify_approval
     from event_ledger import append_event
+    from execution_receipt_status import dispositions_by_approval, is_pending_execution
     from quote_proof import strict_quote_proofs
 except ModuleNotFoundError:  # pragma: no cover - package import path used by pytest
     from scripts.approval_lifecycle import classify_approval
     from scripts.event_ledger import append_event
+    from scripts.execution_receipt_status import dispositions_by_approval, is_pending_execution
     from scripts.quote_proof import strict_quote_proofs
 
 
@@ -79,6 +81,7 @@ def build_report(
     cases = read_csv(data_dir / "master_cases.csv")
     approvals = read_csv(data_dir / "approvals_receipts.csv")
     quotes = read_csv(data_dir / "quote_master.csv")
+    execution_dispositions = dispositions_by_approval(approvals, events_path=data_dir / "events.jsonl")
 
     pending_approvals: list[dict[str, Any]] = []
     for approval in approvals:
@@ -124,22 +127,32 @@ def build_report(
                 }
             )
 
-    approved_actions = [
-        {
-            "approval_id": approval.get("approval_id", ""),
-            "case_id": approval.get("case_id", ""),
-            "action": approval.get("action_approved") or approval.get("proposed_action") or "approved_action",
-            "external_effect": approval.get("external_effect", ""),
-            "receipt_path": approval.get("receipt_path", ""),
-            "next_action": "Track only the approved scope; no resend, resubmit, or escalation without a new owner command.",
-        }
-        for approval in approvals
-        if (approval.get("approval_status") or "").upper() == "APPROVED"
-        and (
-            (approval.get("external_effect") or "").upper() == "PENDING_APPROVED_EXECUTION"
-            or not (approval.get("receipt_path") or "").strip()
+    approved_actions: list[dict[str, Any]] = []
+    for approval in approvals:
+        if (approval.get("approval_status") or "").upper() != "APPROVED":
+            continue
+        if (
+            (approval.get("external_effect") or "").upper() != "PENDING_APPROVED_EXECUTION"
+            and (approval.get("receipt_path") or "").strip()
+        ):
+            continue
+        disposition = execution_dispositions.get(approval.get("approval_id", ""), {})
+        approved_actions.append(
+            {
+                "approval_id": approval.get("approval_id", ""),
+                "case_id": approval.get("case_id", ""),
+                "action": approval.get("action_approved") or approval.get("proposed_action") or "approved_action",
+                "approval_external_effect": approval.get("external_effect", ""),
+                "external_effect": disposition.get("external_effect", approval.get("external_effect", "")),
+                "receipt_path": approval.get("receipt_path", ""),
+                "execution_receipt_paths": disposition.get("execution_receipt_paths", []),
+                "execution_receipt_count": disposition.get("execution_receipt_count", 0),
+                "next_action": disposition.get(
+                    "next_action",
+                    "Track only the approved scope; no resend, resubmit, or escalation without a new owner command.",
+                ),
+            }
         )
-    ]
 
     blockers: list[dict[str, str]] = []
     blockers.extend(
@@ -165,6 +178,7 @@ def build_report(
             "detail": "Approved action is awaiting a verified execution receipt.",
         }
         for item in approved_actions
+        if is_pending_execution(item)
     )
 
     run_id = f"MON-{generated_at.strftime('%Y%m%dT%H%M%SZ')}"
@@ -241,7 +255,7 @@ def render_markdown(report: dict[str, Any]) -> str:
         lines.append("- None.")
     lines.extend(["", "## Approved actions tracked", ""])
     lines.extend(
-        f"- {item['approval_id']} / {item['case_id']}: {item['action']} — {item['next_action']}"
+        f"- {item['approval_id']} / {item['case_id']}: {item['action']} [{item['external_effect']}] — {item['next_action']}"
         for item in report["approved_actions_tracked"]
     )
     if not report["approved_actions_tracked"]:

@@ -32,6 +32,24 @@ do_not_save_to_memory:
   - sensitive contract details
   - temporary paths
   - one-off facts
+  - raw buyer or supplier email bodies
+  - private contact dumps or contact lists
+  - personal email addresses, phone numbers, or direct-message contents
+  - full communication threads or unredacted reply snippets
+
+relationship_memory:
+  register: data/relationship_memory.csv
+  profile_scope: relationship-ops
+  write_approval: true
+  allowed_memory_types:
+    - COMMUNICATION_PREFERENCE
+    - OPT_OUT
+    - RECURRING_OBJECTION
+    - OWNER_CORRECTION
+  required_verification_status: VERIFIED
+  evidence_rule: retain only metadata-only connector receipts or owner evidence references; never copy raw message content
+  no_auto_promotion_from_reply_classification: true
+  expiry_rule: opt-outs remain active until the owner records a verified superseding correction; other entries require an explicit review/expiry date
 
 skill_update_triggers:
   - workflow repeated 3+ times

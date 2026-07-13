@@ -17,6 +17,8 @@ rules:
 jobs:
   - id: core_source_agent_browser_radar
     enabled: true
+    hermes_name: "Core Source Agent-Browser Radar"
+    hermes_script: teos_core_source_agent_browser_radar.py
     cadence: "30 5 * * *"
     local_time: "05:30 IST daily"
     runtime: hermes_no_agent_script
@@ -28,9 +30,11 @@ jobs:
     stop_condition: "Read-only public evidence only; no click, login, form fill, submit, upload, message, payment, DSC, or commercial commitment."
     outputs:
       - outputs/core_source_browser/
-      - outputs/agent_browser/
+      - outputs/evidence/private/agent_browser/
   - id: morning_opportunity_intelligence_html
     enabled: true
+    hermes_name: "Morning Opportunity Intelligence"
+    hermes_script: teos_morning_opportunity_intelligence_html.py
     cadence: "0 6 * * *"
     local_time: "06:00 IST daily"
     runtime: hermes_no_agent_script
@@ -48,6 +52,8 @@ jobs:
       - data/agent_run_log.csv
   - id: morning_operator_brief
     enabled: true
+    hermes_name: "Morning Operator Brief"
+    hermes_script: teos_morning_operator_brief.py
     cadence: "30 8 * * *"
     local_time: "08:30 IST daily"
     runtime: hermes_default
@@ -64,8 +70,41 @@ jobs:
     command: ".venv/bin/python scripts/teos_job_supervisor.py --job-id morning_operator_brief"
     task_command: "python3 scripts/generate_operating_desk_report.py"
     run_log_agent: teos_job_supervisor
+  - id: daily_shadow_profile_probe
+    enabled: true
+    hermes_name: "Daily Shadow Profile Probe"
+    hermes_script: teos_daily_shadow_profile_probe.py
+    cadence: "50 6 * * *"
+    local_time: "06:50 IST daily"
+    runtime: hermes_no_agent_script
+    max_runtime_minutes: 2
+    purpose: "Add one idempotent local-only TASK-093 shadow probe row per Hermes profile during the active shadow pilot."
+    command: ".venv/bin/python scripts/teos_job_supervisor.py --job-id daily_shadow_profile_probe"
+    task_command: "python3 scripts/run_shadow_profile_probes.py --write-log --write-evaluations --json"
+    run_log_agent: teos_job_supervisor
+    stop_condition: "Local profile evidence checks only; no browser, network, email, portal, payment, DSC, upload, contact, or production routing action."
+    outputs:
+      - outputs/shadow_profile_probes/
+      - data/agent_run_log.csv
+  - id: daily_production_readiness_gate
+    enabled: true
+    hermes_name: "Daily Production Readiness Gate"
+    hermes_script: teos_daily_production_readiness_gate.py
+    cadence: "5 7 * * *"
+    local_time: "07:05 IST daily"
+    runtime: hermes_no_agent_script
+    max_runtime_minutes: 8
+    purpose: "Run the canonical safe production-readiness gate and emit the latest owner-action packet."
+    command: ".venv/bin/python scripts/teos_job_supervisor.py --job-id daily_production_readiness_gate"
+    task_command: "python3 scripts/run_production_readiness_gate.py --json"
+    run_log_agent: teos_job_supervisor
+    stop_condition: "Readiness verification and local receipts only; no approval, production routing enablement, auth change, browser action, contact, upload, submission, payment, DSC, final pricing, or commitment."
+    outputs:
+      - outputs/production_readiness/
   - id: v5_demand_forecast_low_competition_shadow
     enabled: true
+    hermes_name: "V5 Prediction Shadow and Calibration"
+    hermes_script: teos_v5_demand_forecast_shadow.py
     cadence: "15 7 * * *"
     local_time: "07:15 IST daily"
     runtime: hermes_no_agent_script
@@ -87,6 +126,8 @@ jobs:
       - outputs/demand_forecasting/v5_demand_forecast_low_competition_YYYYMMDD.json
   - id: midday_opportunity_radar
     enabled: true
+    hermes_name: "Midday Opportunity Radar"
+    hermes_script: teos_midday_opportunity_radar.py
     cadence: "0 13 * * *"
     local_time: "13:00 IST daily"
     runtime: hermes_plus_codex_when_needed
@@ -101,10 +142,46 @@ jobs:
       - data/source_health.csv
       - data/agent_run_log.csv
     command: ".venv/bin/python scripts/teos_job_supervisor.py --job-id midday_opportunity_radar"
-    task_command: "python3 scripts/run_live_source_canary.py --adapters cppp,ungm,gem --limit 3 --timeout 180"
+    task_command: "python3 scripts/run_live_source_canary.py --adapters cppp,ungm,gem --limit 3 --timeout 180 --degradation-threshold 3 --record-degradation"
     run_log_agent: teos_job_supervisor
+  - id: daily_retender_corrigenda_watch
+    enabled: true
+    hermes_name: "Daily Retender and Corrigenda Watch"
+    hermes_script: teos_daily_retender_corrigenda_watch.py
+    cadence: "30 12 * * *"
+    local_time: "12:30 IST daily"
+    runtime: hermes_no_agent_script
+    max_runtime_minutes: 10
+    purpose: "Detect evidenced retenders, corrigenda, revised BOQs, and deadline changes; create one idempotent internal document-diff card per change."
+    command: ".venv/bin/python scripts/teos_job_supervisor.py --job-id daily_retender_corrigenda_watch"
+    task_command: "python3 scripts/retender_corrigenda_watch.py --record-event --apply-actions"
+    run_log_agent: teos_job_supervisor
+    stop_condition: "Public/local evidence only; no portal login, submission, upload, contact, payment, DSC, or commitment."
+    outputs:
+      - outputs/low_competition_radar/retender_corrigenda_watch_YYYYMMDD.json
+      - data/events.jsonl
+  - id: weekly_historical_gov_intelligence_capture
+    enabled: true
+    hermes_name: "Weekly Historical GOV Intelligence Capture"
+    hermes_script: teos_weekly_historical_gov_intelligence_capture.py
+    cadence: "15 11 * * 6"
+    local_time: "Saturday 11:15 IST"
+    runtime: hermes_no_agent_script
+    max_runtime_minutes: 10
+    purpose: "Import a bounded set of pre-captured official/public GOV historical notice and award packets with hashes, source confidence, and normalized buyer/category fields."
+    command: ".venv/bin/python scripts/teos_job_supervisor.py --job-id weekly_historical_gov_intelligence_capture"
+    task_command: "python3 scripts/capture_historical_gov_intelligence.py --write --json"
+    run_log_agent: teos_job_supervisor
+    stop_condition: "Evidence packets only; no browser fetch, login, CAPTCHA/paywall bypass, portal interaction, contact, payment, DSC, or commitment. Unknown or non-official records are rejected."
+    outputs:
+      - outputs/historical_intelligence/historical_gov_capture_YYYYMMDDTHHMMSSZ.json
+      - data/historical_tender_notices.csv
+      - data/historical_awards.csv
+      - data/events.jsonl
   - id: supplier_followup_review
     enabled: true
+    hermes_name: "Supplier Follow-up Review"
+    hermes_script: teos_supplier_followup_review.py
     cadence: "0 17 * * *"
     local_time: "17:00 IST daily"
     runtime: hermes_default
@@ -122,6 +199,8 @@ jobs:
     run_log_agent: teos_job_supervisor
   - id: buyer_reply_monitor
     enabled: true
+    hermes_name: "Buyer Reply Monitor"
+    hermes_script: teos_buyer_reply_monitor.py
     cadence: "*/30 9-21 * * *"
     local_time: "Every 30 minutes, 09:00–21:59 IST"
     runtime: hermes_no_agent_script
@@ -135,8 +214,55 @@ jobs:
       - outputs/buyer_replies/
       - data/communication_log.csv
       - data/outreach_queue.csv
+  - id: morning_agentic_review_enqueue
+    enabled: true
+    hermes_name: "Morning Agentic Review Enqueue"
+    hermes_script: teos_morning_agentic_review_enqueue.py
+    cadence: "45 8 * * *"
+    local_time: "08:45 IST daily"
+    runtime: hermes_no_agent_script
+    max_runtime_minutes: 2
+    purpose: "Create an idempotent Morning Chief Operator Kanban review card after deterministic source, forecast, and operating-desk packets exist."
+    command: ".venv/bin/python scripts/teos_job_supervisor.py --job-id morning_agentic_review_enqueue"
+    task_command: "python3 scripts/enqueue_agentic_reviews.py --morning-packet-glob 'outputs/operating_desk/operating_desk_*.json' --write"
+    run_log_agent: teos_job_supervisor
+    stop_condition: "Kanban card enqueue only; no model run, external action, portal action, send, upload, payment, DSC, or commitment."
+    outputs:
+      - outputs/operating_desk/
+  - id: intraday_exception_enqueue
+    enabled: true
+    hermes_name: "Intraday Exception Enqueue"
+    hermes_script: teos_intraday_exception_enqueue.py
+    cadence: "*/45 9-21 * * *"
+    local_time: "Every 45 minutes, 09:00–21:59 IST"
+    runtime: hermes_no_agent_script
+    max_runtime_minutes: 2
+    purpose: "Create idempotent Intraday Exception Officer Kanban review cards when monitor/reply packets exist."
+    command: ".venv/bin/python scripts/teos_job_supervisor.py --job-id intraday_exception_enqueue"
+    task_command: "python3 scripts/enqueue_agentic_reviews.py --exception-packet-glob 'outputs/intraday_monitor/*.json' --write"
+    run_log_agent: teos_job_supervisor
+    stop_condition: "Kanban card enqueue only; no model run, external action, portal action, send, upload, payment, DSC, or commitment."
+    outputs:
+      - outputs/intraday_monitor/
+  - id: weekly_learning_enqueue
+    enabled: true
+    hermes_name: "Weekly Learning Enqueue"
+    hermes_script: teos_weekly_learning_enqueue.py
+    cadence: "30 18 * * 5"
+    local_time: "Friday 18:30 IST"
+    runtime: hermes_no_agent_script
+    max_runtime_minutes: 2
+    purpose: "Create an idempotent Weekly Learning Council Kanban review card from the latest learning packet."
+    command: ".venv/bin/python scripts/teos_job_supervisor.py --job-id weekly_learning_enqueue"
+    task_command: "python3 scripts/enqueue_agentic_reviews.py --weekly-packet-glob 'outputs/learning_packets/weekly_learning_packet_*.json' --write"
+    run_log_agent: teos_job_supervisor
+    stop_condition: "Kanban card enqueue only; no model run, no proposal application, and no external action."
+    outputs:
+      - outputs/learning_packets/
   - id: evening_execution_close
     enabled: true
+    hermes_name: "Evening Execution Close"
+    hermes_script: teos_evening_execution_close.py
     cadence: "30 20 * * *"
     local_time: "20:30 IST daily"
     runtime: hermes_default
@@ -155,6 +281,8 @@ jobs:
     run_log_agent: teos_job_supervisor
   - id: weekly_learning_review
     enabled: true
+    hermes_name: "Weekly Learning Review"
+    hermes_script: teos_weekly_learning_review.py
     cadence: "0 18 * * 5"
     local_time: "Friday 18:00 IST"
     runtime: hermes_plus_chatgpt_snapshot

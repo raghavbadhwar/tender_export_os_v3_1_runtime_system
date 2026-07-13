@@ -7,6 +7,7 @@ import argparse
 import csv
 import json
 from collections import Counter
+from statistics import median
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -14,17 +15,31 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 def analyze_past_awards(rows: list[dict], buyer: str, category: str) -> dict:
     buyer_rows = [row for row in rows if row.get("buyer_name", "").lower() == buyer.lower()]
-    category_rows = [row for row in buyer_rows if category.lower() in row.get("category", row.get("product_or_service", "")).lower()]
-    winners = Counter(row.get("winner", "") for row in category_rows if row.get("winner"))
+    category_rows = [
+        row
+        for row in buyer_rows
+        if category.lower()
+        in row.get("category_name", row.get("category", row.get("product_or_service", ""))).lower()
+    ]
+    winners = Counter(
+        row.get("winner_name", row.get("winner", ""))
+        for row in category_rows
+        if row.get("winner_name", row.get("winner", ""))
+    )
     prices = [float(str(row.get("award_value_inr", "0")).replace(",", "") or 0) for row in category_rows if row.get("award_value_inr")]
+    l1_prices = [float(str(row.get("l1_price_inr", "0")).replace(",", "") or 0) for row in category_rows if row.get("l1_price_inr")]
+    bidder_counts = [int(float(str(row.get("bidder_count", "0")).replace(",", "") or 0)) for row in category_rows if row.get("bidder_count")]
     average = sum(prices) / len(prices) if prices else 0
     return {
         "buyer_repeat_score": min(100, len(buyer_rows) * 10 + len(category_rows) * 15),
         "past_tender_count": len(buyer_rows),
         "similar_category_awards": len(category_rows),
-        "average_award_value": round(average, 2),
+        "average_award_value": round(average, 2) if prices else "",
         "known_past_winners": [winner for winner, _ in winners.most_common(5)],
-        "typical_l1_price": round(min(prices), 2) if prices else 0,
+        "typical_l1_price": round(float(median(l1_prices)), 2) if l1_prices else "",
+        "l1_price_status": "OBSERVED" if l1_prices else "UNKNOWN",
+        "observed_bidder_counts": bidder_counts,
+        "bidder_count_status": "OBSERVED" if bidder_counts else "UNKNOWN",
         "incumbent_risk": "high" if winners and winners.most_common(1)[0][1] >= 2 else "unknown",
         "possible_supplier_from_past_winner": winners.most_common(1)[0][0] if winners else "",
     }

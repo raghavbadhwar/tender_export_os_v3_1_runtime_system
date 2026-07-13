@@ -202,6 +202,17 @@ thresholds:
   supplier_minimum_source_types: 3
   supplier_minimum_quote_proofs: 2
 
+gov_fast_kill_control:
+  deterministic_stage: "scripts/gov_fast_kill.py"
+  score_proceed_threshold: 60
+  high_value_exception_inr: 5000000
+  hard_rejection_requires_cited_proof: true
+  missing_evidence_result: WATCHLIST
+  high_value_hard_kill_result: WATCHLIST
+  critic_profile: gov-tender-intelligence
+  critic_required_for: [SURVIVED, WATCHLIST, HIGH_VALUE_EXCEPTION]
+  no_register_mutation_in_deterministic_stage: true
+
 trader_specific_kills:
   - manufacturer_only_tender
   - authorized_dealer_or_oem_letter_missing

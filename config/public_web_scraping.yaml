@@ -1,4 +1,27 @@
 version: 1
+shared_contract:
+  version: 2
+  evidence:
+    private_root: outputs/evidence/private
+    redacted_root: outputs/evidence/redacted
+    raw_evidence_commit_allowed: false
+  hard_limits:
+    max_pages: 50
+    max_depth: 3
+    timeout_seconds: 120
+    max_file_size_mb: 100
+  access_boundaries:
+    public_https_read_only: true
+    captcha_bypass: false
+    login_bypass: false
+    paywall_bypass: false
+    external_actions: false
+  escalation_labels:
+    login: MANUAL_LOGIN_REQUIRED
+    captcha: CAPTCHA_BLOCKED
+    paywall: PAYWALL_BLOCKED
+    owner_approval: OWNER_APPROVAL_REQUIRED
+    source_conflict: SOURCE_TEXT_CONFLICT
 profile: tender-export-os
 purpose: "Read-only public web evidence capture for market, buyer, supplier, catalogue, and source research"
 
@@ -26,7 +49,8 @@ defaults:
   hard_max_response_bytes: 10000000
 
 artifacts:
-  output_root: outputs/web_scraping
+  output_root: outputs/evidence/private/web_scraping
+  redacted_output_root: outputs/evidence/redacted/web_scraping
   preserve_raw_html: true
   preserve_extracted_text: true
   preserve_structured_json: true

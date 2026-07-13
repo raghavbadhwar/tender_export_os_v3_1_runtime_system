@@ -1,0 +1,26 @@
+version: 1
+register: data/relationship_memory.csv
+owner: relationship-ops
+purpose: "Retain only compact, verified relationship operating facts across buyer conversations."
+allowed_memory_types: [COMMUNICATION_PREFERENCE, OPT_OUT, RECURRING_OBJECTION, OWNER_CORRECTION]
+required_verification_status: VERIFIED
+allowed_evidence_reference_extensions: [.json]
+prohibited_content:
+  - raw email body
+  - email address
+  - phone number
+  - contact list or private contact dump
+  - credential, token, cookie, session, or mailbox export
+  - full thread, subject line, or unredacted message snippet
+summary_rules:
+  max_characters: 500
+  single_line: true
+  must_be_behavioral_not_narrative: true
+  redact_direct_contact_identifiers: true
+opt_out_rule: "An OPT_OUT memory must be ACTIVE and stops follow-up until a verified owner-recorded correction supersedes it."
+write_policy:
+  default_mode: dry_run
+  actor_must_be_named: true
+  no_automatic_promotion_from_reply_classification: true
+  event_type: relationship_memory.recorded
+boundary: "Relationship memory is internal metadata only. It never sends, follows up, changes a contact record, or exposes private communication content."

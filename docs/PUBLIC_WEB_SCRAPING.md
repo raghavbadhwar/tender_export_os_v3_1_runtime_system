@@ -32,7 +32,10 @@ For multiple known URLs, repeat `--url` or pass `--urls-file`. A file contains o
 - Public contacts are routing evidence only; no guessed personal emails or automatic outreach.
 - Catalogue fit remains a demand hypothesis until a buyer reply, RFQ, order, or comparable proof confirms it.
 
-Canonical policy: `config/public_web_scraping.yaml`.
+Canonical policy: `config/public_web_scraping.yaml`. New raw HTML, browser
+snapshots, screenshots, extracted text, and receipts default to
+`outputs/evidence/private/`; only deliberately redacted artifacts may be
+published outside that private evidence root.
 
 Verified canary on 2026-07-12: the official Hermes documentation page returned HTTP 200 with robots allowed; raw HTML, extracted JSON/text, 10 headings, 44 links, and SHA-256 hashes were stored under `outputs/web_scraping/WEB-20260712T000400Z-fd621c81/`.
 

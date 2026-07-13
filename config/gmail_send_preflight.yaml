@@ -1,0 +1,34 @@
+version: 1
+purpose: "Gmail-plugin-only send-packet preflight for approved Tender Export OS outreach."
+required_connector: GMAIL_PLUGIN
+required_sender_account: raghavbadhwar7@gmail.com
+forbidden_substitutes:
+  - gws
+  - direct_imap
+  - himalaya
+  - browser_gmail
+
+required_packet_fields:
+  - connector
+  - operation
+  - sender_account
+  - recipient
+  - subject
+  - body_text
+  - content_sha256
+  - approval_id
+  - approval_receipt
+  - approval_scope_hash
+  - idempotency_key
+  - attachments
+
+block_on:
+  ambiguous_connector_state: true
+  prior_sent_receipt: true
+  prior_approval_execution: true
+  content_hash_mismatch: true
+  attachment_hash_mismatch: true
+  account_mismatch: true
+  missing_scope_hash: true
+  missing_idempotency_key: true
+  unsupported_connector: true

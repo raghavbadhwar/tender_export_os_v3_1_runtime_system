@@ -13,8 +13,10 @@ from typing import Any
 
 try:
     from scripts.quote_proof import strict_quote_proofs
+    from scripts.source_degradation import apply_degradation_actions, build_degradation_actions
 except ModuleNotFoundError:  # pragma: no cover
     from quote_proof import strict_quote_proofs
+    from source_degradation import apply_degradation_actions, build_degradation_actions
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -84,6 +86,7 @@ def build_metrics(
         "approval_rows": 0,
         "strict_quote_proof_cases": 0,
         "access_friction": False,
+        "consecutive_failures": 0,
         "access_friction_notes": [],
         "useful_lead_quality_proxy": 0,
         "recommended_action": "",
@@ -96,6 +99,7 @@ def build_metrics(
         metric["source_type"] = row.get("source_type", "")
         metric["workflow"] = row.get("workflow", "")
         metric["checks"] += safe_int(row.get("total_checks")) or safe_int(row.get("records_found"))
+        metric["consecutive_failures"] = max(metric["consecutive_failures"], safe_int(row.get("consecutive_failures")))
         friction = norm_upper(row.get("login_required")) == "TRUE" or norm_upper(row.get("paywalled")) == "TRUE" or safe_int(row.get("consecutive_failures")) > 0
         if friction or norm_upper(row.get("health_status")) in {"PAYWALLED", "LOGIN_REQUIRED", "BLOCKED", "FAILING"}:
             metric["access_friction"] = True
@@ -155,6 +159,7 @@ def write_csv_report(path: Path, rows: list[dict[str, Any]]) -> None:
         "approval_rows",
         "strict_quote_proof_cases",
         "access_friction",
+        "consecutive_failures",
         "useful_lead_quality_proxy",
         "recommended_action",
     ]
@@ -203,6 +208,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Build source-yield metrics from local ledgers")
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR))
     parser.add_argument("--json", action="store_true")
+    parser.add_argument("--degradation-threshold", type=int, default=3)
+    parser.add_argument("--record-degradation", action="store_true")
     args = parser.parse_args()
 
     report = build_report()
@@ -214,6 +221,27 @@ def main() -> int:
     json_path = output_dir / f"source_yield_metrics_{stamp}.json"
     csv_path = output_dir / f"source_yield_metrics_{stamp}.csv"
     md_path = output_dir / f"source_yield_metrics_{stamp}.md"
+    receipt_path = display_path(json_path)
+    health_rows = load_csv(DATA_DIR / "source_health.csv")
+    metric_results = [
+        {
+            "adapter": row["source_name"],
+            "source_name": row["source_name"],
+            "status": "FAILING" if row.get("consecutive_failures", 0) >= args.degradation_threshold else "HEALTHY",
+        }
+        for row in report["metrics"]
+    ]
+    actions = build_degradation_actions(
+        health_rows,
+        metric_results,
+        threshold=args.degradation_threshold,
+        receipt_path=receipt_path,
+        increment_failure=False,
+    )
+    report["degradation_threshold"] = args.degradation_threshold
+    report["degradation_actions"] = actions
+    report["degradation_actions_applied"] = apply_degradation_actions(actions) if args.record_degradation else []
+    report["kanban_mutated"] = bool(report["degradation_actions_applied"])
     json_path.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     write_csv_report(csv_path, report["metrics"])
     write_markdown(md_path, report["metrics"], report["generated_at"])

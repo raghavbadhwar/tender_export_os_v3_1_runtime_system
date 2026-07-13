@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Tender Export OS Owner-Operated Export Execution Milestone",
+  "schema_version": "export_execution_milestone.v1",
+  "workflow_type": "EXPORT",
+  "required_fields": [
+    "milestone_id",
+    "case_id",
+    "milestone_type",
+    "outcome_id",
+    "outcome_type",
+    "execution_sub_status",
+    "occurred_at",
+    "evidence_path",
+    "evidence_sha256",
+    "verification_status",
+    "recorded_by",
+    "recorded_at",
+    "external_actions_executed"
+  ],
+  "verification_statuses": ["EVIDENCE_PRESENT", "VERIFIED", "REJECTED", "SUPERSEDED"],
+  "milestones": {
+    "ORDER_RECEIVED": {"outcome_type": "ORDER_RECEIVED", "execution_sub_status": "ORDER_RECEIVED", "rank": 10, "requires_approval_reference": true},
+    "SAMPLE_SENT": {"outcome_type": "SAMPLE_SENT", "execution_sub_status": "SAMPLE_SENT", "rank": 20},
+    "PRODUCTION_STARTED": {"outcome_type": "PRODUCTION_STARTED", "execution_sub_status": "PRODUCTION", "rank": 30},
+    "INSPECTION_COMPLETED": {"outcome_type": "INSPECTION_COMPLETED", "execution_sub_status": "INSPECTION", "rank": 40},
+    "PACKING_COMPLETED": {"outcome_type": "PACKING_COMPLETED", "execution_sub_status": "PACKING", "rank": 50},
+    "DISPATCHED": {"outcome_type": "DISPATCHED", "execution_sub_status": "DISPATCHED", "rank": 60},
+    "CUSTOMS_CLEARED": {"outcome_type": "CUSTOMS_CLEARED", "execution_sub_status": "CUSTOMS_CLEARED", "rank": 70},
+    "SHIPPED": {"outcome_type": "SHIPPED", "execution_sub_status": "SHIPPED", "rank": 80},
+    "DELIVERY_CONFIRMED": {"outcome_type": "DELIVERED", "execution_sub_status": "DELIVERY", "rank": 90},
+    "INVOICE_SUBMITTED": {"outcome_type": "INVOICED", "execution_sub_status": "INVOICE_SUBMITTED", "rank": 100},
+    "PAYMENT_DUE": {"outcome_type": "PAYMENT_DUE", "execution_sub_status": "PAYMENT_PENDING", "rank": 110},
+    "PAYMENT_RECEIVED": {"outcome_type": "PAYMENT_RECEIVED", "execution_sub_status": "PAYMENT_RECEIVED", "rank": 120},
+    "CLAIM_OR_RETURN": {"outcome_type": "CLAIM_OR_RETURN", "execution_sub_status": "CLAIM_OR_RETURN", "rank": 130},
+    "REPEAT_INQUIRY": {"outcome_type": "REPEAT_INQUIRY", "execution_sub_status": "REPEAT_INQUIRY", "rank": 140}
+  },
+  "boundary": "This contract records owner-operated evidence only. It never sends a quotation, accepts an order, ships, files customs documents, invoices, receives payment, or otherwise performs an external action. Only VERIFIED evidence may update execution_sub_status."
+}

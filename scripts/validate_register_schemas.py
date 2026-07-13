@@ -112,7 +112,9 @@ def validate_csv_schema(schema_path: Path, public_template: bool = False) -> lis
                 errors.append(f"{label}:{index}: required field {field} is blank")
 
         for field, allowed in schema.get("enums", {}).items():
-            value = row.get(field, "")
+            # A historical row can omit newly added trailing CSV columns; treat
+            # that as an explicit blank rather than a spurious Python None.
+            value = row.get(field, "") or ""
             if value not in allowed:
                 errors.append(f"{label}:{index}: {field}={value!r} not in {allowed}")
 

@@ -21,8 +21,10 @@ from typing import Any
 
 try:
     from scripts.event_ledger import append_event
+    from scripts.validate_forecast_targets import load_targets, target_index
 except ModuleNotFoundError:  # pragma: no cover - direct script execution
     from event_ledger import append_event
+    from validate_forecast_targets import load_targets, target_index
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "data"
@@ -84,6 +86,11 @@ FORECAST_CANDIDATE_COLUMNS = [
     "forecast_id",
     "run_id",
     "forecast_date",
+    "target_id",
+    "horizon_days",
+    "prediction_timestamp",
+    "maturity_timestamp",
+    "feature_schema_hash",
     "horizon",
     "forecast_type",
     "case_or_research_id",
@@ -274,6 +281,35 @@ def eligible_for_backtest(forecast_date: str, horizon: Any) -> str:
     if explicit_dates:
         return max(dt.date.fromisoformat(value) for value in explicit_dates).isoformat()
     return (base + dt.timedelta(days=horizon_days(horizon))).isoformat()
+
+
+def target_for_item(item: dict[str, Any], forecast_type: str) -> dict[str, Any]:
+    """Map legacy forecast rows onto explicit target contracts."""
+    targets = target_index(load_targets())
+    workflow = norm_upper(item.get("workflow_type"))
+    evidence = norm_upper(item.get("evidence_label") or item.get("evidence_level"))
+    if workflow in {"EXPORT", "EXPORT_RESEARCH"} or forecast_type == "RESEARCH_LANE" or evidence == "RFQ_VERIFIED":
+        return targets["EXPORT_RFQ_CONVERSION_60D"]
+    return targets["GOV_PROGRESS_JUSTIFIED_KILL_30D"]
+
+
+def prediction_timestamp_for_date(forecast_date: str) -> str:
+    return f"{forecast_date}T00:00:00+00:00"
+
+
+def maturity_timestamp_for_date(forecast_date: str, target_horizon_days: int) -> str:
+    base = dt.date.fromisoformat(forecast_date)
+    return f"{(base + dt.timedelta(days=target_horizon_days)).isoformat()}T23:59:59+00:00"
+
+
+def feature_schema_hash(target: dict[str, Any], features: dict[str, Any]) -> str:
+    schema = {
+        "target_id": target["target_id"],
+        "model_version": PREDICTION_MODEL_VERSION,
+        "target_feature_list": target.get("feature_list", []),
+        "emitted_feature_keys": sorted(features.keys()),
+    }
+    return hashlib.sha256(json.dumps(schema, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
 
 
 def forecast_horizon(days_to_deadline: float | None, research_only: bool = False) -> str:
@@ -813,11 +849,18 @@ def forecast_candidate_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
         next_action = internal_safe_action(item.get("next_safe_action", ""), evidence, proof_gap)
         predicted_probability, features = estimate_operational_probability(item)
         horizon = item.get("horizon", "")
+        target = target_for_item(item, forecast_type)
+        target_horizon_days = int(target["horizon_days"])
         rows.append(
             {
                 "forecast_id": f"FC-{payload['date']}-{forecast_type}-{slugify(case_id)[:80]}",
                 "run_id": payload["run_id"],
                 "forecast_date": forecast_date,
+                "target_id": target["target_id"],
+                "horizon_days": target_horizon_days,
+                "prediction_timestamp": prediction_timestamp_for_date(forecast_date),
+                "maturity_timestamp": maturity_timestamp_for_date(forecast_date, target_horizon_days),
+                "feature_schema_hash": feature_schema_hash(target, features),
                 "horizon": horizon,
                 "forecast_type": forecast_type,
                 "case_or_research_id": case_id,
@@ -829,11 +872,11 @@ def forecast_candidate_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
                 "source_url": item.get("source_url", ""),
                 "forecast_score": item.get("forecast_score", ""),
                 "confidence": item.get("confidence", "LOW"),
-                "prediction_target": PREDICTION_TARGET,
+                "prediction_target": target["prediction_target"],
                 "predicted_probability": f"{predicted_probability:.4f}",
                 "probability_status": "PRIOR_UNCALIBRATED",
                 "model_version": PREDICTION_MODEL_VERSION,
-                "eligible_for_backtest_at": eligible_for_backtest(forecast_date, horizon),
+                "eligible_for_backtest_at": (dt.date.fromisoformat(forecast_date) + dt.timedelta(days=target_horizon_days)).isoformat(),
                 "feature_snapshot_json": json.dumps(features, sort_keys=True, separators=(",", ":")),
                 "repeat_probability": item.get("repeat_probability", 0),
                 "low_competition_score": item.get("low_competition_signal_score", 0),

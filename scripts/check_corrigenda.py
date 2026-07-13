@@ -19,6 +19,17 @@ def corrigendum_hash(items: Iterable[dict]) -> str:
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
+def deadline_change(items: list[dict]) -> dict[str, str] | None:
+    changes = []
+    for item in items:
+        previous = str(item.get("previous_deadline") or item.get("old_deadline") or "").strip()
+        new = str(item.get("new_deadline") or item.get("deadline_date") or "").strip()
+        if previous and new and previous != new:
+            changes.append({"previous_deadline": previous, "new_deadline": new})
+    unique = list({(row["previous_deadline"], row["new_deadline"]): row for row in changes}.values())
+    return unique[-1] if unique else None
+
+
 def detect_corrigenda(case_id: str, previous_hash: str, items: list[dict]) -> dict:
     current = corrigendum_hash(items)
     changed = bool(items) and current != (previous_hash or "")
@@ -29,6 +40,7 @@ def detect_corrigenda(case_id: str, previous_hash: str, items: list[dict]) -> di
         "corrigenda_status": "CHANGED_REVIEW_REQUIRED" if changed else "NO_CHANGE",
         "changed": changed,
         "summary": "; ".join(str(item.get("title", item.get("url", ""))) for item in items[:5]),
+        "deadline_change": deadline_change(items),
     }
 
 

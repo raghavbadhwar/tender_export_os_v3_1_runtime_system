@@ -8,6 +8,7 @@ runtime:
   profile_home: /Users/raghav/.hermes/profiles/tender-export-os
   gateway_service_label: ai.hermes.gateway-tender-export-os
   gateway_supervision_required: launchd
+  mcp_discovery_timeout_seconds: 20
   canonical_state: data/events.jsonl
   default_delivery: local
   external_business_actions: approval_gated
@@ -49,7 +50,7 @@ kanban:
   board: tender-export-os
   dispatcher_in_gateway: true
   default_assignee: tender-export-os
-  orchestrator_profile: tender-export-os
+  orchestrator_profile: teos-orchestrator
   max_in_progress: 2
   max_in_progress_per_profile: 1
   failure_limit: 2
@@ -111,12 +112,15 @@ local_capabilities:
   browser:
     engine: agent-browser
     mode: read_only_public_evidence
+    raw_evidence_root: outputs/evidence/private/agent_browser
+    redacted_evidence_root: outputs/evidence/redacted/agent_browser
   web_scraping:
     config: config/public_web_scraping.yaml
     static_batch: scripts/public_web_evidence_scraper.py
     javascript_rendered: scripts/agent_browser_capture.py
     robots_enforced: true
     public_https_only: true
+    raw_evidence_root: outputs/evidence/private/web_scraping
   governed_mcp:
     server_name: tender_os
     transport: stdio
@@ -173,7 +177,10 @@ scheduled_jobs:
   - {name: Midday Opportunity Radar, schedule: "0 13 * * *", mode: no_agent_supervised}
   - {name: Supplier Follow-up Review, schedule: "0 17 * * *", mode: no_agent_supervised}
   - {name: Buyer Reply Monitor, schedule: "*/30 9-21 * * *", mode: no_agent_supervised}
+  - {name: Morning Agentic Review Enqueue, schedule: "45 8 * * *", mode: no_agent_supervised}
+  - {name: Intraday Exception Enqueue, schedule: "*/45 9-21 * * *", mode: no_agent_supervised}
   - {name: Evening Execution Close, schedule: "30 20 * * *", mode: no_agent_supervised}
+  - {name: Weekly Learning Enqueue, schedule: "30 18 * * 5", mode: no_agent_supervised}
   - {name: Weekly Learning Review, schedule: "0 18 * * 5", mode: no_agent_supervised}
 
 prediction_contract:
@@ -201,6 +208,61 @@ optional_capabilities_not_enabled:
   langfuse_remote_tracing: "Not justified while local events, receipts, capability audits, and repeated behavioral evaluations remain sufficient."
   browsertrix_and_changedetection: "Existing hashed public capture, screenshots, source adapters, and scheduled corrigenda checks already cover the present evidence/monitoring need."
   docling_and_paddleocr: "Heavy local models are deferred until real scan/layout failures exceed the current PyMuPDF/pdfplumber/OCR fallback lane."
+
+# High-risk or cost-bearing runtime services are deliberately not part of the
+# default capability set. Each individual activation needs every gate below;
+# an attractive feature, a one-off blocked source, or an agent suggestion is
+# never enough to turn one on.
+restricted_capability_activation:
+  default_status: DISABLED
+  decision_rule: "ALL activation requirements must be evidenced for the named capability, then the owner must approve an exact provider, scope, budget cap, retention plan, and rollback date."
+  explicitly_not_authorized:
+    - bypassing robots, login, CAPTCHA, paywalls, portal terms, or source access controls
+    - importing cookies, browser profiles, credentials, or private source data into a third party
+    - enabling a broad MCP server or provider-wide tool catalog
+    - automatic external sends, submissions, payments, DSC use, or commercial commitments
+  common_activation_requires: &restricted_activation_requires
+    measured_capture_failure_rate:
+      required: true
+      threshold: ">=20% eligible public captures fail after adapter repair across at least 100 attempts and 30 consecutive days; expected login/CAPTCHA/paywall stops are excluded."
+      evidence: "source-health rows, canary receipts, and a dated failure analysis"
+    operator_hours_lost:
+      required: true
+      threshold: ">=20 verified operator hours per calendar month are lost to the same bounded capture problem after local adapter remediation."
+      evidence: "time log linked to source/case IDs and remediation attempts"
+    monthly_volume:
+      required: true
+      threshold: ">=500 eligible public pages or evidence packets per month for the named workflow, with a documented throughput bottleneck."
+      evidence: "event-ledger/run-log aggregate and demand forecast for the next 90 days"
+    privacy_review:
+      required: true
+      threshold: "PASS: owner-reviewed data-flow, retention, vendor terms/DPA, geographic processing, secret handling, and redaction assessment; private evidence remains outside the provider unless separately approved."
+      evidence: "dated privacy review with named owner and rollback/deletion procedure"
+    owner_approved_budget:
+      required: true
+      threshold: "Exact-scope owner approval naming the provider, use case, monthly cap, trial end date, permitted inputs, and immediate disable/rollback path."
+      evidence: "approval receipt with scope hash and budget cap"
+  capabilities:
+    paid_extraction_services:
+      status: DISABLED
+      examples: [Firecrawl, Tavily, Exa, Parallel, Nous Tool Gateway extraction]
+      permitted_trial_scope: "One named public-source capture gap, read-only evidence only, no credentials or private documents."
+      activation_requires: *restricted_activation_requires
+    cloud_browser_services:
+      status: DISABLED
+      examples: [Browserbase, Browser Use cloud browser, remote managed browser]
+      permitted_trial_scope: "One owner-approved public read-only browser workflow; no portal login, form interaction, or sensitive session persistence."
+      activation_requires: *restricted_activation_requires
+    residential_proxy_services:
+      status: DISABLED
+      examples: [residential proxy network, rotating proxy service]
+      permitted_trial_scope: "No default trial. Any future proposal must remain legal, terms-compliant, public-read-only, and explicitly reject access-control circumvention."
+      activation_requires: *restricted_activation_requires
+    general_third_party_mcp_services:
+      status: DISABLED
+      examples: [unscoped external MCP gateway, provider-wide MCP catalog, third-party action MCP]
+      permitted_trial_scope: "One pinned, least-privilege tool allowlist with a local policy wrapper and no execution tool exposure."
+      activation_requires: *restricted_activation_requires
 
 buyer_acquisition:
   broad_market_discovery: "ChatGPT Deep Research"

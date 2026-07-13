@@ -1,18 +1,375 @@
-finance:
-  annual_financing_rate_pct: 18
-  emd_annual_opportunity_rate_pct: 10
-  default_margin_pct: 15
-  payment_delay_buffer_pct: 3
-  penalty_risk_buffer_pct: 2
-gov_tender:
-  gst_rate_pct: 18
-  portal_fee_inr: 0
-  document_fee_inr: 0
-  bid_submission_fee_inr: 0
-  pbg_charge_pct: 2
-export:
-  bank_charges_pct: 1
-  insurance_pct_for_cif: 0.5
-  currency_buffer_pct: 3
-  payment_risk_pct: 2
-  minimum_viable_order_usd: 1000
+version: pricing_assumptions.v1
+generated_at: "2026-07-13"
+owner: pricing-risk
+boundary: "Internal draft pricing only. These assumptions do not authorize final price, delivery, payment-term, tax, classification, origin, or compliance commitments."
+
+required_fields:
+  - assumption_id
+  - workflow_type
+  - component_key
+  - source
+  - observed_date
+  - expiry_date
+  - currency
+  - tax_treatment
+  - default_value
+  - conservative_value
+  - responsible_profile
+  - status
+
+allowed_statuses: [ACTIVE, EXPIRED, RETIRED]
+allowed_workflows: [GOV, EXPORT]
+
+assumptions:
+  - assumption_id: GOV-FREIGHT-2026Q3
+    workflow_type: GOV
+    component_key: freight
+    source: owner_pricing_policy
+    observed_date: "2026-07-13"
+    expiry_date: "2026-10-13"
+    currency: INR
+    tax_treatment: gst_extra_if_applicable
+    default_value: 0
+    conservative_value: 0
+    zero_value_reason: "Only valid when freight is included in supplier quote or delivery is pickup/not applicable."
+    responsible_profile: pricing-risk
+    status: ACTIVE
+  - assumption_id: GOV-GST-2026Q3
+    workflow_type: GOV
+    component_key: gst
+    source: owner_pricing_policy
+    observed_date: "2026-07-13"
+    expiry_date: "2026-10-13"
+    currency: INR
+    tax_treatment: gst_component
+    default_value: 0
+    conservative_value: 0
+    zero_value_reason: "Only valid when GST is included in supplier quote, exempt, or separately observed as not applicable."
+    responsible_profile: pricing-risk
+    status: ACTIVE
+  - assumption_id: GOV-PACKAGING-2026Q3
+    workflow_type: GOV
+    component_key: packaging
+    source: owner_pricing_policy
+    observed_date: "2026-07-13"
+    expiry_date: "2026-10-13"
+    currency: INR
+    tax_treatment: included_or_gst_extra_if_applicable
+    default_value: 0
+    conservative_value: 0
+    zero_value_reason: "Only valid when packaging is included in supplier quote."
+    responsible_profile: pricing-risk
+    status: ACTIVE
+  - assumption_id: GOV-INSTALLATION-2026Q3
+    workflow_type: GOV
+    component_key: installation
+    source: owner_pricing_policy
+    observed_date: "2026-07-13"
+    expiry_date: "2026-10-13"
+    currency: INR
+    tax_treatment: gst_extra_if_applicable
+    default_value: 0
+    conservative_value: 0
+    zero_value_reason: "Only valid for supply-only cases with no installation scope."
+    responsible_profile: pricing-risk
+    status: ACTIVE
+  - assumption_id: GOV-WARRANTY-2026Q3
+    workflow_type: GOV
+    component_key: warranty_reserve
+    source: owner_pricing_policy
+    observed_date: "2026-07-13"
+    expiry_date: "2026-10-13"
+    currency: INR
+    tax_treatment: internal_reserve_not_tax_line
+    default_value: 0
+    conservative_value: 0
+    zero_value_reason: "Only valid when warranty is not required or is included in supplier quote."
+    responsible_profile: pricing-risk
+    status: ACTIVE
+  - assumption_id: GOV-DOCUMENTATION-2026Q3
+    workflow_type: GOV
+    component_key: documentation
+    source: owner_pricing_policy
+    observed_date: "2026-07-13"
+    expiry_date: "2026-10-13"
+    currency: INR
+    tax_treatment: internal_cost
+    default_value: 0
+    conservative_value: 0
+    zero_value_reason: "Only valid when no paid documentation, notarization, printing, testing, or certificate cost is required."
+    responsible_profile: pricing-risk
+    status: ACTIVE
+  - assumption_id: GOV-FEES-2026Q3
+    workflow_type: GOV
+    component_key: portal_fee
+    source: owner_pricing_policy
+    observed_date: "2026-07-13"
+    expiry_date: "2026-10-13"
+    currency: INR
+    tax_treatment: portal_fee_tax_as_applicable
+    default_value: 0
+    conservative_value: 0
+    zero_value_reason: "Only valid when the tender portal explicitly shows no portal fee."
+    responsible_profile: pricing-risk
+    status: ACTIVE
+  - assumption_id: GOV-DOCUMENT-FEE-2026Q3
+    workflow_type: GOV
+    component_key: document_fee
+    source: owner_pricing_policy
+    observed_date: "2026-07-13"
+    expiry_date: "2026-10-13"
+    currency: INR
+    tax_treatment: portal_fee_tax_as_applicable
+    default_value: 0
+    conservative_value: 0
+    zero_value_reason: "Only valid when tender documents are free to download."
+    responsible_profile: pricing-risk
+    status: ACTIVE
+  - assumption_id: GOV-BID-SUBMISSION-FEE-2026Q3
+    workflow_type: GOV
+    component_key: bid_submission_fee
+    source: owner_pricing_policy
+    observed_date: "2026-07-13"
+    expiry_date: "2026-10-13"
+    currency: INR
+    tax_treatment: portal_fee_tax_as_applicable
+    default_value: 0
+    conservative_value: 0
+    zero_value_reason: "Only valid when portal submission is free."
+    responsible_profile: pricing-risk
+    status: ACTIVE
+  - assumption_id: GOV-EMD-COST-2026Q3
+    workflow_type: GOV
+    component_key: emd_opportunity_cost
+    source: owner_pricing_policy
+    observed_date: "2026-07-13"
+    expiry_date: "2026-10-13"
+    currency: INR
+    tax_treatment: financing_cost_not_tax_line
+    default_value: 0
+    conservative_value: 0
+    zero_value_reason: "Only valid when EMD is waived, not applicable, or separately observed as zero."
+    responsible_profile: pricing-risk
+    status: ACTIVE
+  - assumption_id: GOV-PBG-COST-2026Q3
+    workflow_type: GOV
+    component_key: pbg_cost
+    source: owner_pricing_policy
+    observed_date: "2026-07-13"
+    expiry_date: "2026-10-13"
+    currency: INR
+    tax_treatment: financing_cost_not_tax_line
+    default_value: 0
+    conservative_value: 0
+    zero_value_reason: "Only valid when performance bank guarantee is not required."
+    responsible_profile: pricing-risk
+    status: ACTIVE
+  - assumption_id: GOV-WORKING-CAPITAL-2026Q3
+    workflow_type: GOV
+    component_key: working_capital_financing
+    source: owner_pricing_policy
+    observed_date: "2026-07-13"
+    expiry_date: "2026-10-13"
+    currency: INR
+    tax_treatment: financing_cost_not_tax_line
+    default_value: 0
+    conservative_value: 0
+    zero_value_reason: "Only valid when supplier and buyer payment dates create no cash gap."
+    responsible_profile: pricing-risk
+    status: ACTIVE
+  - assumption_id: GOV-PAYMENT-DELAY-2026Q3
+    workflow_type: GOV
+    component_key: payment_delay_buffer
+    source: owner_pricing_policy
+    observed_date: "2026-07-13"
+    expiry_date: "2026-10-13"
+    currency: INR
+    tax_treatment: internal_reserve_not_tax_line
+    default_value: 0
+    conservative_value: 0
+    zero_value_reason: "Only valid when payment-delay risk is explicitly not applicable or handled in another buffer."
+    responsible_profile: pricing-risk
+    status: ACTIVE
+  - assumption_id: GOV-PENALTY-RESERVE-2026Q3
+    workflow_type: GOV
+    component_key: penalty_reserve
+    source: owner_pricing_policy
+    observed_date: "2026-07-13"
+    expiry_date: "2026-10-13"
+    currency: INR
+    tax_treatment: internal_reserve_not_tax_line
+    default_value: 0
+    conservative_value: 0
+    zero_value_reason: "Only valid when no penalty exposure exists after deep read."
+    responsible_profile: pricing-risk
+    status: ACTIVE
+  - assumption_id: GOV-RISK-BUFFER-2026Q3
+    workflow_type: GOV
+    component_key: risk_buffer
+    source: owner_pricing_policy
+    observed_date: "2026-07-13"
+    expiry_date: "2026-10-13"
+    currency: INR
+    tax_treatment: internal_reserve_not_tax_line
+    default_value: 0
+    conservative_value: 0
+    zero_value_reason: "Only valid when all material risks are separately priced or not applicable."
+    responsible_profile: pricing-risk
+    status: ACTIVE
+  - assumption_id: GOV-MARGIN-2026Q3
+    workflow_type: GOV
+    component_key: margin
+    source: owner_pricing_policy
+    observed_date: "2026-07-13"
+    expiry_date: "2026-10-13"
+    currency: INR
+    tax_treatment: pricing_margin
+    default_value: 0
+    conservative_value: 0
+    zero_value_reason: "Only valid in test fixtures or loss-analysis scenarios, never in owner-facing recommended pricing."
+    responsible_profile: pricing-risk
+    status: ACTIVE
+  - assumption_id: EXPORT-PACKAGING-2026Q3
+    workflow_type: EXPORT
+    component_key: packaging
+    source: owner_pricing_policy
+    observed_date: "2026-07-13"
+    expiry_date: "2026-10-13"
+    currency: USD
+    tax_treatment: export_cost_assumption
+    default_value: 5
+    conservative_value: 8
+    responsible_profile: pricing-risk
+    status: ACTIVE
+  - assumption_id: EXPORT-INLAND-FREIGHT-2026Q3
+    workflow_type: EXPORT
+    component_key: inland_freight
+    source: owner_pricing_policy
+    observed_date: "2026-07-13"
+    expiry_date: "2026-10-13"
+    currency: USD
+    tax_treatment: export_cost_assumption
+    default_value: 5
+    conservative_value: 10
+    responsible_profile: pricing-risk
+    status: ACTIVE
+  - assumption_id: EXPORT-CHA-DOCS-2026Q3
+    workflow_type: EXPORT
+    component_key: cha_customs_docs
+    source: owner_pricing_policy
+    observed_date: "2026-07-13"
+    expiry_date: "2026-10-13"
+    currency: USD
+    tax_treatment: export_cost_assumption
+    default_value: 5
+    conservative_value: 10
+    responsible_profile: pricing-risk
+    status: ACTIVE
+  - assumption_id: EXPORT-PORT-HANDLING-2026Q3
+    workflow_type: EXPORT
+    component_key: port_handling
+    source: owner_pricing_policy
+    observed_date: "2026-07-13"
+    expiry_date: "2026-10-13"
+    currency: USD
+    tax_treatment: export_cost_assumption
+    default_value: 5
+    conservative_value: 10
+    responsible_profile: pricing-risk
+    status: ACTIVE
+  - assumption_id: EXPORT-INTERNATIONAL-FREIGHT-2026Q3
+    workflow_type: EXPORT
+    component_key: international_freight
+    source: owner_pricing_policy
+    observed_date: "2026-07-13"
+    expiry_date: "2026-10-13"
+    currency: USD
+    tax_treatment: export_cost_assumption
+    default_value: 10
+    conservative_value: 20
+    responsible_profile: pricing-risk
+    status: ACTIVE
+  - assumption_id: EXPORT-INSURANCE-2026Q3
+    workflow_type: EXPORT
+    component_key: insurance
+    source: owner_pricing_policy
+    observed_date: "2026-07-13"
+    expiry_date: "2026-10-13"
+    currency: USD
+    tax_treatment: export_cost_assumption
+    default_value: 2
+    conservative_value: 5
+    responsible_profile: pricing-risk
+    status: ACTIVE
+  - assumption_id: EXPORT-BANK-CHARGES-2026Q3
+    workflow_type: EXPORT
+    component_key: bank_charges_pct
+    source: owner_pricing_policy
+    observed_date: "2026-07-13"
+    expiry_date: "2026-10-13"
+    currency: PCT
+    tax_treatment: bank_charge_pct
+    default_value: 1
+    conservative_value: 2
+    responsible_profile: pricing-risk
+    status: ACTIVE
+  - assumption_id: EXPORT-INSPECTION-CERT-2026Q3
+    workflow_type: EXPORT
+    component_key: inspection_certification
+    source: owner_pricing_policy
+    observed_date: "2026-07-13"
+    expiry_date: "2026-10-13"
+    currency: USD
+    tax_treatment: export_cost_assumption
+    default_value: 1
+    conservative_value: 5
+    responsible_profile: pricing-risk
+    status: ACTIVE
+  - assumption_id: EXPORT-SAMPLE-COST-2026Q3
+    workflow_type: EXPORT
+    component_key: sample_cost
+    source: owner_pricing_policy
+    observed_date: "2026-07-13"
+    expiry_date: "2026-10-13"
+    currency: USD
+    tax_treatment: export_cost_assumption
+    default_value: 1
+    conservative_value: 5
+    responsible_profile: pricing-risk
+    status: ACTIVE
+  - assumption_id: EXPORT-CURRENCY-BUFFER-2026Q3
+    workflow_type: EXPORT
+    component_key: currency_buffer_pct
+    source: owner_pricing_policy
+    observed_date: "2026-07-13"
+    expiry_date: "2026-10-13"
+    currency: PCT
+    tax_treatment: currency_buffer_pct
+    default_value: 3
+    conservative_value: 5
+    responsible_profile: pricing-risk
+    status: ACTIVE
+  - assumption_id: EXPORT-PAYMENT-RISK-2026Q3
+    workflow_type: EXPORT
+    component_key: payment_risk_pct
+    source: owner_pricing_policy
+    observed_date: "2026-07-13"
+    expiry_date: "2026-10-13"
+    currency: PCT
+    tax_treatment: payment_risk_pct
+    default_value: 2
+    conservative_value: 5
+    responsible_profile: pricing-risk
+    status: ACTIVE
+  - assumption_id: EXPORT-MARGIN-2026Q3
+    workflow_type: EXPORT
+    component_key: margin_pct
+    source: owner_pricing_policy
+    observed_date: "2026-07-13"
+    expiry_date: "2026-10-13"
+    currency: PCT
+    tax_treatment: pricing_margin_pct
+    default_value: 15
+    conservative_value: 10
+    responsible_profile: pricing-risk
+    status: ACTIVE

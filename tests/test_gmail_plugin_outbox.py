@@ -4,7 +4,7 @@ import csv
 
 import pytest
 
-from scripts.generate_gmail_plugin_outbox import build_packet, eligibility
+from scripts.generate_gmail_plugin_outbox import build_packet, eligibility, preflight_packet
 from scripts import ingest_gmail_send_receipts as send_receipts
 from scripts.ingest_gmail_send_receipts import validate_payload
 
@@ -47,9 +47,65 @@ def test_outbox_packet_is_a_handoff_not_a_send() -> None:
     outreach, approval = approved_outreach()
     packet = build_packet(outreach, approval, body="Hello")
     assert packet["connector"] == "GMAIL_PLUGIN"
+    assert packet["sender_account"] == "raghavbadhwar7@gmail.com"
     assert packet["send_authorized_by_owner"] is True
     assert packet["external_action_executed"] is False
     assert packet["recipient"] == "public@example.com"
+    assert len(packet["content_sha256"]) == 64
+    assert packet["attachments"] == []
+
+
+def test_outbox_preflight_passes_only_exact_gmail_plugin_scope() -> None:
+    outreach, approval = approved_outreach()
+    packet = build_packet(outreach, approval, body="Hello")
+
+    result = preflight_packet(packet, outreach=outreach, approval=approval, communication_rows=[])
+
+    assert result["ok"] is True
+    assert result["external_action_executed"] is False
+
+
+def test_outbox_preflight_blocks_account_hash_and_ambiguous_connector_state() -> None:
+    outreach, approval = approved_outreach()
+    packet = build_packet(outreach, approval, body="Hello")
+    packet["sender_account"] = "wrong@example.com"
+    packet["content_sha256"] = "bad"
+
+    result = preflight_packet(
+        packet,
+        outreach=outreach,
+        approval=approval,
+        communication_rows=[],
+        connector_status="UNKNOWN",
+    )
+
+    assert result["ok"] is False
+    assert "sender account mismatch" in result["blockers"]
+    assert "content hash mismatch" in result["blockers"]
+    assert "ambiguous or disconnected Gmail plugin state" in result["blockers"]
+
+
+def test_outbox_preflight_blocks_prior_sent_receipts() -> None:
+    outreach, approval = approved_outreach()
+    packet = build_packet(outreach, approval, body="Hello")
+
+    result = preflight_packet(
+        packet,
+        outreach=outreach,
+        approval=approval | {"external_effect": "EXECUTED_AFTER_APPROVAL"},
+        communication_rows=[],
+    )
+    replay = preflight_packet(
+        packet,
+        outreach=outreach,
+        approval=approval,
+        communication_rows=[{"outreach_id": "OUT-1", "source_connector": "GMAIL_PLUGIN"}],
+    )
+
+    assert result["ok"] is False
+    assert replay["ok"] is False
+    assert "prior sent receipt or executed approval exists" in result["blockers"]
+    assert "prior sent receipt or executed approval exists" in replay["blockers"]
 
 
 def test_send_receipts_accept_only_gmail_plugin() -> None:

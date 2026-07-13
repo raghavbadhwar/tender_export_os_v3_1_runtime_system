@@ -1,4 +1,4 @@
-version: 4
+version: 5
 board:
   slug: tender-export-os
   name: Tender Export OS
@@ -14,26 +14,30 @@ statuses:
   - archived
 
 profiles:
-  - id: hermes-chief-operator
-    role: "Overall orchestration, owner briefing, approvals, routing, memory, learning."
-  - id: gov-tender-radar
-    role: "Find and fast-kill Indian government/public procurement tenders."
-  - id: export-rfq-radar
-    role: "Find export buyer RFQs and foreign/multilateral procurement opportunities."
-  - id: supplier-sourcing
-    role: "Apply 5-3-2 supplier sourcing and supplier verification."
-  - id: pricing-compliance
-    role: "Pricing waterfall, candidate classification notes, tariff/routing, payment risk, and compliance checklist."
-  - id: codex-artifact-factory
-    role: "Use Codex App-Server Runtime and plugins to create workbooks, PDFs, DOCX, PPTX, dashboards, reports, invoices, and packs."
-  - id: sales-followup
-    role: "Draft buyer/supplier outreach and follow-up sequences. No external send without approval."
-  - id: source-health
-    role: "Track broken, paywalled, login-required, low-relevance, high-quality, or restricted sources."
-  - id: learning-review
-    role: "Weekly review, memory/skill update proposals, and rule improvement."
-  - id: chatgpt-boardroom-handoff
-    role: "Prepare snapshots and prompts for ChatGPT deep research and strategic review."
+  - id: tender-export-os
+    role: "Owner-facing chief console, approval desk, Codex artifact routing, and final internal readiness review."
+  - id: teos-orchestrator
+    role: "Routing-only decomposition of top-level work into typed specialist tasks."
+  - id: gov-tender-intelligence
+    role: "Government tender discovery, fast-kill critique, deep read, source health, corrigenda, and repeat-buyer intelligence."
+  - id: export-buyer-intelligence
+    role: "Export market research, buyer verification, RFQ proof, and demand hypotheses."
+  - id: supplier-commercial
+    role: "Supplier 5-3-2, candidate verification, and strict quote-proof readiness."
+  - id: pricing-risk
+    role: "Cost waterfalls, working capital, L1 sensitivity, margins, and pricing scenarios."
+  - id: compliance-due-diligence
+    role: "Draft-only eligibility, DGFT/SCOMET, candidate classification, origin, and compliance gaps."
+  - id: relationship-ops
+    role: "Approved communication packets, reply classification, opt-outs, and follow-up timing; no send authority."
+  - id: learning-evaluation
+    role: "Outcome review, source/supplier performance, forecast evaluation, and governed learning proposals."
+
+routing:
+  decomposition_profile: teos-orchestrator
+  owner_approval_profile: tender-export-os
+  compatibility_aliases_allowed_as_assignees: false
+  codex_artifact_lane: tender-export-os
 
 task_templates:
   - GOV Tender Intake
@@ -68,3 +72,4 @@ safety:
   external_effects_allowed_from_board: false
   approval_card_required_for_gated_actions: true
   receipt_required_after_approved_execution: true
+  compatibility_aliases_allowed_as_assignees: false

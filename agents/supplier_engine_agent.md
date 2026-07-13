@@ -50,6 +50,13 @@ Before pricing, confirm supplier readiness:
 - credit terms
 - delivery coverage
 
+Create the case-scoped candidate manifest at
+`outputs/case_reports/<case_id>/supplier_candidates_<case_id>.json`. Every
+candidate must carry source provenance, an explicit `MATCHED` product-fit
+status, explicit blacklist/watchlist state, and capacity/delivery evidence.
+For a GeM-origin case, every pricing-eligible supplier also needs a verified
+GeM registration evidence path or verified seller ID and timestamp.
+
 Marketplace listing price is not quote proof. Quote proof must be supplier-specific response, proforma invoice, email quotation, quotation PDF, verified portal quote, or approved internal quote receipt.
 
 ### Step 2: External Sourcing — Minimum 3 Source Types
@@ -136,7 +143,8 @@ See approval card: receipts/approvals/<case_id>_supplier_rqf.html
 After approval and sending:
 - Check for responses every 24 hours
 - If no response in 48 hours → flag in agent_run_log and daily brief
-- When 2+ quotes received → update status to `PRICING_READY`
+- When 2+ strict quotes are received, run the case-scoped 5-3-2 gate; update
+  status to `PRICING_READY` only when it passes
 - Update `data/quote_master.csv` with received quote details
 
 ---
@@ -149,6 +157,10 @@ Before moving to PRICING_READY:
 ✓ Minimum 2 quote proofs received
 ✓ Blacklist check done
 ✓ Certificates verified (basic level)
+✓ `scripts/gov_supplier_532_gate.py` produces `PASS` and writes
+  `supplier_532_<case_id>.json`
+✓ A `supplier_specific_quote=TRUE` flag without a retained proof asset does
+  not count as a strict quote
 ```
 If any gate fails → remain in SUPPLIER_SEARCH, flag reason
 

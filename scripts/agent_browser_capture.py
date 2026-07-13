@@ -23,19 +23,30 @@ except ModuleNotFoundError:  # pragma: no cover
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "agent_browser"
+PRIVATE_EVIDENCE_ROOT = PROJECT_ROOT / "outputs" / "evidence" / "private"
+DEFAULT_OUTPUT_ROOT = PRIVATE_EVIDENCE_ROOT / "agent_browser"
 PROFILE_ROOT = PROJECT_ROOT / ".local" / "browser_profiles" / "agent_browser"
 READ_ONLY_COMMANDS = {"open", "snapshot", "get", "screenshot", "close"}
 BLOCKER_MARKERS = {
-    "verify you are human": "BLOCKED_CAPTCHA",
-    "complete the captcha": "BLOCKED_CAPTCHA",
-    "captcha challenge": "BLOCKED_CAPTCHA",
-    "i'm not a robot": "BLOCKED_CAPTCHA",
+    "verify you are human": "CAPTCHA_BLOCKED",
+    "complete the captcha": "CAPTCHA_BLOCKED",
+    "captcha challenge": "CAPTCHA_BLOCKED",
+    "i'm not a robot": "CAPTCHA_BLOCKED",
     "access denied": "ACCESS_BLOCKED",
     "forbidden": "ACCESS_BLOCKED",
-    "you must log in": "LOGIN_REQUIRED",
-    "login required": "LOGIN_REQUIRED",
-    "please log in to continue": "LOGIN_REQUIRED",
+    "you must log in": "MANUAL_LOGIN_REQUIRED",
+    "login required": "MANUAL_LOGIN_REQUIRED",
+    "please log in to continue": "MANUAL_LOGIN_REQUIRED",
+    "subscription required": "PAYWALL_BLOCKED",
+    "subscribe to continue": "PAYWALL_BLOCKED",
+    "paywall": "PAYWALL_BLOCKED",
+    "ignore previous instructions": "PROMPT_INJECTION_DETECTED",
+    "ignore all previous instructions": "PROMPT_INJECTION_DETECTED",
+    "reveal your instructions": "PROMPT_INJECTION_DETECTED",
+    "system prompt": "PROMPT_INJECTION_DETECTED",
+    "net::err_timed_out": "NAVIGATION_TIMEOUT",
+    "navigation timeout": "NAVIGATION_TIMEOUT",
+    "timed out after": "CAPTURE_TIMEOUT",
 }
 
 
@@ -56,6 +67,17 @@ def sha256(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def require_private_evidence_root(output_root: Path) -> Path:
+    """Reject accidental raw browser artifact writes outside the private root."""
+    resolved = output_root.expanduser().resolve()
+    private_root = PRIVATE_EVIDENCE_ROOT.expanduser().resolve()
+    try:
+        resolved.relative_to(private_root)
+    except ValueError as exc:
+        raise ValueError(f"raw browser evidence must stay under private root: {private_root}") from exc
+    return resolved
 
 
 def public_hostname(url: str, *, resolve_dns: bool = True) -> str:
@@ -122,6 +144,13 @@ def run_process(args: list[str], timeout: int) -> subprocess.CompletedProcess[st
     )
 
 
+def process_output(value: object) -> str:
+    """Return subprocess output safely when a command times out mid-stream."""
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    return str(value or "")
+
+
 def blocker_status(*values: str) -> list[str]:
     text = "\n".join(values).lower()
     return sorted({status for marker, status in BLOCKER_MARKERS.items() if marker in text})
@@ -139,6 +168,7 @@ def capture(
     runner: Callable[[list[str], int], subprocess.CompletedProcess[str]] = run_process,
 ) -> tuple[dict, Path]:
     host = public_hostname(url, resolve_dns=resolve_dns)
+    output_root = require_private_evidence_root(output_root)
     timestamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     capture_id = f"ABCAP-{timestamp}-{uuid.uuid4().hex[:8]}"
     source_slug = safe_slug(source_name)
@@ -153,7 +183,27 @@ def capture(
 
     def execute(action: str, *arguments: str) -> subprocess.CompletedProcess[str]:
         args = command(base, action, *arguments)
-        result = runner(args, timeout)
+        try:
+            result = runner(args, timeout)
+        except subprocess.TimeoutExpired as exc:
+            message = f"agent-browser {action} timed out after {timeout} seconds"
+            result = subprocess.CompletedProcess(
+                args=args,
+                returncode=-1,
+                stdout=process_output(exc.stdout),
+                stderr="\n".join(part for part in (process_output(exc.stderr), message) if part),
+            )
+            steps.append(
+                {
+                    "action": action,
+                    "returncode": -1,
+                    "stderr": result.stderr[-2000:],
+                    "timed_out": True,
+                }
+            )
+            return result
+        except OSError as exc:
+            result = subprocess.CompletedProcess(args=args, returncode=-1, stdout="", stderr=str(exc))
         steps.append(
             {
                 "action": action,
@@ -180,7 +230,12 @@ def capture(
         if screenshot is not None and screenshot.returncode == 0 and screenshot_path.exists():
             artifacts["screenshot"] = relative(screenshot_path)
 
-        texts = [result.stdout for result in (opened, snapshot, page_text) if result is not None]
+        texts = [
+            value
+            for result in (opened, snapshot, page_text)
+            if result is not None
+            for value in (result.stdout, result.stderr)
+        ]
         blockers = blocker_status(*texts)
         status = "COMPLETED" if opened.returncode == 0 else "FAILED"
         if blockers and status == "COMPLETED":

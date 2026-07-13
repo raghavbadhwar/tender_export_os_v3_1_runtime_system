@@ -1,8 +1,8 @@
 {
   "file": "data/historical_competition_signals.csv",
   "primary_key": "signal_id",
-  "required_columns": ["signal_id", "notice_id", "buyer_name", "category_code", "signal_type", "signal_strength", "evidence_level", "source_name", "source_url", "observed_at", "created_at"],
-  "required_fields": ["signal_id", "signal_type", "signal_strength", "evidence_level", "source_name", "observed_at", "created_at"],
+  "required_columns": ["signal_id", "notice_id", "buyer_name", "category_code", "signal_type", "signal_strength", "evidence_level", "source_name", "source_url", "evidence_path", "evidence_sha256", "observed_at", "created_at"],
+  "required_fields": ["signal_id", "signal_type", "signal_strength", "evidence_level", "source_name", "evidence_path", "evidence_sha256", "observed_at", "created_at"],
   "enums": {"evidence_level": ["PUBLIC_LISTING_ONLY", "DETAIL_PAGE_READ", "DOCUMENTS_DISCOVERED", "DOCUMENTS_DOWNLOADED", "STRUCTURED_EVIDENCE_BUNDLE"]},
   "date_fields": ["observed_at", "created_at"],
   "numeric_fields": ["signal_strength"],
