@@ -21,6 +21,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from scripts.event_ledger import append_event
+from scripts.validate_kanban_handoff import SUPPORTED_COMPLETION_VALIDATORS
 
 
 DATA_DIR = PROJECT_ROOT / "data"
@@ -179,6 +180,11 @@ def validate_graph_spec(spec: dict[str, Any], known_profiles: set[str] | None = 
                 raise ValueError(f"{workflow_name}.{stage['key']} has unknown assignee {stage['assignee']}")
             if not str(stage.get("idempotency_key_template") or ""):
                 raise ValueError(f"{workflow_name}.{stage['key']} has no idempotency template")
+            validator = str(stage.get("completion_validator") or "")
+            if validator not in SUPPORTED_COMPLETION_VALIDATORS:
+                raise ValueError(
+                    f"{workflow_name}.{stage['key']} has unknown completion validator {validator or '<empty>'}"
+                )
             if stage.get("initial_status") == "blocked" and stage.get("block_kind") != "needs_input":
                 raise ValueError(f"{workflow_name}.{stage['key']} blocked task must use needs_input")
             if stage.get("external_effect") and int(stage.get("retry_limit") or 0) != 0:

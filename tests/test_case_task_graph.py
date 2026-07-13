@@ -174,6 +174,14 @@ def test_validate_graph_spec_rejects_unknown_parent(tmp_path: Path) -> None:
         validate_graph_spec(spec)
 
 
+def test_validate_graph_spec_rejects_unknown_completion_validator() -> None:
+    spec = load_graph_spec(DEFAULT_GRAPH_SPEC)
+    spec["workflows"]["GOV"]["stages"][0]["completion_validator"] = "unvalidated_stage"
+
+    with pytest.raises(ValueError, match="unknown completion validator"):
+        validate_graph_spec(spec)
+
+
 def test_execute_graph_fails_before_board_write_for_unknown_assignee() -> None:
     graph = build_graph(
         {
