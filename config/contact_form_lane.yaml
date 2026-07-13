@@ -4,6 +4,7 @@ status: APPROVED_DESIGN_EXECUTION_DISABLED
 production_enabled: false
 approved_connector_design:
   approval_id: CFCD-20260713T191305Z
+  approval_receipt: receipts/contact_form_connector_approvals/CFCD-20260713T191305Z.json
   design_doc: config/contact_form_connector_design.yaml
   approved_at: '2026-07-13T19:13:05+00:00'
 required_controls_before_enable:

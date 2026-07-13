@@ -106,6 +106,71 @@ def _hash_file(path_value: str) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _parse_datetime(value: Any) -> dt.datetime | None:
+    try:
+        parsed = dt.datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=dt.timezone.utc)
+
+
+def _verified_approval_blockers(approval: dict[str, str], *, now: dt.datetime | None = None) -> list[str]:
+    blockers: list[str] = []
+    approvals_path = DATA_DIR / "approvals_receipts.csv"
+    if not approvals_path.is_file():
+        return ["exact local approval register record is missing"]
+    _, approval_rows = read_csv(approvals_path)
+    registered = [
+        row
+        for row in approval_rows
+        if row.get("approval_id") == approval.get("approval_id")
+        and row.get("case_id") == approval.get("case_id")
+        and row.get("action_approved") == EXPECTED_ACTION
+    ]
+    if len(registered) != 1:
+        return ["exact local approval register record is missing"]
+    registered_approval = registered[0]
+    for field in ("approval_status", "receipt_path", "scope_hash", "external_effect", "approval_timeout_at"):
+        if approval.get(field) != registered_approval.get(field):
+            blockers.append(f"approval {field} does not match local approval register")
+    if registered_approval.get("approval_status") != "APPROVED":
+        blockers.append("registered approval is not APPROVED")
+    if registered_approval.get("external_effect") != "PENDING_APPROVED_EXECUTION":
+        blockers.append("registered approval is consumed or not execution-ready")
+
+    expires_at = _parse_datetime(registered_approval.get("approval_timeout_at"))
+    current = now or dt.datetime.now(dt.timezone.utc)
+    if current.tzinfo is None:
+        current = current.replace(tzinfo=dt.timezone.utc)
+    if expires_at is None:
+        blockers.append("registered approval expiry cannot be established")
+    elif current.astimezone(dt.timezone.utc) >= expires_at.astimezone(dt.timezone.utc):
+        blockers.append("registered approval is expired")
+
+    receipt_path = Path(str(registered_approval.get("receipt_path") or ""))
+    if not receipt_path.is_absolute():
+        receipt_path = PROJECT_ROOT / receipt_path
+    try:
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        blockers.append("owner decision receipt is missing or unreadable")
+        return blockers
+    if not isinstance(receipt, dict):
+        blockers.append("owner decision receipt is not an object")
+        return blockers
+    if receipt.get("approval_id") != registered_approval.get("approval_id"):
+        blockers.append("owner decision receipt approval_id mismatch")
+    if receipt.get("case_id") != registered_approval.get("case_id"):
+        blockers.append("owner decision receipt case_id mismatch")
+    if receipt.get("action_approved") != EXPECTED_ACTION:
+        blockers.append("owner decision receipt action mismatch")
+    if receipt.get("decision_status") != "APPROVED":
+        blockers.append("owner decision receipt is not approved")
+    if receipt.get("external_effect") != "PENDING_APPROVED_EXECUTION":
+        blockers.append("owner decision receipt is consumed or not execution-ready")
+    return blockers
+
+
 def _prior_receipt_exists(
     *,
     outreach: dict[str, str],
@@ -133,6 +198,7 @@ def preflight_packet(
     communication_rows: list[dict[str, str]] | None = None,
     policy: dict[str, Any] | None = None,
     connector_status: str = "CONNECTED_GMAIL_PLUGIN",
+    now: dt.datetime | None = None,
 ) -> dict[str, Any]:
     policy = policy or load_preflight_policy()
     communication_rows = communication_rows or []
@@ -155,6 +221,7 @@ def preflight_packet(
         blockers.append("approval receipt mismatch")
     if packet.get("approval_scope_hash") != approval.get("scope_hash") or not approval.get("scope_hash"):
         blockers.append("approval scope hash mismatch or missing")
+    blockers.extend(_verified_approval_blockers(approval, now=now))
     body = str(packet.get("body_text") or "")
     if hashlib.sha256(body.encode("utf-8")).hexdigest() != packet.get("content_sha256"):
         blockers.append("content hash mismatch")

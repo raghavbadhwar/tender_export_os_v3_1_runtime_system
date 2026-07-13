@@ -40,12 +40,20 @@ def sha256_file(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def update_lane_approval(lane: dict[str, Any], *, approval_id: str, design_doc: str, approved_at: str) -> dict[str, Any]:
+def update_lane_approval(
+    lane: dict[str, Any],
+    *,
+    approval_id: str,
+    approval_receipt: str,
+    design_doc: str,
+    approved_at: str,
+) -> dict[str, Any]:
     updated = dict(lane)
     approved = dict(updated.get("approved_connector_design") or {})
     approved.update(
         {
             "approval_id": approval_id,
+            "approval_receipt": approval_receipt,
             "design_doc": design_doc,
             "approved_at": approved_at,
         }
@@ -96,9 +104,11 @@ def record_approval(
     receipt_path = receipt_dir / f"{approval_id}.json"
     if apply:
         receipt_path.write_text(json.dumps(receipt, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        receipt_doc = str(receipt_path.relative_to(PROJECT_ROOT) if receipt_path.is_relative_to(PROJECT_ROOT) else receipt_path)
         updated_lane = update_lane_approval(
             lane,
             approval_id=approval_id,
+            approval_receipt=receipt_doc,
             design_doc=receipt["design_doc"],
             approved_at=approved_at,
         )

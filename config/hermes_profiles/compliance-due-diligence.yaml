@@ -49,4 +49,4 @@ mcp_servers:
       resources: false
       prompts: false
 platform_toolsets:
-  cli: [web, browser, file, skills, memory, todo]
+  cli: [web, file, skills, memory, todo]

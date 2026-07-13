@@ -17,6 +17,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from scripts.record_computer_use_read_only_canary import validate_canary_receipt
+from scripts.validate_contact_form_lane import validate_contact_form_lane
 
 
 PLAN = PROJECT_ROOT / "plan" / "upgrade-hermes-tender-export-os-1.md"
@@ -96,8 +97,7 @@ def latest_json(pattern: str) -> tuple[Path | None, dict[str, Any]]:
 
 def has_contact_form_approval() -> bool:
     lane = load_yaml(PROJECT_ROOT / "config" / "contact_form_lane.yaml")
-    approved = lane.get("approved_connector_design") if isinstance(lane.get("approved_connector_design"), dict) else {}
-    return all(approved.get(field) for field in ("approval_id", "design_doc", "approved_at"))
+    return validate_contact_form_lane(lane).get("status") == "PASS"
 
 
 def has_owner_signoff() -> bool:

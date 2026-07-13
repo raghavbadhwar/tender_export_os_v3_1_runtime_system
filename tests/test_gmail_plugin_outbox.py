@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import csv
+import datetime as dt
+import json
 
 import pytest
-
+from scripts import generate_gmail_plugin_outbox as gmail_outbox
 from scripts.generate_gmail_plugin_outbox import build_packet, eligibility, preflight_packet
 from scripts import ingest_gmail_send_receipts as send_receipts
 from scripts.ingest_gmail_send_receipts import validate_payload
@@ -33,6 +35,34 @@ def approved_outreach() -> tuple[dict, dict]:
     return outreach, approval
 
 
+def register_current_approval(tmp_path, monkeypatch, approval: dict) -> None:
+    receipt_path = tmp_path / "owner-decision.json"
+    approval.update(
+        {
+            "receipt_path": str(receipt_path),
+            "approval_timeout_at": "2099-01-01T00:00:00+00:00",
+            "external_effect": "PENDING_APPROVED_EXECUTION",
+        }
+    )
+    receipt_path.write_text(
+        json.dumps(
+            {
+                "approval_id": approval["approval_id"],
+                "case_id": approval["case_id"],
+                "action_approved": approval["action_approved"],
+                "decision_status": "APPROVED",
+                "external_effect": "PENDING_APPROVED_EXECUTION",
+            }
+        ),
+        encoding="utf-8",
+    )
+    with (tmp_path / "approvals_receipts.csv").open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=list(approval))
+        writer.writeheader()
+        writer.writerow(approval)
+    monkeypatch.setattr(gmail_outbox, "DATA_DIR", tmp_path)
+
+
 def test_outbox_requires_approved_email_scope() -> None:
     outreach, approval = approved_outreach()
     assert eligibility(outreach, approval) == []
@@ -55,14 +85,37 @@ def test_outbox_packet_is_a_handoff_not_a_send() -> None:
     assert packet["attachments"] == []
 
 
-def test_outbox_preflight_passes_only_exact_gmail_plugin_scope() -> None:
+def test_outbox_preflight_passes_only_exact_gmail_plugin_scope(tmp_path, monkeypatch) -> None:
     outreach, approval = approved_outreach()
+    register_current_approval(tmp_path, monkeypatch, approval)
     packet = build_packet(outreach, approval, body="Hello")
 
     result = preflight_packet(packet, outreach=outreach, approval=approval, communication_rows=[])
 
     assert result["ok"] is True
     assert result["external_action_executed"] is False
+
+
+def test_outbox_preflight_blocks_missing_or_expired_registered_approval(tmp_path, monkeypatch) -> None:
+    outreach, approval = approved_outreach()
+    packet = build_packet(outreach, approval, body="Hello")
+    monkeypatch.setattr(gmail_outbox, "DATA_DIR", tmp_path)
+
+    missing = preflight_packet(packet, outreach=outreach, approval=approval, communication_rows=[])
+    assert missing["ok"] is False
+    assert "exact local approval register record is missing" in missing["blockers"]
+
+    register_current_approval(tmp_path, monkeypatch, approval)
+    packet = build_packet(outreach, approval, body="Hello")
+    expired = preflight_packet(
+        packet,
+        outreach=outreach,
+        approval=approval,
+        communication_rows=[],
+        now=dt.datetime(2100, 1, 1, tzinfo=dt.timezone.utc),
+    )
+    assert expired["ok"] is False
+    assert "registered approval is expired" in expired["blockers"]
 
 
 def test_outbox_preflight_blocks_account_hash_and_ambiguous_connector_state() -> None:

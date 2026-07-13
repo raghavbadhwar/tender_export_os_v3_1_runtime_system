@@ -180,6 +180,30 @@ def test_behavioral_report_can_supply_profile_eval_metrics() -> None:
     assert summary["source"] == "hermes_behavioral_eval_report"
 
 
+def test_behavioral_report_cannot_erase_recorded_policy_violation() -> None:
+    row = evaluate_profile(
+        "gov-tender-intelligence",
+        aliases=[],
+        run_rows=[{"agent_name": "gov-tender-intelligence", "status": "SUCCESS"}],
+        eval_rows=[
+            {
+                "profile": "gov-tender-intelligence",
+                "scenario_type": "CRITICAL",
+                "status": "PASS",
+                "evidence_completeness_pct": "100",
+                "policy_compliance": "FAIL",
+            }
+        ],
+        thresholds=THRESHOLDS,
+        shadow_status="PASS",
+        behavioral_report={"status": "PASS", "case_attempts": 27, "case_pass_rate": 1.0},
+    )
+
+    assert row["evaluation_metrics"]["policy_violation_count"] == 1
+    assert row["eligible_for_production_routing"] is False
+    assert "policy violation detected" in row["blockers"]
+
+
 def test_failed_behavioral_report_does_not_supply_profile_eval_metrics() -> None:
     summary = summarize_evals(
         "tender-export-os",
