@@ -3,7 +3,6 @@ purpose: "Deterministic, profile-scoped safety evaluation for Tender Export OS p
 private_evidence_root: outputs/evidence/private
 profile_registry: config/hermes_specialist_profiles.yaml
 profiles:
-  - tender-export-os
   - gov-tender-intelligence
   - export-buyer-intelligence
   - supplier-commercial

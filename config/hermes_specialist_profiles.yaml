@@ -164,9 +164,9 @@ profiles:
     identity: "A public-source and document intelligence worker for government procurement, never a bid-submission agent."
     provision: create
     durable_responsibility: "GOV discovery, fast-kill review, tender deep read, corrigenda, and repeat-buyer intelligence."
-    allowed_toolsets: [web, browser, file, terminal, skills, memory, delegation, todo]
+    allowed_toolsets: [web, file, skills, memory, delegation, todo]
     mcp_tools: [get_case, search_cases, assess_opportunity, get_source_health, parse_local_documents, capture_public_web]
-    forbidden_toolsets: [cronjob, kanban, computer_use, session_search]
+    forbidden_toolsets: [browser, terminal, cronjob, kanban, computer_use, session_search]
     skill_bundle: [teos-evidence-verifier, teos-public-web-scraping, teos-recovered-context]
     memory_scope:
       enabled: true
@@ -191,9 +191,9 @@ profiles:
     identity: "An evidence-led export research worker that distinguishes catalogue fit from verified demand and never contacts a buyer."
     provision: create
     durable_responsibility: "Market research, buyer verification, public RFQ evidence, and demand hypotheses."
-    allowed_toolsets: [web, browser, file, terminal, skills, memory, delegation, todo]
+    allowed_toolsets: [web, file, skills, memory, delegation, todo]
     mcp_tools: [get_case, search_cases, assess_opportunity, get_source_health, parse_local_documents, capture_public_web]
-    forbidden_toolsets: [cronjob, kanban, computer_use, session_search]
+    forbidden_toolsets: [browser, terminal, cronjob, kanban, computer_use, session_search]
     skill_bundle: [teos-buyer-acquisition, teos-evidence-verifier, teos-public-web-scraping]
     memory_scope:
       enabled: true
@@ -218,9 +218,9 @@ profiles:
     identity: "An internal supplier evidence worker without supplier-contact, purchase-order, payment, or commitment authority."
     provision: create
     durable_responsibility: "Supplier 5-3-2, verification, quote-proof readiness, and response quality."
-    allowed_toolsets: [web, browser, file, skills, memory, delegation, todo]
+    allowed_toolsets: [web, file, skills, memory, delegation, todo]
     mcp_tools: [get_case, search_cases, parse_local_documents, capture_public_web, get_approval_status]
-    forbidden_toolsets: [terminal, code_execution, cronjob, kanban, computer_use, session_search]
+    forbidden_toolsets: [browser, terminal, code_execution, cronjob, kanban, computer_use, session_search]
     skill_bundle: [teos-evidence-verifier, teos-public-web-scraping]
     memory_scope:
       enabled: true
@@ -272,9 +272,9 @@ profiles:
     identity: "An evidence and gap-review worker that never converts ambiguity into a final legal, classification, origin, or compliance claim."
     provision: create
     durable_responsibility: "Clause-by-clause GOV/EXPORT compliance matrices, draft eligibility, DGFT/SCOMET, candidate classification, origin, and Incoterms review."
-    allowed_toolsets: [web, browser, file, skills, memory, todo]
+    allowed_toolsets: [web, file, skills, memory, todo]
     mcp_tools: [get_case, search_cases, parse_local_documents, capture_public_web, get_approval_status]
-    forbidden_toolsets: [terminal, code_execution, cronjob, kanban, computer_use, session_search, delegation]
+    forbidden_toolsets: [browser, terminal, code_execution, cronjob, kanban, computer_use, session_search, delegation]
     skill_bundle: [teos-evidence-verifier, teos-public-web-scraping]
     memory_scope:
       enabled: true

@@ -257,7 +257,6 @@ def summarize_evals(profile: str, rows: list[dict[str, str]], behavioral_report:
                     "critical_evaluation_count": attempts,
                     "critical_eval_pass_rate_pct": round(pass_rate, 2),
                     "average_evidence_completeness_pct": 100.0 if behavioral_report.get("status") == "PASS" else 0.0,
-                    "policy_violation_count": 0,
                     "source": "hermes_behavioral_eval_report",
                     "behavioral_report_path": behavioral_report.get("path", ""),
                     "behavioral_report_status": behavioral_report.get("status"),

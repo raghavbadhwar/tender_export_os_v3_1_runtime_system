@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
@@ -34,6 +35,43 @@ def load_config(path: Path = DEFAULT_CONFIG) -> dict[str, Any]:
     return payload
 
 
+def _resolve_path(value: str, *, project_root: Path) -> Path:
+    path = Path(value).expanduser()
+    return path if path.is_absolute() else project_root / path
+
+
+def _approval_receipt_errors(approved_design: dict[str, Any], *, project_root: Path) -> list[str]:
+    receipt_value = str(approved_design.get("approval_receipt") or "")
+    if not receipt_value:
+        return ["approved_connector_design approval_receipt is missing"]
+    receipt_path = _resolve_path(receipt_value, project_root=project_root)
+    try:
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return ["approved_connector_design approval_receipt is missing or unreadable"]
+    if not isinstance(receipt, dict):
+        return ["approved_connector_design approval_receipt is not an object"]
+    errors: list[str] = []
+    for field in ("approval_id", "approved_at", "design_doc"):
+        if receipt.get(field) != approved_design.get(field):
+            errors.append(f"approved_connector_design approval_receipt {field} mismatch")
+    if receipt.get("approved") is not True or not receipt.get("approved_by"):
+        errors.append("approved_connector_design approval_receipt is not owner-approved")
+    if receipt.get("production_enabled") is not False:
+        errors.append("approved_connector_design approval_receipt must keep production disabled")
+    if receipt.get("external_actions_authorized") is not False or receipt.get("form_submission_authorized") is not False:
+        errors.append("approved_connector_design approval_receipt must not authorize external actions")
+    design_path = _resolve_path(str(approved_design.get("design_doc") or ""), project_root=project_root)
+    try:
+        design_sha256 = hashlib.sha256(design_path.read_bytes()).hexdigest()
+    except OSError:
+        errors.append("approved_connector_design design_doc is missing or unreadable")
+    else:
+        if receipt.get("design_sha256") != design_sha256:
+            errors.append("approved_connector_design approval_receipt design hash mismatch")
+    return errors
+
+
 def validate_contact_form_lane(config: dict[str, Any]) -> dict[str, Any]:
     errors: list[str] = []
     controls = set(config.get("required_controls_before_enable") or [])
@@ -55,7 +93,10 @@ def validate_contact_form_lane(config: dict[str, Any]) -> dict[str, Any]:
 
     production_enabled = config.get("production_enabled") is True
     approved_design = config.get("approved_connector_design") if isinstance(config.get("approved_connector_design"), dict) else {}
-    has_approved_design = all(approved_design.get(field) for field in ("approval_id", "design_doc", "approved_at"))
+    approval_fields = ("approval_id", "approval_receipt", "design_doc", "approved_at")
+    has_approved_design = all(approved_design.get(field) for field in approval_fields)
+    if approved_design:
+        errors.extend(_approval_receipt_errors(approved_design, project_root=PROJECT_ROOT))
     if not production_enabled:
         if has_approved_design:
             if config.get("status") != "APPROVED_DESIGN_EXECUTION_DISABLED":
@@ -64,7 +105,7 @@ def validate_contact_form_lane(config: dict[str, Any]) -> dict[str, Any]:
             errors.append("unapproved disabled lane status must be DISABLED_PENDING_APPROVED_CONNECTOR_DESIGN")
     else:
         if not has_approved_design:
-            errors.append("production_enabled requires approved_connector_design approval_id, design_doc, and approved_at")
+            errors.append("production_enabled requires approved_connector_design approval_id, approval_receipt, design_doc, and approved_at")
         if not config.get("domain_allowlist"):
             errors.append("production_enabled requires non-empty domain_allowlist")
         if not config.get("form_field_maps"):

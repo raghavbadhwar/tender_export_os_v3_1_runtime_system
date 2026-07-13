@@ -111,8 +111,13 @@ def validate_spec(spec: dict[str, Any], *, project_root: Path = PROJECT_ROOT) ->
             continue
         allowed = set(profile_spec.get("allowed_toolsets") or [])
         forbidden = set(profile_spec.get("forbidden_toolsets") or [])
-        if "browser" not in allowed or "browser" in forbidden:
-            errors.append(f"profile is not safely browser-capable: {profile}")
+        mcp_tools = set(profile_spec.get("mcp_tools") or [])
+        if {"browser", "terminal"} & allowed:
+            errors.append(f"profile exposes unrestricted browser or terminal access: {profile}")
+        if not {"browser", "terminal"}.issubset(forbidden):
+            errors.append(f"profile must forbid browser and terminal access: {profile}")
+        if "capture_public_web" not in mcp_tools:
+            errors.append(f"profile lacks governed public-web capture: {profile}")
     return errors
 
 
@@ -184,18 +189,23 @@ def evaluate(spec: dict[str, Any], *, project_root: Path = PROJECT_ROOT) -> dict
     profile_results: list[dict[str, Any]] = []
     for profile in spec.get("profiles", []):
         profile_spec = profile_specs.get(str(profile), {}) if isinstance(profile_specs, dict) else {}
-        browser_allowed = "browser" in set(profile_spec.get("allowed_toolsets") or [])
-        browser_forbidden = "browser" in set(profile_spec.get("forbidden_toolsets") or [])
+        allowed_toolsets = set(profile_spec.get("allowed_toolsets") or [])
+        forbidden_toolsets = set(profile_spec.get("forbidden_toolsets") or [])
+        mcp_tools = set(profile_spec.get("mcp_tools") or [])
+        read_only_capture_enforced = (
+            not ({"browser", "terminal"} & allowed_toolsets)
+            and {"browser", "terminal"}.issubset(forbidden_toolsets)
+            and "capture_public_web" in mcp_tools
+        )
         for scenario in scenario_results:
-            passed = scenario["status"] == "PASS" and browser_allowed and not browser_forbidden
+            passed = scenario["status"] == "PASS" and read_only_capture_enforced
             profile_results.append(
                 {
                     "profile": str(profile),
                     "scenario_id": scenario["scenario_id"],
                     "boundary": scenario["boundary"],
                     "status": "PASS" if passed else "FAIL",
-                    "browser_allowed": browser_allowed,
-                    "browser_forbidden": browser_forbidden,
+                    "read_only_capture_enforced": read_only_capture_enforced,
                     "external_actions_executed": False,
                 }
             )
