@@ -19,6 +19,7 @@ SAFE_COMMANDS = [
     ["scripts/check_no_private_runtime_data.py", "--public-template"],
     ["scripts/system_health_check.py", "--public-template"],
     ["scripts/validate_event_type_registry.py"],
+    ["scripts/validate_authority_matrix.py", "--json", "--output", "outputs/regression/authority_matrix_validation.json"],
     ["scripts/validate_register_schemas.py", "--public-template"],
     ["scripts/validate_business_state_consistency.py", "--public-template", "--output", "outputs/regression/public_business_state_consistency.json"],
     ["scripts/validate_chatgpt_return.py", "--input", "tests/fixtures/chatgpt_returns/good_return.md"],

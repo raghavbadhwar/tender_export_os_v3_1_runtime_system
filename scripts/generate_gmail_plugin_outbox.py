@@ -7,6 +7,7 @@ import argparse
 import datetime as dt
 import hashlib
 import json
+import os
 from pathlib import Path
 from typing import Any
 import yaml
@@ -63,6 +64,9 @@ def load_preflight_policy(path: Path = PREFLIGHT_CONFIG) -> dict[str, Any]:
     payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     if not isinstance(payload, dict):
         raise ValueError(f"{path} must contain a mapping")
+    sender_override = os.environ.get("HERMES_GMAIL_SENDER_ACCOUNT", "").strip()
+    if sender_override:
+        payload["required_sender_account"] = sender_override
     return payload
 
 
@@ -71,7 +75,7 @@ def build_packet(
     approval: dict[str, str],
     *,
     body: str,
-    sender_account: str = "raghavbadhwar7@gmail.com",
+    sender_account: str = "owner@example.com",
 ) -> dict[str, Any]:
     content_sha256 = hashlib.sha256(body.encode("utf-8")).hexdigest()
     idempotency = hashlib.sha256(

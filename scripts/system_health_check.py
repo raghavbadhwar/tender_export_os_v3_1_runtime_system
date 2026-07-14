@@ -522,6 +522,7 @@ def check_existing_validators(health: Health) -> None:
         [PYTHON, "-m", "py_compile", *[str(path) for path in production_python_modules]],
         [PYTHON, "scripts/validate_agent_loops.py"],
         [PYTHON, "scripts/validate_loop_schedule.py"],
+        [PYTHON, "scripts/validate_authority_matrix.py", "--output", "outputs/system_health/authority_matrix_validation.json"],
     ]:
         rc, stdout, stderr = run(command)
         if rc != 0:
