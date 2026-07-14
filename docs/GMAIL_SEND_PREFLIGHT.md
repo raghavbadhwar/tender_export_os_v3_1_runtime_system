@@ -2,7 +2,7 @@
 
 TASK-094 is implemented in the existing Gmail-plugin handoff path.
 
-Config: `config/gmail_send_preflight.yaml`
+The public-template config uses `owner@example.com`. A private deployment may inject its owner account at runtime with `HERMES_GMAIL_SENDER_ACCOUNT`; the value is not committed to the repository.
 
 Generator: `scripts/generate_gmail_plugin_outbox.py`
 
@@ -13,7 +13,7 @@ The system still does not send email by itself. It only prepares packets for the
 The preflight verifies:
 
 - connector is exactly `GMAIL_PLUGIN`;
-- sender account is `raghavbadhwar7@gmail.com`;
+- sender account is the configured owner account (`owner@example.com` in this public template; private deployments must inject their account from a secret store);
 - connector status is `CONNECTED_GMAIL_PLUGIN`;
 - recipient matches the verified outreach contact;
 - approval ID, receipt path, and scope hash match the current approval row;

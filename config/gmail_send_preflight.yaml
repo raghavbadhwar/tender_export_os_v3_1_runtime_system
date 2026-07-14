@@ -1,7 +1,8 @@
 version: 1
 purpose: "Gmail-plugin-only send-packet preflight for approved Tender Export OS outreach."
 required_connector: GMAIL_PLUGIN
-required_sender_account: raghavbadhwar7@gmail.com
+# Public-template placeholder. A private deployment must inject the real owner account from its secret store.
+required_sender_account: owner@example.com
 forbidden_substitutes:
   - gws
   - direct_imap

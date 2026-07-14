@@ -6,7 +6,7 @@ import json
 
 import pytest
 from scripts import generate_gmail_plugin_outbox as gmail_outbox
-from scripts.generate_gmail_plugin_outbox import build_packet, eligibility, preflight_packet
+from scripts.generate_gmail_plugin_outbox import build_packet, eligibility, load_preflight_policy, preflight_packet
 from scripts import ingest_gmail_send_receipts as send_receipts
 from scripts.ingest_gmail_send_receipts import validate_payload
 
@@ -77,12 +77,20 @@ def test_outbox_packet_is_a_handoff_not_a_send() -> None:
     outreach, approval = approved_outreach()
     packet = build_packet(outreach, approval, body="Hello")
     assert packet["connector"] == "GMAIL_PLUGIN"
-    assert packet["sender_account"] == "raghavbadhwar7@gmail.com"
+    assert packet["sender_account"] == "owner@example.com"
     assert packet["send_authorized_by_owner"] is True
     assert packet["external_action_executed"] is False
     assert packet["recipient"] == "public@example.com"
     assert len(packet["content_sha256"]) == 64
     assert packet["attachments"] == []
+
+
+def test_preflight_sender_account_can_be_injected_without_committing_a_secret(monkeypatch) -> None:
+    monkeypatch.setenv("HERMES_GMAIL_SENDER_ACCOUNT", "private-owner@example.test")
+
+    policy = load_preflight_policy()
+
+    assert policy["required_sender_account"] == "private-owner@example.test"
 
 
 def test_outbox_preflight_passes_only_exact_gmail_plugin_scope(tmp_path, monkeypatch) -> None:

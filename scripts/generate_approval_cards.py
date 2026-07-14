@@ -11,6 +11,8 @@ import html
 import json
 from pathlib import Path
 
+import yaml
+
 try:
     from approval_lifecycle import approval_timeout_at as calculate_approval_timeout_at
     from codex_bid_pack_contract import verify_bid_pack_approval_ready
@@ -28,6 +30,17 @@ TEMPLATE = PROJECT_ROOT / "templates" / "approval_card.html"
 APPROVALS = DATA_DIR / "approvals_receipts.csv"
 MASTER_CASES = DATA_DIR / "master_cases.csv"
 OUTPUT_DIR = PROJECT_ROOT / "receipts" / "approvals"
+AUTHORITY_MATRIX = PROJECT_ROOT / "config" / "agent_authority_matrix.yaml"
+
+
+def authority_class_for_action(action: str) -> str:
+    """Resolve an action to the constitutional class, failing closed when unknown."""
+    try:
+        matrix = yaml.safe_load(AUTHORITY_MATRIX.read_text(encoding="utf-8")) or {}
+    except (OSError, yaml.YAMLError):
+        return "prohibited"
+    mappings = matrix.get("policy_action_classes", {}) if isinstance(matrix, dict) else {}
+    return str(mappings.get(action) or "prohibited")
 
 
 def load_csv(path: Path) -> list[dict]:
@@ -349,10 +362,18 @@ def structured_card(approval: dict, case: dict, html_path: Path, json_path: Path
     except ValueError:
         confidence = 60
     return {
+        "schema_version": "approval_card.v2",
         "approval_id": approval.get("approval_id", ""),
         "case_id": approval.get("case_id", ""),
         "workflow_type": workflow,
         "proposed_action": action,
+        "authority_class": authority_class_for_action(action),
+        "receipt_contract": "approval",
+        "policy_decision_id": text_value(approval.get("policy_decision_id")) or f"POLICY-{approval.get('approval_id', '')}",
+        "approval_boundary": "owner_decision_required_before_external_action",
+        "owner_decision_receipt": text_value(approval.get("owner_decision_receipt")),
+        "post_action_receipt": text_value(approval.get("post_action_receipt")),
+        "external_actions_executed": False,
         "business_object": business_object,
         "amount_or_price": get_amount(approval, case),
         "external_party": case.get("buyer_name", ""),
