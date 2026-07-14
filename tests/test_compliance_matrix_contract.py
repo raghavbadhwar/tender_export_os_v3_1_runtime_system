@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import json
+import shutil
+import subprocess
+import sys
 from pathlib import Path
 
-from scripts.compliance_matrix_contract import validate_matrix, write_matrix
+from scripts.compliance_matrix_contract import render_markdown, validate_matrix, write_matrix
 
 
 def citation() -> dict[str, str | int]:
@@ -108,3 +111,32 @@ def test_write_matrix_creates_readable_artifact_and_canonical_event(tmp_path: Pa
     event = json.loads(events.read_text(encoding="utf-8").strip())
     assert event["event_type"] == "compliance.matrix_drafted"
     assert event["payload"]["matrix_status"] == "DRAFT_READY"
+
+
+def test_render_markdown_escapes_pipe_delimiters() -> None:
+    value = matrix()
+    value["clauses"][0]["requirement_text"] = "GST | registration"
+    value["clauses"][0]["reason"] = "Evidence | reviewed"
+
+    markdown = render_markdown(value)
+
+    assert "GST \\| registration" in markdown
+
+
+def test_compliance_contract_parses_under_python_311_when_available() -> None:
+    python311 = shutil.which("python3.11")
+    if python311 is None:
+        if sys.version_info[:2] == (3, 11):
+            python311 = sys.executable
+        else:
+            return
+
+    source = Path(__file__).parents[1] / "scripts" / "compliance_matrix_contract.py"
+    result = subprocess.run(
+        [python311, "-m", "py_compile", str(source)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr

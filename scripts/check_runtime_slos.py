@@ -155,6 +155,49 @@ def check_kanban(runner: Runner) -> dict[str, Any]:
     return pass_fail("kanban_dispatch", ok, {"stale_running_task_count": stale_count, "command": result})
 
 
+def check_operational_metrics(path: Path, thresholds: dict[str, Any]) -> list[dict[str, Any]]:
+    """Evaluate privacy-safe local runtime metrics; missing evidence fails closed."""
+    names = [
+        "kanban_dispatch_latency",
+        "worker_success_rate",
+        "mcp_cold_start",
+        "event_to_task_latency",
+        "owner_channel_delivery",
+        "receipt_completeness",
+    ]
+    if not path.is_file():
+        return [pass_fail(name, False, {"path": str(path), "reason": "metrics_evidence_missing"}) for name in names]
+    try:
+        metrics = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return [pass_fail(name, False, {"path": str(path), "reason": "metrics_evidence_invalid"}) for name in names]
+    if not isinstance(metrics, dict):
+        return [pass_fail(name, False, {"path": str(path), "reason": "metrics_evidence_not_object"}) for name in names]
+
+    def numeric(key: str) -> float | None:
+        value = metrics.get(key)
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
+
+    definitions = [
+        ("kanban_dispatch_latency", "kanban_dispatch_p95_ms", "max", thresholds.get("kanban_dispatch_p95_ms", 300000)),
+        ("worker_success_rate", "worker_success_rate_pct", "min", thresholds.get("worker_success_rate_min_pct", 100)),
+        ("mcp_cold_start", "mcp_cold_start_p95_ms", "max", thresholds.get("mcp_cold_start_p95_ms", 30000)),
+        ("event_to_task_latency", "event_to_task_p95_ms", "max", thresholds.get("event_to_task_p95_ms", 300000)),
+        ("owner_channel_delivery", "owner_channel_delivery_age_hours", "max", thresholds.get("owner_channel_delivery_max_age_hours", 24)),
+        ("receipt_completeness", "receipt_completeness_pct", "min", thresholds.get("receipt_completeness_min_pct", 100)),
+    ]
+    checks = []
+    for name, key, operator, threshold in definitions:
+        observed = numeric(key)
+        limit = float(threshold)
+        ok = observed is not None and (observed <= limit if operator == "max" else observed >= limit)
+        checks.append(pass_fail(name, ok, {"path": str(path), "metric": key, "observed": observed, "operator": operator, "threshold": limit}))
+    return checks
+
+
 def build_exception_cards(checks: list[dict[str, Any]], output_dir: Path) -> list[str]:
     output_dir.mkdir(parents=True, exist_ok=True)
     paths = []
@@ -191,6 +234,12 @@ def run_checks(*, config: dict[str, Any], runner: Runner = subprocess.run) -> di
         check_age("backup_age", "outputs/disaster_recovery_drill/DR-*/disaster_recovery_drill_report.json", float(thresholds.get("disaster_recovery_drill_max_age_hours", 168))),
         check_age("production_readiness_gate_freshness", "outputs/production_readiness/production_readiness_gate_*.json", float(thresholds.get("production_readiness_gate_max_age_hours", 24))),
     ]
+    checks.extend(
+        check_operational_metrics(
+            PROJECT_ROOT / str((config.get("observability") or {}).get("metrics_path") or "outputs/observability/runtime_metrics.json"),
+            thresholds,
+        )
+    )
     exception_cards = build_exception_cards(checks, cards_dir)
     return {
         "schema_version": "runtime_slo_report.v1",

@@ -57,6 +57,46 @@ actions:
     mode: internal_evidence_write
     external_effect: false
     approval_required: false
+  mcp.stage_case_transition:
+    tier: 2
+    mode: internal_state_staging
+    external_effect: false
+    approval_required: false
+  mcp.attach_case_evidence:
+    tier: 2
+    mode: internal_evidence_write
+    external_effect: false
+    approval_required: false
+  mcp.stage_supplier_candidate:
+    tier: 2
+    mode: internal_supplier_staging
+    external_effect: false
+    approval_required: false
+  mcp.record_quote_proof_review:
+    tier: 2
+    mode: internal_quote_review
+    external_effect: false
+    approval_required: false
+  mcp.create_internal_approval_card:
+    tier: 2
+    mode: internal_approval_staging
+    external_effect: false
+    approval_required: false
+  mcp.record_case_outcome:
+    tier: 2
+    mode: internal_outcome_recording
+    external_effect: false
+    approval_required: false
+  mcp.stage_learning_proposal:
+    tier: 2
+    mode: internal_learning_staging
+    external_effect: false
+    approval_required: false
+  mcp.reconcile_projection_from_receipt:
+    tier: 2
+    mode: internal_projection_reconciliation
+    external_effect: false
+    approval_required: false
 
   portal_login_for_research:
     tier: 3

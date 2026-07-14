@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import csv
 import datetime as dt
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
@@ -81,6 +82,73 @@ def path_exists(path_text: str) -> bool:
     return path.exists()
 
 
+def file_sha256(path_text: str) -> str:
+    path = Path(path_text).expanduser()
+    if not path.is_absolute():
+        path = PROJECT_ROOT / path
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def build_promotion_receipt(
+    *,
+    proposal: dict[str, Any],
+    evaluation_report_path: str,
+    checkpoint_path: str,
+    artifact_hash: str,
+    event_id: str,
+    promoted_at: str,
+) -> dict[str, Any]:
+    """Build an immutable, content-minimized receipt for an approved promotion."""
+    if not path_exists(evaluation_report_path):
+        raise ValueError("evaluation report path must exist")
+    if not path_exists(checkpoint_path):
+        raise ValueError("checkpoint path must exist")
+    proposal_type = clean(proposal.get("proposal_type")).lower()
+    proposal_type = {"source": "source_adapter", "routing": "rule", "evaluation": "test"}.get(proposal_type, proposal_type or "test")
+    return {
+        "schema_version": "learning_promotion_receipt.v1",
+        "proposal_id": clean(proposal.get("proposal_id")),
+        "proposal_type": proposal_type,
+        "proposal_target": clean(proposal.get("proposal_target")),
+        "proposed_version": clean(proposal.get("proposed_version")),
+        "approval_id": clean(proposal.get("approval_id")),
+        "evaluation_report_path": evaluation_report_path,
+        "evaluation_report_sha256": file_sha256(evaluation_report_path),
+        "checkpoint_path": checkpoint_path,
+        "rollback_artifact_path": clean(proposal.get("rollback_artifact_path")),
+        "artifact_hash": artifact_hash,
+        "event_id": event_id,
+        "promoted_at": promoted_at,
+        "external_actions_executed": False,
+        "raw_content_persisted": False,
+    }
+
+
+def validate_promotion_receipt(receipt: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    if receipt.get("schema_version") != "learning_promotion_receipt.v1":
+        errors.append("schema_version must be learning_promotion_receipt.v1")
+    for field in ("proposal_id", "proposal_target", "proposed_version", "approval_id", "evaluation_report_path", "checkpoint_path", "rollback_artifact_path", "artifact_hash", "event_id", "promoted_at"):
+        if not clean(receipt.get(field)):
+            errors.append(f"{field} is required")
+    if not path_exists(clean(receipt.get("rollback_artifact_path"))):
+        errors.append("rollback artifact must exist")
+    if not path_exists(clean(receipt.get("evaluation_report_path"))):
+        errors.append("evaluation report must exist")
+    if not path_exists(clean(receipt.get("checkpoint_path"))):
+        errors.append("checkpoint must exist")
+    if receipt.get("external_actions_executed") is not False:
+        errors.append("external_actions_executed must be false")
+    if receipt.get("raw_content_persisted") is not False:
+        errors.append("raw_content_persisted must be false")
+    digest = clean(receipt.get("evaluation_report_sha256"))
+    if len(digest) != 64 or any(char not in "0123456789abcdef" for char in digest.lower()):
+        errors.append("evaluation_report_sha256 must be a SHA-256 digest")
+    elif path_exists(clean(receipt.get("evaluation_report_path"))) and digest != file_sha256(clean(receipt.get("evaluation_report_path"))):
+        errors.append("evaluation_report_sha256 does not match evaluation report")
+    return errors
+
+
 def validate_application(
     *,
     proposal: dict[str, Any],
@@ -108,6 +176,11 @@ def validate_application(
         errors.append("evaluation_report.proposal_id mismatch")
     if upper(evaluation_report.get("evaluation_status")) != "PASS":
         errors.append("evaluation status must be PASS")
+    evaluation_rows = evaluation_report.get("rows")
+    if not isinstance(evaluation_rows, list) or len(evaluation_rows) != 3 or any(row.get("status") != "PASS" for row in evaluation_rows if isinstance(row, dict)):
+        errors.append("evaluation must contain three passing repeated runs")
+    if not isinstance(evaluation_rows, list) or any(not isinstance(row, dict) for row in evaluation_rows):
+        errors.append("evaluation rows must be objects")
     rollback_path = clean(proposal.get("rollback_artifact_path"))
     if not path_exists(rollback_path):
         errors.append("rollback artifact must exist")
@@ -138,6 +211,7 @@ def main() -> int:
     parser.add_argument("--checkpoint-path", required=True)
     parser.add_argument("--learning-proposals", default=str(LEARNING_PROPOSALS))
     parser.add_argument("--events", default=str(EVENTS_PATH))
+    parser.add_argument("--promotion-receipt", default="", help="Output path for the immutable promotion receipt")
     parser.add_argument("--write", action="store_true")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args()
@@ -145,12 +219,14 @@ def main() -> int:
     proposals_path = Path(args.learning_proposals).expanduser().resolve()
     proposals = load_csv(proposals_path)
     proposal = next((row for row in proposals if clean(row.get("proposal_id")) == args.proposal_id), None)
+    evaluation_report_path = Path(args.evaluation_report).expanduser().resolve()
+    evaluation_report = load_json(evaluation_report_path)
     if proposal is None:
         errors = [f"proposal not found: {args.proposal_id}"]
     else:
         errors = validate_application(
             proposal=proposal,
-            evaluation_report=load_json(Path(args.evaluation_report).expanduser()),
+            evaluation_report=evaluation_report,
             approval_scope=args.approval_scope,
             target=args.target,
             version=args.version,
@@ -178,7 +254,28 @@ def main() -> int:
             idempotency_key=f"learning.promoted:{args.proposal_id}:{args.artifact_hash}",
             events_file=Path(args.events).expanduser().resolve(),
         )
-        outputs["event_id"] = str(event["event_id"])
+        event_id = str(event["event_id"])
+        receipt_path = Path(args.promotion_receipt or (PROJECT_ROOT / "outputs" / "learning_evaluations" / f"promotion_receipt_{args.proposal_id}.json")).expanduser().resolve()
+        receipt = build_promotion_receipt(
+            proposal=proposal,
+            evaluation_report_path=str(evaluation_report_path),
+            checkpoint_path=args.checkpoint_path,
+            artifact_hash=args.artifact_hash,
+            event_id=event_id,
+            promoted_at=applied_at,
+        )
+        receipt_errors = validate_promotion_receipt(receipt)
+        if receipt_errors:
+            raise ValueError("promotion receipt validation failed: " + "; ".join(receipt_errors))
+        receipt_path.parent.mkdir(parents=True, exist_ok=True)
+        serialized_receipt = json.dumps(receipt, indent=2, ensure_ascii=False) + "\n"
+        if receipt_path.exists():
+            if receipt_path.read_text(encoding="utf-8") != serialized_receipt:
+                raise ValueError("promotion receipt path already exists with different content")
+        else:
+            receipt_path.write_text(serialized_receipt, encoding="utf-8")
+        outputs["event_id"] = event_id
+        outputs["promotion_receipt"] = str(receipt_path)
     payload = {"status": "PASS" if not errors else "FAIL", "errors": errors, "write_applied": bool(args.write and not errors), "outputs": outputs}
     print(json.dumps(payload, indent=2, ensure_ascii=False) if args.json else json.dumps(payload, ensure_ascii=False))
     return 0 if not errors else 1

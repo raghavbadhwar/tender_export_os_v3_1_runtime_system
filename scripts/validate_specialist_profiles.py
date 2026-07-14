@@ -25,6 +25,7 @@ from scripts.apply_specialist_profile_souls import REGISTRY_PATH, load_registry
 
 DEFAULT_PROFILES_ROOT = Path.home() / ".hermes" / "profiles"
 DEFAULT_OUTPUT = PROJECT_ROOT / "outputs" / "profile_specialization" / "specialist_validation.json"
+CRON_RUNTIME_MARKERS = {"ticker_last_success", "ticker_heartbeat", ".tick.lock", ".jobs.lock"}
 Runner = Callable[..., subprocess.CompletedProcess[str]]
 
 
@@ -167,7 +168,12 @@ def validate_profiles(
             errors.append("specialist gateway dispatcher is not disabled")
 
         cron_dir = profile_dir / "cron"
-        row["profile_local_cron"] = cron_dir.is_dir() and any(path.is_file() for path in cron_dir.rglob("*"))
+        cron_entries = [
+            path
+            for path in cron_dir.rglob("*")
+            if path.is_file() and path.name not in CRON_RUNTIME_MARKERS
+        ] if cron_dir.is_dir() else []
+        row["profile_local_cron"] = bool(cron_entries)
         if row["profile_local_cron"]:
             errors.append("profile-local cron files present")
 

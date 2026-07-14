@@ -36,6 +36,7 @@
     "drive_upload",
     "drive_lock",
     "kanban_reconciliation",
+    "kanban_route",
     "source_adapter",
     "evidence",
     "case_workspace",
@@ -136,6 +137,9 @@
     "drive.lock_timeout",
     "kanban.reconciliation_planned",
     "kanban.reconciliation_applied",
+    "kanban.event_routed",
+    "kanban.event_ignored",
+    "kanban.event_route_failed",
     "kanban.task_graph_created",
     "source_adapter.mock_ran",
     "source_adapter.external_probe_ran",
@@ -235,6 +239,7 @@
     ,"case_outcome.snapshot_imported"
     ,"case.outcome_recorded"
     ,"payment.received"
+    ,"payment.overdue"
     ,"forecast.matured"
     ,"learning_proposal.snapshot_imported"
     ,"learning.proposal_staged"

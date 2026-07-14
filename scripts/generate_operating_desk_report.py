@@ -92,6 +92,40 @@ def hermes_runtime_health(project_root: Path) -> dict[str, Any]:
     }
 
 
+def hermes_capability_utilization(project_root: Path) -> dict[str, Any]:
+    report = read_latest_json(
+        project_root / "outputs" / "hermes_profile_audit",
+        "hermes_profile_capability_audit_*.json",
+    )
+    utilization = report.get("capability_utilization", {}) if isinstance(report.get("capability_utilization"), dict) else {}
+    capabilities = utilization.get("capabilities", {}) if isinstance(utilization.get("capabilities"), dict) else {}
+    scheduler = capabilities.get("scheduler", {}) if isinstance(capabilities.get("scheduler"), dict) else {}
+    profiles = capabilities.get("profiles", {}) if isinstance(capabilities.get("profiles"), dict) else {}
+    mcp = capabilities.get("mcp", {}) if isinstance(capabilities.get("mcp"), dict) else {}
+    sessions = capabilities.get("session_runtime", {}) if isinstance(capabilities.get("session_runtime"), dict) else {}
+    material_underuse = [
+        name
+        for name, value in capabilities.items()
+        if isinstance(value, dict) and value.get("status") in {"CONFIGURED_NOT_EVIDENCED", "CONFIGURED_PARTIAL_EVIDENCE"}
+    ]
+    return {
+        "status": report.get("status", "NOT_CHECKED"),
+        "schema_version": utilization.get("schema_version", ""),
+        "observed_jobs": scheduler.get("observed_jobs", 0),
+        "configured_jobs": scheduler.get("configured_jobs", 0),
+        "configured_profiles": profiles.get("configured_profiles", 0),
+        "observed_mcp_calls": mcp.get("observed_calls_in_insights_window", 0),
+        "observed_sessions": sessions.get("sessions_in_insights_window", 0),
+        "material_underuse": material_underuse,
+        "report_path": report.get("report_path", ""),
+        "next_action": (
+            "Review material capability underuse before enabling more authority."
+            if material_underuse
+            else "Continue measuring configured versus operationally used Hermes capability."
+        ),
+    }
+
+
 def prediction_health(project_root: Path) -> dict[str, Any]:
     report = read_latest_json(project_root / "outputs" / "demand_forecasting", "forecast_calibration_*.json")
     return {
@@ -675,9 +709,11 @@ def build_report(
             "data/outreach_queue.csv",
             "data/communication_log.csv",
             "outputs/cron_gateway/cron_gateway_reliability_*.json",
+            "outputs/hermes_profile_audit/hermes_profile_capability_audit_*.json",
             "outputs/demand_forecasting/forecast_calibration_*.json",
         ],
         "hermes_runtime_health": hermes_runtime_health(project_root),
+        "hermes_capability_utilization": hermes_capability_utilization(project_root),
         "prediction_health": prediction_health(project_root),
         "buyer_acquisition": buyer_acquisition_health(project_root, buyer_signals, outreach, communications),
         "top_three_evidenced_opportunities": get_top_evidenced_opportunities(cases),
@@ -719,6 +755,8 @@ def build_report(
         "source_blockers": len(report["source_blockers"]),
         "plugin_blockers": len(report["plugin_blockers"]),
         "active_cron_jobs": report["hermes_runtime_health"]["active_jobs"],
+        "hermes_capability_audit_status": report["hermes_capability_utilization"]["status"],
+        "hermes_capability_material_underuse": len(report["hermes_capability_utilization"]["material_underuse"]),
         "mature_forecast_outcomes": report["prediction_health"]["mature_sample_size"],
         "buyer_targets": report["buyer_acquisition"]["target_count"],
         "outreach_drafts": report["buyer_acquisition"]["outreach_draft_count"],
@@ -757,6 +795,7 @@ td,th{border:1px solid #d8dee9;padding:7px;text-align:left;vertical-align:top}th
     ef = report["exception_first"]
     sections = [
         ("Hermes Runtime Health", [report["hermes_runtime_health"]], ["status", "profile", "gateway_running", "active_jobs", "generated_at", "next_action"]),
+        ("Hermes Capability Utilization", [report["hermes_capability_utilization"]], ["status", "schema_version", "configured_jobs", "observed_jobs", "configured_profiles", "observed_mcp_calls", "observed_sessions", "material_underuse", "next_action"]),
         ("Prediction Calibration Health", [report["prediction_health"]], ["status", "review_date", "mature_sample_size", "minimum_mature_sample", "brier_score", "next_action"]),
         ("Exceptions", ef["exceptions"], ["case_id", "approval_id", "communication_id", "name", "run_id", "days_left", "days_overdue", "next_action"]),
         ("Top Three Evidenced Opportunities", ef["top_three_evidenced_opportunities"], ["case_id", "workflow_type", "title", "buyer", "score", "evidence_level", "deadline_date", "next_action"]),

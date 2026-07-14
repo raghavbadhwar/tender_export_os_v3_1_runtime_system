@@ -45,7 +45,7 @@ mcp_servers:
     sampling: {enabled: false}
     elicitation: {enabled: false}
     tools:
-      include: [capability_status]
+      include: [capability_status, stage_case_transition, attach_case_evidence, create_internal_approval_card, reconcile_projection_from_receipt]
       resources: false
       prompts: false
 platform_toolsets:

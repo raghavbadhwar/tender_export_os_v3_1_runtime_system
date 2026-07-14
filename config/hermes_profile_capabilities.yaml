@@ -72,6 +72,7 @@ local_skills:
 
 local_capabilities:
   model_resilience:
+    policy: config/model_routing_policy.yaml
     fallback_chain:
       - {provider: openai-codex, model: gpt-5.5}
     credential_reuse: openai_codex_oauth
@@ -142,6 +143,14 @@ local_capabilities:
       - capture_public_web
       - get_approval_status
       - evaluate_business_action
+      - stage_case_transition
+      - attach_case_evidence
+      - stage_supplier_candidate
+      - record_quote_proof_review
+      - create_internal_approval_card
+      - record_case_outcome
+      - stage_learning_proposal
+      - reconcile_projection_from_receipt
     external_execution_tools_exposed: false
     policy_engine: opa
     policy_binary: opa
@@ -172,16 +181,21 @@ gateway_hooks:
 scheduled_jobs:
   - {name: Core Source Agent-Browser Radar, schedule: "30 5 * * *", mode: no_agent_supervised}
   - {name: Morning Opportunity Intelligence, schedule: "0 6 * * *", mode: no_agent_supervised}
+  - {name: Daily Shadow Profile Probe, schedule: "50 6 * * *", mode: no_agent_supervised}
+  - {name: Daily Production Readiness Gate, schedule: "5 7 * * *", mode: no_agent_supervised}
+  - {name: Hermes Capability Truth Audit, schedule: "20 7 * * *", mode: no_agent_supervised}
   - {name: V5 Prediction Shadow and Calibration, schedule: "15 7 * * *", mode: no_agent_supervised}
   - {name: Morning Operator Brief, schedule: "30 8 * * *", mode: no_agent_supervised}
-  - {name: Midday Opportunity Radar, schedule: "0 13 * * *", mode: no_agent_supervised}
-  - {name: Supplier Follow-up Review, schedule: "0 17 * * *", mode: no_agent_supervised}
-  - {name: Buyer Reply Monitor, schedule: "*/30 9-21 * * *", mode: no_agent_supervised}
   - {name: Morning Agentic Review Enqueue, schedule: "45 8 * * *", mode: no_agent_supervised}
+  - {name: Buyer Reply Monitor, schedule: "*/30 9-21 * * *", mode: no_agent_supervised}
+  - {name: Weekly Historical GOV Intelligence Capture, schedule: "15 11 * * 6", mode: no_agent_supervised}
+  - {name: Daily Retender and Corrigenda Watch, schedule: "30 12 * * *", mode: no_agent_supervised}
+  - {name: Midday Opportunity Radar, schedule: "0 13 * * *", mode: no_agent_supervised}
   - {name: Intraday Exception Enqueue, schedule: "*/45 9-21 * * *", mode: no_agent_supervised}
-  - {name: Evening Execution Close, schedule: "30 20 * * *", mode: no_agent_supervised}
+  - {name: Supplier Follow-up Review, schedule: "0 17 * * *", mode: no_agent_supervised}
   - {name: Weekly Learning Enqueue, schedule: "30 18 * * 5", mode: no_agent_supervised}
   - {name: Weekly Learning Review, schedule: "0 18 * * 5", mode: no_agent_supervised}
+  - {name: Evening Execution Close, schedule: "30 20 * * *", mode: no_agent_supervised}
 
 prediction_contract:
   prioritization_score_is_probability: false

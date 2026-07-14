@@ -1,0 +1,31 @@
+{
+  "created_at": "2026-07-14T03:37:17+05:30",
+  "case_id": "GOV-CODEX-FIXTURE-002",
+  "task": "Produce an internal draft artifact only; preserve unknowns and prohibited claims.",
+  "reason": "Codex App-Server Runtime unavailable or not selected.",
+  "approval_boundary": "Codex may not send, upload, submit, pay, sign, contact, or finalize commercial/legal/classification/origin/delivery claims.",
+  "status": "PENDING_CODEX_ARTIFACT",
+  "schema_version": "codex_artifact_task.v1",
+  "task_type": "CODEX_ARTIFACT",
+  "artifact_kind": "spreadsheet",
+  "workflow_type": "GOV",
+  "source_artifact_hashes": [
+    {
+      "path": "tests/fixtures/swarms/requirements.json",
+      "sha256": "2fc51645ffdc56eb01e2f0f7fad161c2ef9e841015c0c5a9490b5433ece016d1"
+    }
+  ],
+  "expected_outputs": [
+    "outputs/case_reports/GOV-CODEX-FIXTURE-002/workbook.xlsx"
+  ],
+  "allowed_paths": [
+    "outputs/case_reports/GOV-CODEX-FIXTURE-002"
+  ],
+  "required_output_schema": "config/schemas/codex_artifact_task.schema.json",
+  "prohibited_claims": [
+    "final price",
+    "origin"
+  ],
+  "external_actions_executed": false,
+  "input_fingerprint": "d750c20611ab41bc42c0ca086b15701936feb3a542da7889592316c9f2f0dcea"
+}

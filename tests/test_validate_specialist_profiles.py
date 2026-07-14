@@ -8,6 +8,9 @@ import yaml
 from scripts.validate_specialist_profiles import validate_profiles
 
 
+CRON_RUNTIME_MARKERS = {"ticker_last_success", "ticker_heartbeat", ".tick.lock", ".jobs.lock"}
+
+
 WORKSPACE = "/workspace/tender-os"
 
 
@@ -80,6 +83,24 @@ def test_validate_profiles_passes_exact_isolated_profiles(tmp_path: Path) -> Non
     assert report["duplicate_soul_hashes"] == []
     assert all(row["auth_status"] == "PASS" for row in report["profiles"])
     assert all(row["forbidden_tools_present"] == [] for row in report["profiles"])
+
+
+def test_validate_profiles_ignores_hermes_runtime_cron_markers(tmp_path: Path) -> None:
+    root = tmp_path / "profiles"
+    for name, description in (
+        ("worker-one", "First role-specific worker."),
+        ("worker-two", "Second role-specific worker."),
+    ):
+        profile = seed_profile(root, name, description, f"# {name}\n")
+        cron = profile / "cron"
+        for marker in CRON_RUNTIME_MARKERS:
+            (cron / marker).write_text("runtime", encoding="utf-8")
+
+    report = validate_profiles(registry_fixture(), profiles_root=root, runner=auth_runner)
+
+    assert report["status"] == "PASS"
+    assert all(row["profile_local_cron"] is False for row in report["profiles"])
+
 
 
 def test_validate_profiles_detects_authority_state_and_isolation_failures(tmp_path: Path) -> None:

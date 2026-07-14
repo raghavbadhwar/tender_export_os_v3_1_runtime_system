@@ -1,0 +1,17 @@
+{
+  "event_id": "EVT-ROUTE-FIXTURE-001",
+  "event_time": "2026-07-14T00:00:00+00:00",
+  "schema_version": "1.1",
+  "event_type": "tender.deadline_changed",
+  "actor": "fixture",
+  "case_id": "GOV-ROUTE-FIXTURE-001",
+  "object_type": "case",
+  "object_id": "GOV-ROUTE-FIXTURE-001",
+  "source": "tests/fixtures",
+  "payload": {
+    "previous_deadline": "2026-07-10",
+    "new_deadline": "2026-07-20"
+  },
+  "citations": ["tests/fixtures/events/deadline_change.json"],
+  "idempotency_key": "fixture:deadline-change:001"
+}

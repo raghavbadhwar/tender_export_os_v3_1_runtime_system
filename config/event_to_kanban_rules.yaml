@@ -1,0 +1,94 @@
+version: 1
+board: tender-export-os
+route_via: teos-orchestrator
+external_effects_allowed: false
+rules:
+  - id: corrigendum-review
+    event_types: [corrigendum.detected, case.updated_from_corrigendum]
+    profile: gov-tender-intelligence
+    title: "Review corrigendum or amended tender evidence"
+    priority: 75
+    case_id_required: true
+    payload_match: {}
+    evidence_fields: [corrigendum_hash, report_path, source_url]
+  - id: deadline-change-review
+    event_types: [tender.deadline_changed]
+    profile: gov-tender-intelligence
+    title: "Recheck tender deadline and submission readiness"
+    priority: 100
+    case_id_required: true
+    payload_match: {}
+    evidence_fields: [previous_deadline, new_deadline]
+  - id: source-health-degradation
+    event_types: [source.adapter_degraded]
+    profile: teos-orchestrator
+    title: "Investigate degraded source adapter"
+    priority: 75
+    case_id_required: false
+    payload_match: {}
+    evidence_fields: [source_name, consecutive_failures, threshold, receipt_path]
+  - id: failed-job-review
+    event_types: [job.failed, pipeline.error]
+    profile: teos-orchestrator
+    title: "Investigate failed deterministic job"
+    priority: 100
+    case_id_required: false
+    payload_match: {}
+    evidence_fields: [run_id, job_id, receipt_path, reason]
+  - id: quote-received-review
+    event_types: [supplier.quote_received]
+    profile: supplier-commercial
+    title: "Review received supplier quote proof"
+    priority: 75
+    case_id_required: true
+    payload_match: {}
+    evidence_fields: [quote_id, quote_proof_path]
+  - id: quote-rejected-review
+    event_types: [supplier.quote_rejected, supplier.quote_proof_rejected]
+    profile: supplier-commercial
+    title: "Review rejected supplier quote evidence"
+    priority: 75
+    case_id_required: true
+    payload_match: {}
+    evidence_fields: [quote_id, reason]
+  - id: substantive-buyer-reply
+    event_types: [buyer.reply_received]
+    profile: relationship-ops
+    title: "Triage substantive buyer reply"
+    priority: 100
+    case_id_required: true
+    payload_match:
+      classification: [SUBSTANTIVE, RFQ, INTERESTED, COUNTERQUESTION]
+    evidence_fields: [communication_id, classification, evidence_path]
+  - id: approval-expiry-review
+    event_types: [approval.expired]
+    profile: tender-export-os
+    title: "Review expired owner approval"
+    priority: 100
+    case_id_required: true
+    payload_match: {}
+    evidence_fields: [approval_id]
+  - id: execution-receipt-review
+    event_types: [execution.receipt_ingested]
+    profile: tender-export-os
+    title: "Verify execution receipt and next internal state"
+    priority: 75
+    case_id_required: true
+    payload_match: {}
+    evidence_fields: [receipt_id, verification_status, receipt_path]
+  - id: forecast-maturity-review
+    event_types: [forecast.matured]
+    profile: learning-evaluation
+    title: "Evaluate matured forecast outcome"
+    priority: 50
+    case_id_required: false
+    payload_match: {}
+    evidence_fields: [forecast_id, outcome_id]
+  - id: overdue-payment-review
+    event_types: [payment.overdue]
+    profile: tender-export-os
+    title: "Review overdue payment evidence"
+    priority: 100
+    case_id_required: true
+    payload_match: {}
+    evidence_fields: [outcome_id, due_date, evidence_sha256]

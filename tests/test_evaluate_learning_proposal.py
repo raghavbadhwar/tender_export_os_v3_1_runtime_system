@@ -29,6 +29,8 @@ def test_learning_proposal_evaluation_passes_three_repeated_runs(tmp_path: Path)
     report = evaluate_payload(_payload(tmp_path), root=tmp_path)
 
     assert report["evaluation_status"] == "PASS"
+    assert report["promotion_gate"]["ready_for_owner_approval"] is True
+    assert report["promotion_gate"]["passing_repeated_runs"] == 3
     assert len(report["rows"]) == 3
     assert all(row["status"] == "PASS" for row in report["rows"])
 

@@ -71,3 +71,28 @@ safety:
   no_final_hsn_itchs_or_origin_claims: true
   cite_sources_in_artifacts: true
   append_agent_run_log: true
+
+artifact_request_contract:
+  schema: config/schemas/codex_artifact_task.schema.json
+  supported_kinds: [spreadsheet, pdf, docx, pptx, dashboard, parser, bid_pack, quote_pack]
+  source_artifact_hashes_required: true
+  expected_output_schema_required: true
+  allowed_paths_required: true
+  prohibited_claims_required: true
+  bounded_worktree_required: true
+  verifier_receipt_required_before_approval: true
+  external_actions_executed: false
+  prohibited_actions:
+    - send
+    - upload
+    - submit
+    - pay
+    - sign
+    - use_dsc
+    - contact_buyer
+    - contact_supplier
+    - finalize_price
+    - finalize_classification
+    - finalize_origin
+    - finalize_delivery
+    - finalize_payment_terms

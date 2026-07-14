@@ -212,9 +212,13 @@ def render_markdown(matrix: dict[str, Any]) -> str:
     ]
     for clause in matrix["clauses"]:
         basis = citation_text(clause.get("evidence_citations", [])) or clean_text(clause.get("reason"))
+        clause_id = clean_text(clause.get("clause_id"))
+        requirement = clean_text(clause.get("requirement_text")).replace("|", "\\|")
+        evidence = basis.replace("|", "\\|")
+        position = clean_text(clause.get("position"))
+        owner_decision = str(bool(clause.get("owner_decision_needed"))).lower()
         lines.append(
-            f"| {clause.get('clause_id', '')} | {clean_text(clause.get('requirement_text')).replace('|', '\\|')} | "
-            f"{clause.get('position', '')} | {basis.replace('|', '\\|')} | {str(bool(clause.get('owner_decision_needed'))).lower()} |"
+            f"| {clause_id} | {requirement} | {position} | {evidence} | {owner_decision} |"
         )
     lines.extend(["", "## Unresolved items", ""])
     lines.extend(f"- {item}" for item in matrix["unresolved_items"] or ["- None"])

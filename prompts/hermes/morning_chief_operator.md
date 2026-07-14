@@ -28,3 +28,8 @@ Return:
 7. One primary owner action for today.
 
 Keep the brief exception-first and owner-facing. If evidence is missing, say exactly what is missing and route it; do not infer readiness.
+
+Return one JSON object with these fields:
+`status`, `profile`, `task_id`, `case_id`, `summary`, `evidence`, `artifacts`, `unknowns`, `approval_required`, `external_actions_executed`, `stop_reason`, `next_profile`, `gate`, `artifact_paths`, `validator_receipt_path`, `retry_method`, and `smallest_safe_next_action`.
+
+Set `external_actions_executed` to `false` always. Cite packet paths and hashes in `evidence`; preserve unknowns and stop at approval boundaries.

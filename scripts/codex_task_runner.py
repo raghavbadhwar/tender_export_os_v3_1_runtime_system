@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 
@@ -27,6 +28,66 @@ def resolve_project_path(value: str) -> Path:
     except ValueError as exc:
         raise ValueError(f"Path escapes project root: {value}") from exc
     return path
+
+
+def validate_task_packet(packet: dict[str, object]) -> dict[str, object]:
+    """Validate a generic Codex artifact packet before worker dispatch."""
+    errors: list[str] = []
+    required = {
+        "schema_version", "task_type", "case_id", "artifact_kind", "workflow_type",
+        "source_artifact_hashes", "expected_outputs", "allowed_paths",
+        "required_output_schema", "prohibited_claims", "external_actions_executed",
+        "input_fingerprint",
+    }
+    errors.extend(f"missing required field: {field}" for field in sorted(required - set(packet)))
+    if packet.get("schema_version") != "codex_artifact_task.v1":
+        errors.append("schema_version must be codex_artifact_task.v1")
+    if packet.get("task_type") != "CODEX_ARTIFACT":
+        errors.append("task_type must be CODEX_ARTIFACT")
+    if packet.get("external_actions_executed") is not False:
+        errors.append("external_actions_executed must be false")
+    allowed = packet.get("allowed_paths") if isinstance(packet.get("allowed_paths"), list) else []
+    try:
+        allowed_paths = [resolve_project_path(str(value)) for value in allowed]
+        if not allowed_paths:
+            errors.append("allowed_paths must contain at least one project path")
+        if packet.get("required_output_schema"):
+            resolve_project_path(str(packet["required_output_schema"]))
+        outputs = packet.get("expected_outputs") if isinstance(packet.get("expected_outputs"), list) else []
+        for output in outputs:
+            path = resolve_project_path(str(output))
+            if not any(path.is_relative_to(root) for root in allowed_paths):
+                errors.append(f"expected output is outside allowed_paths: {output}")
+    except ValueError as exc:
+        errors.append(str(exc))
+    source_hashes = packet.get("source_artifact_hashes") if isinstance(packet.get("source_artifact_hashes"), list) else []
+    for item in source_hashes:
+        if not isinstance(item, dict) or not item.get("path") or not item.get("sha256"):
+            errors.append("every source_artifact_hashes item requires path and sha256")
+            continue
+        try:
+            resolve_project_path(str(item["path"]))
+        except ValueError as exc:
+            errors.append(str(exc))
+        digest = str(item["sha256"])
+        if len(digest) != 64 or any(char not in "0123456789abcdef" for char in digest.lower()):
+            errors.append(f"invalid source sha256: {item['path']}")
+    if not source_hashes:
+        errors.append("source_artifact_hashes must contain at least one item")
+    if not isinstance(packet.get("prohibited_claims"), list) or not packet.get("prohibited_claims"):
+        errors.append("prohibited_claims must contain at least one item")
+    fingerprint = packet.get("input_fingerprint")
+    if isinstance(fingerprint, str):
+        fingerprint_fields = {
+            "schema_version", "task_type", "case_id", "artifact_kind", "workflow_type", "task",
+            "source_artifact_hashes", "expected_outputs", "allowed_paths", "required_output_schema",
+            "prohibited_claims", "approval_boundary", "external_actions_executed",
+        }
+        unsigned = {key: packet[key] for key in fingerprint_fields if key in packet}
+        expected = hashlib.sha256(json.dumps(unsigned, sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()
+        if fingerprint != expected:
+            errors.append("input_fingerprint does not match packet contents")
+    return {"status": "PASS" if not errors else "FAIL", "errors": errors, "external_actions_executed": False}
 
 
 def list_inbox_tasks() -> int:

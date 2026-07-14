@@ -20,6 +20,9 @@ def test_enqueuer_creates_idempotent_cards_without_model_or_external_action(tmp_
     assert card["external_actions_allowed"] is False
     assert card["model_runs_executed_by_enqueuer"] is False
     assert card["idempotency_key"].startswith("agentic-review:weekly_learning:")
+    assert len(card["packet_sha256"]) == 64
+    assert card["route_via"] == "teos-orchestrator"
+    assert card["max_in_progress_per_profile"] == 1
     command = hermes_command(card)
     assert "--idempotency-key" in command
     assert "--body" in command
@@ -29,7 +32,7 @@ def test_enqueuer_creates_idempotent_cards_without_model_or_external_action(tmp_
 
 def test_run_cards_is_dry_run_by_default(tmp_path: Path) -> None:
     packet = tmp_path / "exception.json"
-    packet.write_text("{}", encoding="utf-8")
+    packet.write_text('{"trigger_type":"failed_job"}', encoding="utf-8")
     cards = [enqueue_exceptions(packet)]
     cards = [card for card in cards if card]
 
@@ -42,7 +45,7 @@ def test_run_cards_is_dry_run_by_default(tmp_path: Path) -> None:
 
 def test_exception_review_routes_to_packet_capable_chief_operator(tmp_path: Path) -> None:
     packet = tmp_path / "exception.json"
-    packet.write_text("{}", encoding="utf-8")
+    packet.write_text('{"trigger_type":"deadline"}', encoding="utf-8")
 
     card = enqueue_exceptions(packet)
 
@@ -64,6 +67,13 @@ def test_run_cards_reports_kanban_failure_truthfully(tmp_path: Path) -> None:
     assert result["status"] == "FAIL"
     assert result["failure_count"] == 1
     assert result["kanban_mutated"] is False
+
+
+def test_exception_review_rejects_unproven_packet(tmp_path: Path) -> None:
+    packet = tmp_path / "exception.json"
+    packet.write_text("{}", encoding="utf-8")
+
+    assert enqueue_exceptions(packet) is None
 
 
 def test_latest_existing_selects_newest_packet(tmp_path: Path, monkeypatch) -> None:

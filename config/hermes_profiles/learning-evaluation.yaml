@@ -45,7 +45,7 @@ mcp_servers:
     sampling: {enabled: false}
     elicitation: {enabled: false}
     tools:
-      include: [capability_status, get_case, search_cases, get_source_health, get_approval_status]
+      include: [capability_status, get_case, search_cases, get_source_health, get_approval_status, record_case_outcome, stage_learning_proposal]
       resources: false
       prompts: false
 platform_toolsets:
