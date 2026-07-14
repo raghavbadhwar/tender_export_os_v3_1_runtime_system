@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import importlib.metadata
 import json
 import shutil
@@ -11,7 +12,7 @@ import subprocess
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 from scripts.score_opportunity import (
     evaluate_trader_specific_kills,
@@ -20,13 +21,16 @@ from scripts.score_opportunity import (
 )
 from scripts.gov_fast_kill import evaluate_gov_fast_kill
 from scripts.execution_receipt_status import dispositions_by_approval
+from scripts.event_ledger import append_event
 from scripts.source_runtime.document_intelligence import run_document_intelligence_bundle, sha256_file
 from scripts.tender_os_policy import PROJECT_ROOT, TenderPolicyEngine, display_path, load_csv
+from scripts.update_master_case import validate_status_transition
 
 
 MASTER_CASES = PROJECT_ROOT / "data" / "master_cases.csv"
 SOURCE_HEALTH = PROJECT_ROOT / "data" / "source_health.csv"
 APPROVALS = PROJECT_ROOT / "data" / "approvals_receipts.csv"
+INTERNAL_WRITE_RECEIPT_DIR = "receipts/internal_mcp_writes"
 ALLOWED_DOCUMENT_SUFFIXES = {
     ".csv",
     ".docx",
@@ -59,6 +63,94 @@ class MCPToolResult(BaseModel):
     policy_receipt_path: str = ""
     external_side_effects: Literal[False] = False
     data: dict[str, Any] = Field(default_factory=dict)
+
+
+class InternalCaseTransitionRequest(BaseModel):
+    case_id: str = Field(min_length=1)
+    from_status: str = Field(min_length=1)
+    to_status: str = Field(min_length=1)
+    evidence_ids: list[str] = Field(min_length=1)
+    citations: list[str] = Field(min_length=1)
+    actor_profile: str = Field(min_length=1)
+    idempotency_key: str = Field(min_length=8)
+    reason: str = Field(min_length=1)
+
+
+class InternalEvidenceAttachmentRequest(BaseModel):
+    case_id: str = Field(min_length=1)
+    evidence_path: str = Field(min_length=1)
+    evidence_type: str = Field(min_length=1)
+    actor_profile: str = Field(min_length=1)
+    idempotency_key: str = Field(min_length=8)
+    citations: list[str] = Field(min_length=1)
+
+
+class InternalSupplierCandidateRequest(BaseModel):
+    case_id: str = Field(min_length=1)
+    supplier_id: str = Field(min_length=1)
+    supplier_name: str = Field(min_length=1)
+    source_type: str = Field(min_length=1)
+    evidence_path: str = Field(min_length=1)
+    actor_profile: str = Field(min_length=1)
+    idempotency_key: str = Field(min_length=8)
+    citations: list[str] = Field(min_length=1)
+
+
+class InternalQuoteProofRequest(BaseModel):
+    case_id: str = Field(min_length=1)
+    supplier_id: str = Field(min_length=1)
+    quote_id: str = Field(min_length=1)
+    proof_status: Literal["VALID", "REJECTED"]
+    quote_proof_path: str = ""
+    reason: str = Field(min_length=1)
+    actor_profile: str = Field(min_length=1)
+    idempotency_key: str = Field(min_length=8)
+    citations: list[str] = Field(min_length=1)
+
+
+class InternalApprovalCardRequest(BaseModel):
+    case_id: str = Field(min_length=1)
+    proposed_action: str = Field(min_length=1)
+    scope_hash: str = Field(min_length=64, max_length=64)
+    card_path: str = Field(min_length=1)
+    evidence_ids: list[str] = Field(min_length=1)
+    actor_profile: str = Field(min_length=1)
+    idempotency_key: str = Field(min_length=8)
+    citations: list[str] = Field(min_length=1)
+
+
+class InternalCaseOutcomeRequest(BaseModel):
+    case_id: str = Field(min_length=1)
+    outcome_id: str = Field(min_length=1)
+    outcome_status: str = Field(min_length=1)
+    evidence_path: str = Field(min_length=1)
+    actor_profile: str = Field(min_length=1)
+    idempotency_key: str = Field(min_length=8)
+    citations: list[str] = Field(min_length=1)
+
+
+class InternalLearningProposalRequest(BaseModel):
+    proposal_id: str = Field(min_length=1)
+    case_ids: list[str] = Field(min_length=1)
+    proposal_type: Literal["memory", "skill", "rule", "prompt", "model", "source_adapter", "test"]
+    summary: str = Field(min_length=1)
+    evidence: list[str] = Field(min_length=1)
+    tests: list[str] = Field(min_length=1)
+    rollback: str = Field(min_length=1)
+    actor_profile: str = Field(min_length=1)
+    idempotency_key: str = Field(min_length=8)
+    citations: list[str] = Field(min_length=1)
+
+
+class InternalProjectionReconciliationRequest(BaseModel):
+    case_id: str = Field(min_length=1)
+    receipt_path: str = Field(min_length=1)
+    receipt_sha256: str = ""
+    projection_name: str = Field(min_length=1)
+    actor_profile: str = Field(min_length=1)
+    idempotency_key: str = Field(min_length=8)
+    citations: list[str] = Field(min_length=1)
+
 
 
 def read_csv(path: Path) -> list[dict[str, str]]:
@@ -144,6 +236,641 @@ class TenderOSTools:
             policy_decision_id=str(decision["decision_id"]),
             policy_receipt_path=str(decision.get("receipt_path", "")),
             data=data or {},
+        )
+
+    def _internal_failure(self, decision: dict[str, Any], messages: list[str]) -> MCPToolResult:
+        return self._base(
+            decision,
+            status="failed",
+            confidence=1.0,
+            missing_information=messages,
+            recommended_next_action="Correct the typed internal-write request and retry with fresh evidence.",
+            data={"external_actions_executed": False},
+        )
+
+    def _internal_receipt_path(self, idempotency_key: str) -> Path:
+        key_hash = hashlib.sha256(idempotency_key.encode("utf-8")).hexdigest()
+        return self.policy.receipt_root.parent / "internal_mcp_writes" / f"{key_hash}.json"
+
+    def _write_internal_event_receipt(
+        self,
+        *,
+        event_type: str,
+        case_id: str,
+        object_type: str,
+        object_id: str,
+        payload: dict[str, Any],
+        citations: list[str],
+        idempotency_key: str,
+        action: str,
+        actor_profile: str,
+        policy_decision_id: str,
+    ) -> tuple[dict[str, Any], Path]:
+        event = append_event(
+            event_type,
+            "hermes_mcp",
+            case_id=case_id,
+            object_type=object_type,
+            object_id=object_id,
+            source="mcp_internal_write",
+            payload=payload,
+            citations=citations,
+            idempotency_key=idempotency_key,
+            events_file=self.policy.events_file,
+        )
+        receipt_path = self._internal_receipt_path(idempotency_key)
+        receipt_path.parent.mkdir(parents=True, exist_ok=True)
+        if not receipt_path.exists():
+            receipt = {
+                "schema_version": 1,
+                "receipt_type": "internal_mcp_write",
+                "action": action,
+                "case_id": case_id,
+                "actor_profile": actor_profile,
+                "idempotency_key": idempotency_key,
+                "event_id": event["event_id"],
+                "event_type": event_type,
+                "payload": payload,
+                "citations": citations,
+                "external_actions_executed": False,
+                "policy_decision_id": policy_decision_id,
+            }
+            receipt_path.write_text(json.dumps(receipt, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        return event, receipt_path
+
+    def _internal_success(
+        self,
+        decision: dict[str, Any],
+        *,
+        event: dict[str, Any],
+        receipt_path: Path,
+        idempotency_key: str,
+        data: dict[str, Any] | None = None,
+        approval_required_override: bool | None = None,
+    ) -> MCPToolResult:
+        output = {
+            "event_id": event["event_id"],
+            "event_type": event["event_type"],
+            "receipt_path": display_path(receipt_path, root=self.project_root),
+            "idempotency_key": idempotency_key,
+            "external_actions_executed": False,
+        }
+        output.update(data or {})
+        result = self._base(
+            decision,
+            confidence=1.0,
+            evidence_ids=[str(event["event_id"])],
+            source_hashes=file_hash(receipt_path),
+            recommended_next_action="Use the receipt and canonical event for the next internal graph step; no external action was executed.",
+            data=output,
+        )
+        if approval_required_override is not None:
+            result.approval_required = approval_required_override
+        return result
+
+    def _case_exists(self, case_id: str) -> bool:
+        return any(item.get("case_id") == case_id for item in read_csv(self.project_root / "data" / "master_cases.csv"))
+
+    def _workspace_file(self, raw_path: str, *, label: str) -> tuple[Path | None, str | None, list[str]]:
+        path = Path(raw_path).expanduser()
+        path = path if path.is_absolute() else self.project_root / path
+        path = path.resolve()
+        try:
+            path.relative_to(self.project_root)
+        except ValueError:
+            return None, None, [f"{label} escapes the Tender OS workspace"]
+        if not path.is_file() or path.stat().st_size == 0:
+            return None, None, [f"{label} is missing or empty: {raw_path}"]
+        return path, sha256_file(path), []
+
+    def _stage_structured_event(
+        self,
+        decision: dict[str, Any],
+        *,
+        event_type: str,
+        case_id: str,
+        object_type: str,
+        object_id: str,
+        payload: dict[str, Any],
+        citations: list[str],
+        idempotency_key: str,
+        actor_profile: str,
+        action: str,
+        data: dict[str, Any] | None = None,
+        approval_required: bool | None = None,
+    ) -> MCPToolResult:
+        try:
+            event, receipt_path = self._write_internal_event_receipt(
+                event_type=event_type,
+                case_id=case_id,
+                object_type=object_type,
+                object_id=object_id,
+                payload=payload,
+                citations=citations,
+                idempotency_key=idempotency_key,
+                action=action,
+                actor_profile=actor_profile,
+                policy_decision_id=str(decision["decision_id"]),
+            )
+        except (OSError, ValueError) as exc:
+            return self._internal_failure(decision, [str(exc)])
+        return self._internal_success(
+            decision,
+            event=event,
+            receipt_path=receipt_path,
+            idempotency_key=idempotency_key,
+            data=data,
+            approval_required_override=approval_required,
+        )
+
+    def stage_case_transition(
+        self,
+        *,
+        case_id: str,
+        from_status: str,
+        to_status: str,
+        evidence_ids: list[str],
+        citations: list[str],
+        actor_profile: str,
+        idempotency_key: str,
+        reason: str,
+    ) -> MCPToolResult:
+        decision = self._authorize("mcp.stage_case_transition", case_id=case_id)
+        if not decision.get("allow"):
+            return self._blocked(decision)
+        try:
+            request = InternalCaseTransitionRequest(
+                case_id=case_id,
+                from_status=from_status,
+                to_status=to_status,
+                evidence_ids=evidence_ids,
+                citations=citations,
+                actor_profile=actor_profile,
+                idempotency_key=idempotency_key,
+                reason=reason,
+            )
+        except ValidationError as exc:
+            return self._internal_failure(decision, [f"{'.'.join(str(part) for part in error['loc'])}: {error['msg']}" for error in exc.errors()])
+        cases_path = self.project_root / "data" / "master_cases.csv"
+        row = next((item for item in read_csv(cases_path) if item.get("case_id") == request.case_id), None)
+        if row is None:
+            return self._internal_failure(decision, [f"case_id does not exist: {request.case_id}"])
+        if row.get("status") != request.from_status:
+            return self._internal_failure(
+                decision,
+                [f"from_status does not match canonical case status: {row.get('status')}"],
+            )
+        if not validate_status_transition(request.from_status, request.to_status):
+            return self._internal_failure(
+                decision,
+                [f"invalid status transition: {request.from_status} -> {request.to_status}"],
+            )
+        payload = {
+            "previous_status": request.from_status,
+            "new_status": request.to_status,
+            "reason": request.reason,
+            "evidence_ids": request.evidence_ids,
+            "actor_profile": request.actor_profile,
+        }
+        try:
+            event, receipt_path = self._write_internal_event_receipt(
+                event_type="case.status_changed",
+                case_id=request.case_id,
+                object_type="case",
+                object_id=request.case_id,
+                payload=payload,
+                citations=request.citations,
+                idempotency_key=request.idempotency_key,
+                action="mcp.stage_case_transition",
+                actor_profile=request.actor_profile,
+                policy_decision_id=str(decision["decision_id"]),
+            )
+        except (OSError, ValueError) as exc:
+            return self._internal_failure(decision, [str(exc)])
+        return self._internal_success(
+            decision,
+            event=event,
+            receipt_path=receipt_path,
+            idempotency_key=request.idempotency_key,
+            data={"case_id": request.case_id, "from_status": request.from_status, "to_status": request.to_status},
+        )
+
+    def attach_case_evidence(
+        self,
+        *,
+        case_id: str,
+        evidence_path: str,
+        evidence_type: str,
+        actor_profile: str,
+        idempotency_key: str,
+        citations: list[str],
+    ) -> MCPToolResult:
+        decision = self._authorize("mcp.attach_case_evidence", case_id=case_id)
+        if not decision.get("allow"):
+            return self._blocked(decision)
+        try:
+            request = InternalEvidenceAttachmentRequest(
+                case_id=case_id,
+                evidence_path=evidence_path,
+                evidence_type=evidence_type,
+                actor_profile=actor_profile,
+                idempotency_key=idempotency_key,
+                citations=citations,
+            )
+        except ValidationError as exc:
+            return self._internal_failure(decision, [f"{'.'.join(str(part) for part in error['loc'])}: {error['msg']}" for error in exc.errors()])
+        cases_path = self.project_root / "data" / "master_cases.csv"
+        if not any(item.get("case_id") == request.case_id for item in read_csv(cases_path)):
+            return self._internal_failure(decision, [f"case_id does not exist: {request.case_id}"])
+        path = Path(request.evidence_path).expanduser()
+        path = path if path.is_absolute() else self.project_root / path
+        path = path.resolve()
+        try:
+            path.relative_to(self.project_root)
+        except ValueError:
+            return self._internal_failure(decision, ["evidence_path escapes the Tender OS workspace"])
+        if not path.is_file() or path.stat().st_size == 0:
+            return self._internal_failure(decision, [f"evidence_path is missing or empty: {request.evidence_path}"])
+        digest = sha256_file(path)
+        payload = {
+            "evidence_path": display_path(path, root=self.project_root),
+            "evidence_type": request.evidence_type,
+            "sha256": digest,
+            "actor_profile": request.actor_profile,
+        }
+        try:
+            event, receipt_path = self._write_internal_event_receipt(
+                event_type="evidence.bundle_created",
+                case_id=request.case_id,
+                object_type="evidence",
+                object_id=digest,
+                payload=payload,
+                citations=request.citations + [payload["evidence_path"]],
+                idempotency_key=request.idempotency_key,
+                action="mcp.attach_case_evidence",
+                actor_profile=request.actor_profile,
+                policy_decision_id=str(decision["decision_id"]),
+            )
+        except (OSError, ValueError) as exc:
+            return self._internal_failure(decision, [str(exc)])
+        return self._internal_success(
+            decision,
+            event=event,
+            receipt_path=receipt_path,
+            idempotency_key=request.idempotency_key,
+            data={"case_id": request.case_id, "evidence_path": payload["evidence_path"], "sha256": digest},
+        )
+
+    def stage_supplier_candidate(
+        self,
+        *,
+        case_id: str,
+        supplier_id: str,
+        supplier_name: str,
+        source_type: str,
+        evidence_path: str,
+        actor_profile: str,
+        idempotency_key: str,
+        citations: list[str],
+    ) -> MCPToolResult:
+        action = "mcp.stage_supplier_candidate"
+        decision = self._authorize(action, case_id=case_id)
+        if not decision.get("allow"):
+            return self._blocked(decision)
+        try:
+            request = InternalSupplierCandidateRequest(
+                case_id=case_id,
+                supplier_id=supplier_id,
+                supplier_name=supplier_name,
+                source_type=source_type,
+                evidence_path=evidence_path,
+                actor_profile=actor_profile,
+                idempotency_key=idempotency_key,
+                citations=citations,
+            )
+        except ValidationError as exc:
+            return self._internal_failure(decision, [f"{'.'.join(str(part) for part in error['loc'])}: {error['msg']}" for error in exc.errors()])
+        if not self._case_exists(request.case_id):
+            return self._internal_failure(decision, [f"case_id does not exist: {request.case_id}"])
+        path, digest, errors = self._workspace_file(request.evidence_path, label="evidence_path")
+        if errors:
+            return self._internal_failure(decision, errors)
+        payload = {
+            "case_id": request.case_id,
+            "candidates": [{
+                "supplier_id": request.supplier_id,
+                "supplier_name": request.supplier_name,
+                "source_type": request.source_type,
+                "evidence_path": display_path(path, root=self.project_root),
+                "evidence_sha256": digest,
+            }],
+            "actor_profile": request.actor_profile,
+        }
+        return self._stage_structured_event(
+            decision,
+            event_type="supplier.match_candidates_created",
+            case_id=request.case_id,
+            object_type="supplier_match",
+            object_id=request.supplier_id,
+            payload=payload,
+            citations=request.citations + [payload["candidates"][0]["evidence_path"]],
+            idempotency_key=request.idempotency_key,
+            actor_profile=request.actor_profile,
+            action=action,
+            data={"case_id": request.case_id, "supplier_id": request.supplier_id, "evidence_sha256": digest},
+        )
+
+    def record_quote_proof_review(
+        self,
+        *,
+        case_id: str,
+        supplier_id: str,
+        quote_id: str,
+        proof_status: str,
+        quote_proof_path: str = "",
+        reason: str,
+        actor_profile: str,
+        idempotency_key: str,
+        citations: list[str],
+    ) -> MCPToolResult:
+        action = "mcp.record_quote_proof_review"
+        decision = self._authorize(action, case_id=case_id)
+        if not decision.get("allow"):
+            return self._blocked(decision)
+        try:
+            request = InternalQuoteProofRequest(
+                case_id=case_id,
+                supplier_id=supplier_id,
+                quote_id=quote_id,
+                proof_status=proof_status,
+                quote_proof_path=quote_proof_path,
+                reason=reason,
+                actor_profile=actor_profile,
+                idempotency_key=idempotency_key,
+                citations=citations,
+            )
+        except ValidationError as exc:
+            return self._internal_failure(decision, [f"{'.'.join(str(part) for part in error['loc'])}: {error['msg']}" for error in exc.errors()])
+        if not self._case_exists(request.case_id):
+            return self._internal_failure(decision, [f"case_id does not exist: {request.case_id}"])
+        event_type = "supplier.quote_proof_validated" if request.proof_status == "VALID" else "supplier.quote_proof_rejected"
+        payload: dict[str, Any] = {
+            "case_id": request.case_id,
+            "supplier_id": request.supplier_id,
+            "quote_id": request.quote_id,
+            "reason": request.reason,
+            "actor_profile": request.actor_profile,
+        }
+        citations_out = list(request.citations)
+        digest = ""
+        if request.proof_status == "VALID":
+            if not request.quote_proof_path:
+                return self._internal_failure(decision, ["quote_proof_path is required for a VALID review"])
+            path, digest, errors = self._workspace_file(request.quote_proof_path, label="quote_proof_path")
+            if errors:
+                return self._internal_failure(decision, errors)
+            payload["quote_proof_path"] = display_path(path, root=self.project_root)
+            payload["quote_proof_sha256"] = digest
+            citations_out.append(payload["quote_proof_path"])
+        return self._stage_structured_event(
+            decision,
+            event_type=event_type,
+            case_id=request.case_id,
+            object_type="supplier",
+            object_id=request.supplier_id,
+            payload=payload,
+            citations=citations_out,
+            idempotency_key=request.idempotency_key,
+            actor_profile=request.actor_profile,
+            action=action,
+            data={"case_id": request.case_id, "quote_id": request.quote_id, "proof_status": request.proof_status, "sha256": digest},
+        )
+
+    def create_internal_approval_card(
+        self,
+        *,
+        case_id: str,
+        proposed_action: str,
+        scope_hash: str,
+        card_path: str,
+        evidence_ids: list[str],
+        actor_profile: str,
+        idempotency_key: str,
+        citations: list[str],
+    ) -> MCPToolResult:
+        action = "mcp.create_internal_approval_card"
+        decision = self._authorize(action, case_id=case_id)
+        if not decision.get("allow"):
+            return self._blocked(decision)
+        try:
+            request = InternalApprovalCardRequest(
+                case_id=case_id,
+                proposed_action=proposed_action,
+                scope_hash=scope_hash,
+                card_path=card_path,
+                evidence_ids=evidence_ids,
+                actor_profile=actor_profile,
+                idempotency_key=idempotency_key,
+                citations=citations,
+            )
+        except ValidationError as exc:
+            return self._internal_failure(decision, [f"{'.'.join(str(part) for part in error['loc'])}: {error['msg']}" for error in exc.errors()])
+        if not self._case_exists(request.case_id):
+            return self._internal_failure(decision, [f"case_id does not exist: {request.case_id}"])
+        path, digest, errors = self._workspace_file(request.card_path, label="card_path")
+        if errors:
+            return self._internal_failure(decision, errors)
+        payload = {
+            "row": {
+                "case_id": request.case_id,
+                "proposed_action": request.proposed_action,
+                "scope_hash": request.scope_hash,
+                "approval_card_path": display_path(path, root=self.project_root),
+                "card_sha256": digest,
+                "evidence_ids": request.evidence_ids,
+                "approval_status": "PENDING_OWNER_DECISION",
+            },
+            "actor_profile": request.actor_profile,
+        }
+        return self._stage_structured_event(
+            decision,
+            event_type="approval.card_created",
+            case_id=request.case_id,
+            object_type="approval",
+            object_id=request.scope_hash,
+            payload=payload,
+            citations=request.citations + [payload["row"]["approval_card_path"]],
+            idempotency_key=request.idempotency_key,
+            actor_profile=request.actor_profile,
+            action=action,
+            data={"case_id": request.case_id, "scope_hash": request.scope_hash, "approval_status": "PENDING_OWNER_DECISION"},
+            approval_required=True,
+        )
+
+    def record_case_outcome(
+        self,
+        *,
+        case_id: str,
+        outcome_id: str,
+        outcome_status: str,
+        evidence_path: str,
+        actor_profile: str,
+        idempotency_key: str,
+        citations: list[str],
+    ) -> MCPToolResult:
+        action = "mcp.record_case_outcome"
+        decision = self._authorize(action, case_id=case_id)
+        if not decision.get("allow"):
+            return self._blocked(decision)
+        try:
+            request = InternalCaseOutcomeRequest(
+                case_id=case_id,
+                outcome_id=outcome_id,
+                outcome_status=outcome_status,
+                evidence_path=evidence_path,
+                actor_profile=actor_profile,
+                idempotency_key=idempotency_key,
+                citations=citations,
+            )
+        except ValidationError as exc:
+            return self._internal_failure(decision, [f"{'.'.join(str(part) for part in error['loc'])}: {error['msg']}" for error in exc.errors()])
+        if not self._case_exists(request.case_id):
+            return self._internal_failure(decision, [f"case_id does not exist: {request.case_id}"])
+        path, digest, errors = self._workspace_file(request.evidence_path, label="evidence_path")
+        if errors:
+            return self._internal_failure(decision, errors)
+        payload = {
+            "row": {
+                "outcome_id": request.outcome_id,
+                "case_id": request.case_id,
+                "outcome_status": request.outcome_status,
+                "evidence_path": display_path(path, root=self.project_root),
+                "evidence_sha256": digest,
+                "verification_status": "VERIFIED",
+            },
+            "actor_profile": request.actor_profile,
+        }
+        return self._stage_structured_event(
+            decision,
+            event_type="case.outcome_recorded",
+            case_id=request.case_id,
+            object_type="case_outcome",
+            object_id=request.outcome_id,
+            payload=payload,
+            citations=request.citations + [payload["row"]["evidence_path"]],
+            idempotency_key=request.idempotency_key,
+            actor_profile=request.actor_profile,
+            action=action,
+            data={"case_id": request.case_id, "outcome_id": request.outcome_id, "evidence_sha256": digest},
+        )
+
+    def stage_learning_proposal(
+        self,
+        *,
+        proposal_id: str,
+        case_ids: list[str],
+        proposal_type: str,
+        summary: str,
+        evidence: list[str],
+        tests: list[str],
+        rollback: str,
+        actor_profile: str,
+        idempotency_key: str,
+        citations: list[str],
+    ) -> MCPToolResult:
+        action = "mcp.stage_learning_proposal"
+        decision = self._authorize(action)
+        if not decision.get("allow"):
+            return self._blocked(decision)
+        try:
+            request = InternalLearningProposalRequest(
+                proposal_id=proposal_id,
+                case_ids=case_ids,
+                proposal_type=proposal_type,
+                summary=summary,
+                evidence=evidence,
+                tests=tests,
+                rollback=rollback,
+                actor_profile=actor_profile,
+                idempotency_key=idempotency_key,
+                citations=citations,
+            )
+        except ValidationError as exc:
+            return self._internal_failure(decision, [f"{'.'.join(str(part) for part in error['loc'])}: {error['msg']}" for error in exc.errors()])
+        if any(not self._case_exists(case) for case in request.case_ids):
+            return self._internal_failure(decision, ["every case_id in a learning proposal must exist in the canonical case register"])
+        payload = {
+            "row": request.model_dump(mode="json", exclude={"citations"}),
+            "actor_profile": request.actor_profile,
+        }
+        return self._stage_structured_event(
+            decision,
+            event_type="learning.proposal_staged",
+            case_id=request.case_ids[0],
+            object_type="learning_proposal",
+            object_id=request.proposal_id,
+            payload=payload,
+            citations=request.citations,
+            idempotency_key=request.idempotency_key,
+            actor_profile=request.actor_profile,
+            action=action,
+            data={"proposal_id": request.proposal_id, "proposal_type": request.proposal_type},
+        )
+
+    def reconcile_projection_from_receipt(
+        self,
+        *,
+        case_id: str,
+        receipt_path: str,
+        receipt_sha256: str,
+        projection_name: str,
+        actor_profile: str,
+        idempotency_key: str,
+        citations: list[str],
+    ) -> MCPToolResult:
+        action = "mcp.reconcile_projection_from_receipt"
+        decision = self._authorize(action, case_id=case_id)
+        if not decision.get("allow"):
+            return self._blocked(decision)
+        try:
+            request = InternalProjectionReconciliationRequest(
+                case_id=case_id,
+                receipt_path=receipt_path,
+                receipt_sha256=receipt_sha256,
+                projection_name=projection_name,
+                actor_profile=actor_profile,
+                idempotency_key=idempotency_key,
+                citations=citations,
+            )
+        except ValidationError as exc:
+            return self._internal_failure(decision, [f"{'.'.join(str(part) for part in error['loc'])}: {error['msg']}" for error in exc.errors()])
+        if not self._case_exists(request.case_id):
+            return self._internal_failure(decision, [f"case_id does not exist: {request.case_id}"])
+        path, digest, errors = self._workspace_file(request.receipt_path, label="receipt_path")
+        if errors:
+            return self._internal_failure(decision, errors)
+        if request.receipt_sha256 and request.receipt_sha256.lower() != digest.lower():
+            return self._internal_failure(decision, ["receipt_sha256 does not match the retained receipt"])
+        payload = {
+            "case_id": request.case_id,
+            "projection_name": request.projection_name,
+            "receipt_path": display_path(path, root=self.project_root),
+            "receipt_sha256": digest,
+            "status": "RECONCILIATION_STAGED",
+            "actor_profile": request.actor_profile,
+        }
+        return self._stage_structured_event(
+            decision,
+            event_type="kanban.reconciliation_applied",
+            case_id=request.case_id,
+            object_type="kanban_reconciliation",
+            object_id=f"{request.case_id}:{request.projection_name}",
+            payload=payload,
+            citations=request.citations + [payload["receipt_path"]],
+            idempotency_key=request.idempotency_key,
+            actor_profile=request.actor_profile,
+            action=action,
+            data={"case_id": request.case_id, "projection_name": request.projection_name, "receipt_sha256": digest},
         )
 
     def capability_status(self) -> MCPToolResult:

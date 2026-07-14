@@ -101,6 +101,22 @@ jobs:
     stop_condition: "Readiness verification and local receipts only; no approval, production routing enablement, auth change, browser action, contact, upload, submission, payment, DSC, final pricing, or commitment."
     outputs:
       - outputs/production_readiness/
+  - id: hermes_capability_truth_audit
+    enabled: true
+    hermes_name: "Hermes Capability Truth Audit"
+    hermes_script: teos_hermes_capability_truth_audit.py
+    cadence: "20 7 * * *"
+    local_time: "07:20 IST daily"
+    runtime: hermes_no_agent_script
+    max_runtime_minutes: 5
+    purpose: "Compare configured, exposed, observed, and underused Hermes capabilities without emitting private content or enabling authority."
+    command: ".venv/bin/python scripts/teos_job_supervisor.py --job-id hermes_capability_truth_audit"
+    task_command: "python3 scripts/audit_hermes_profile_capabilities.py --json"
+    run_log_agent: teos_job_supervisor
+    stop_condition: "Read-only capability audit and receipt only; no profile, cron, gateway, credential, messaging, browser, portal, payment, DSC, or external action."
+    outputs:
+      - outputs/hermes_profile_audit/
+      - data/agent_run_log.csv
   - id: v5_demand_forecast_low_competition_shadow
     enabled: true
     hermes_name: "V5 Prediction Shadow and Calibration"

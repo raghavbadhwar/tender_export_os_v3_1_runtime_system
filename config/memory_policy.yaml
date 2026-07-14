@@ -63,3 +63,18 @@ skill_update_triggers:
 skill_update_policy:
   stage_for_approval: true
   never_patch_pricing_or_compliance_skills_without_owner_approval: true
+
+learning_promotion:
+  require_structured_case_outcome: true
+  allowed_workflows: [GOV, EXPORT]
+  repeated_evaluations_required: 3
+  minimum_evidence_completeness_pct: 90
+  require_policy_checks_pass: true
+  require_rollback_artifact: true
+  require_checkpoint: true
+  require_owner_approval: true
+  receipt_schema: config/schemas/learning_promotion_receipt.schema.json
+  raw_content_persisted: false
+  external_actions_executed: false
+  external_memory_provider_enabled: false
+  reinforcement_learning_enabled: false

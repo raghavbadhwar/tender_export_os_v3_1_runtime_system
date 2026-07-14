@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tender-export-os.local/schemas/internal_case_transition.schema.json",
+  "title": "Tender OS Internal Case Transition",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["case_id", "from_status", "to_status", "evidence_ids", "citations", "actor_profile", "idempotency_key", "reason"],
+  "properties": {
+    "case_id": {"type": "string", "minLength": 1},
+    "from_status": {"type": "string", "minLength": 1},
+    "to_status": {"type": "string", "minLength": 1},
+    "evidence_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "citations": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "actor_profile": {"type": "string", "minLength": 1},
+    "idempotency_key": {"type": "string", "minLength": 8},
+    "reason": {"type": "string", "minLength": 1}
+  }
+}

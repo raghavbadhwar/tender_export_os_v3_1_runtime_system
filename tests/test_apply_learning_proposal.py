@@ -28,7 +28,7 @@ def test_apply_learning_proposal_requires_approved_scope_and_passed_eval(tmp_pat
     checkpoint.write_text("{}", encoding="utf-8")
     errors = validate_application(
         proposal=_proposal(tmp_path),
-        evaluation_report={"proposal_id": "LP-1", "evaluation_status": "PASS"},
+        evaluation_report={"proposal_id": "LP-1", "evaluation_status": "PASS", "rows": [{"status": "PASS"}, {"status": "PASS"}, {"status": "PASS"}]},
         approval_scope="scope-model",
         target="EXPORT_BUYER_REPLY_21D",
         version="candidate-v1",

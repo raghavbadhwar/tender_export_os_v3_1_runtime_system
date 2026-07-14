@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -219,9 +220,13 @@ def load_csv(path: Path) -> list[dict]:
 
 def run(command: list[str], timeout: int = 90) -> tuple[int, str, str]:
     try:
+        env = os.environ.copy()
+        env.pop("PYTHONPATH", None)
+        env["PYTHONNOUSERSITE"] = "1"
         completed = subprocess.run(
             command,
             cwd=PROJECT_ROOT,
+            env=env,
             text=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -512,8 +517,9 @@ def check_script_dry_runs(health: Health) -> None:
 
 
 def check_existing_validators(health: Health) -> None:
+    production_python_modules = sorted((PROJECT_ROOT / "scripts").rglob("*.py"))
     for command in [
-        [PYTHON, "-m", "py_compile", *[str(p) for p in sorted((PROJECT_ROOT / "scripts").glob("*.py"))]],
+        [PYTHON, "-m", "py_compile", *[str(path) for path in production_python_modules]],
         [PYTHON, "scripts/validate_agent_loops.py"],
         [PYTHON, "scripts/validate_loop_schedule.py"],
     ]:

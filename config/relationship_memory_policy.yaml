@@ -22,5 +22,10 @@ write_policy:
   default_mode: dry_run
   actor_must_be_named: true
   no_automatic_promotion_from_reply_classification: true
+  learning_promotion_requires_owner_approval: true
+  learning_promotion_receipt_schema: config/schemas/learning_promotion_receipt.schema.json
   event_type: relationship_memory.recorded
+evidence_retention:
+  retain_metadata_only: true
+  raw_content_persisted: false
 boundary: "Relationship memory is internal metadata only. It never sends, follows up, changes a contact record, or exposes private communication content."

@@ -70,6 +70,16 @@ telemetry_contract:
     - data/agent_run_log.csv
   privacy_boundary: "Aggregate runtime/token/cost metadata only; do not store raw prompts, raw responses, credentials, cookies, private browser content, raw emails, or raw documents."
 
+kanban_policy:
+  board: tender-export-os
+  project: tender-export-os
+  specialist_child_router: teos-orchestrator
+  routing_mode: SHADOW_ONLY_UNTIL_TASK_092_AND_TASK_093_PASS
+  max_in_progress_per_profile: 1
+  external_actions_allowed: false
+  require_completion_verifier: true
+  required_completion_fields: [case_id, evidence, gate, artifact_paths, validator_receipt_path, stop_reason, retry_method, smallest_safe_next_action]
+
 profiles:
   tender-export-os:
     title: "Tender Export OS Chief Console"
@@ -106,6 +116,7 @@ profiles:
       - capture_public_web
       - get_approval_status
       - evaluate_business_action
+      - create_internal_approval_card
     forbidden_toolsets: []
     skill_bundle:
       - teos-chief-operator
@@ -138,7 +149,7 @@ profiles:
     provision: create
     durable_responsibility: "Decompose goals and route Kanban children."
     allowed_toolsets: [kanban, todo, skills]
-    mcp_tools: [capability_status]
+    mcp_tools: [capability_status, stage_case_transition, attach_case_evidence, create_internal_approval_card, reconcile_projection_from_receipt]
     forbidden_toolsets: [terminal, file, code_execution, web, browser, computer_use, memory, session_search, delegation, cronjob]
     skill_bundle: [teos-chief-operator, teos-evidence-verifier]
     memory_scope:
@@ -219,7 +230,7 @@ profiles:
     provision: create
     durable_responsibility: "Supplier 5-3-2, verification, quote-proof readiness, and response quality."
     allowed_toolsets: [web, file, skills, memory, delegation, todo]
-    mcp_tools: [get_case, search_cases, parse_local_documents, capture_public_web, get_approval_status]
+    mcp_tools: [get_case, search_cases, parse_local_documents, capture_public_web, get_approval_status, stage_supplier_candidate, record_quote_proof_review]
     forbidden_toolsets: [browser, terminal, code_execution, cronjob, kanban, computer_use, session_search]
     skill_bundle: [teos-evidence-verifier, teos-public-web-scraping]
     memory_scope:
@@ -327,7 +338,7 @@ profiles:
     provision: create
     durable_responsibility: "Outcome review, source and supplier performance, model/skill/memory proposals, and regression analysis."
     allowed_toolsets: [file, terminal, code_execution, skills, memory, session_search, todo]
-    mcp_tools: [capability_status, get_case, search_cases, get_source_health, get_approval_status]
+    mcp_tools: [capability_status, get_case, search_cases, get_source_health, get_approval_status, record_case_outcome, stage_learning_proposal]
     forbidden_toolsets: [web, browser, computer_use, cronjob, kanban, delegation]
     skill_bundle: [teos-prediction-calibration, teos-evidence-verifier, teos-recovered-context]
     memory_scope:

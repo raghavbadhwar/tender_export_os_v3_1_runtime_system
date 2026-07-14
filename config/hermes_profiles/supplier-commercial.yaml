@@ -47,7 +47,7 @@ mcp_servers:
     sampling: {enabled: false}
     elicitation: {enabled: false}
     tools:
-      include: [get_case, search_cases, parse_local_documents, capture_public_web, get_approval_status]
+      include: [get_case, search_cases, parse_local_documents, capture_public_web, get_approval_status, stage_supplier_candidate, record_quote_proof_review]
       resources: false
       prompts: false
 platform_toolsets:

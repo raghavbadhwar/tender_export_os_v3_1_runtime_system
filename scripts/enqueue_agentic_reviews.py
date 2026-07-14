@@ -14,6 +14,21 @@ from typing import Any, Callable
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 BOARD = "tender-export-os"
+ROUTE_ORCHESTRATOR = "teos-orchestrator"
+ALLOWED_EXCEPTION_TRIGGERS = frozenset(
+    {
+        "deadline",
+        "source_degradation",
+        "failed_job",
+        "substantive_reply",
+        "approval_expiry",
+        "quote_contradiction",
+        "missing_receipt",
+        "projection_contradiction",
+        "overdue_payment",
+        "forecast_maturity",
+    }
+)
 Runner = Callable[..., subprocess.CompletedProcess[str]]
 PRIORITY_VALUES = {"low": 25, "normal": 50, "high": 75, "urgent": 100}
 
@@ -27,6 +42,28 @@ def rel(path: Path) -> str:
 
 def packet_exists(path: Path) -> bool:
     return path.exists() and path.is_file() and path.stat().st_size > 0
+
+
+def packet_json(path: Path) -> dict[str, Any]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def exception_triggers(path: Path) -> list[str]:
+    payload = packet_json(path)
+    values = payload.get("trigger_types", payload.get("trigger_type", []))
+    if isinstance(values, str):
+        values = [values]
+    if not isinstance(values, list):
+        return []
+    return sorted({str(value).strip() for value in values if str(value).strip()} & ALLOWED_EXCEPTION_TRIGGERS)
+
+
+def packet_sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def latest_existing(pattern: str) -> Path | None:
@@ -47,14 +84,29 @@ def card_payload(kind: str, *, title: str, assignee: str, packet_path: Path, pro
         "kind": kind,
         "title": title,
         "board": BOARD,
+        "project": BOARD,
         "status": "todo",
         "assignee": assignee,
+        "route_via": ROUTE_ORCHESTRATOR if assignee != "tender-export-os" else ROUTE_ORCHESTRATOR,
         "priority": priority,
         "packet_path": rel(packet_path),
+        "packet_sha256": packet_sha256(packet_path),
+        "evidence_paths": [rel(packet_path)],
         "prompt_path": prompt_path,
         "idempotency_key": idempotency_key(kind, packet_path),
         "external_actions_allowed": False,
         "model_runs_executed_by_enqueuer": False,
+        "max_in_progress_per_profile": 1,
+        "required_completion_fields": [
+            "case_id",
+            "evidence",
+            "gate",
+            "artifact_paths",
+            "validator_receipt_path",
+            "stop_reason",
+            "retry_method",
+            "smallest_safe_next_action",
+        ],
         "created_at": dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat(),
     }
 
@@ -71,7 +123,10 @@ def enqueue_morning_review(packet_path: Path) -> dict[str, Any] | None:
 
 
 def enqueue_exceptions(packet_path: Path) -> dict[str, Any] | None:
-    return card_payload(
+    triggers = exception_triggers(packet_path)
+    if not triggers:
+        return None
+    card = card_payload(
         "intraday_exception",
         title="Intraday Exception Officer Review",
         # The orchestrator deliberately has no file/packet-read capability.
@@ -82,6 +137,9 @@ def enqueue_exceptions(packet_path: Path) -> dict[str, Any] | None:
         prompt_path="prompts/hermes/intraday_exception_officer.md",
         priority="high",
     )
+    card["trigger_types"] = triggers
+    card["trigger_validation"] = "allowlisted_canonical_event_types"
+    return card
 
 
 def enqueue_weekly_learning(packet_path: Path) -> dict[str, Any] | None:
@@ -105,7 +163,10 @@ def hermes_command(card: dict[str, Any]) -> list[str]:
             "TEOS_AGENTIC_REVIEW_V1",
             f"Kind: {card['kind']}",
             f"Packet: {card['packet_path']}",
+            f"Packet SHA256: {card['packet_sha256']}",
             f"Prompt: {card['prompt_path']}",
+            f"Route via: {card['route_via']}",
+            f"Required completion fields: {', '.join(card['required_completion_fields'])}",
             "External actions allowed: false",
             "The enqueuer did not run a model. Read the packet, cite evidence, and stop at every approval gate.",
         ]

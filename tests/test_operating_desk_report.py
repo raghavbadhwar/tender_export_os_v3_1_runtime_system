@@ -313,3 +313,33 @@ def test_operating_desk_surfaces_hermes_and_prediction_health(tmp_path: Path) ->
     assert report["hermes_runtime_health"]["active_jobs"] == 7
     assert report["prediction_health"]["status"] == "INSUFFICIENT_MATURE_SAMPLE"
     assert report["prediction_health"]["mature_sample_size"] == 0
+
+
+def test_operating_desk_surfaces_hermes_capability_utilization(tmp_path: Path) -> None:
+    audit_dir = tmp_path / "outputs" / "hermes_profile_audit"
+    audit_dir.mkdir(parents=True)
+    (audit_dir / "hermes_profile_capability_audit_20260714T000000Z.json").write_text(
+        json.dumps(
+            {
+                "status": "PASS",
+                "capability_utilization": {
+                    "schema_version": "hermes_capability_utilization.v1",
+                    "capabilities": {
+                        "scheduler": {"status": "CONFIGURED_AND_OBSERVED", "observed_jobs": 16},
+                        "profiles": {"status": "CONFIGURED", "configured_profiles": 9},
+                        "mcp": {"status": "CONFIGURED_AND_USED", "observed_calls_in_insights_window": 44},
+                        "session_runtime": {"status": "USED", "sessions_in_insights_window": 52},
+                    },
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    report = desk.build_report(project_root=tmp_path, today=desk.dt.date(2026, 7, 14))
+
+    utilization = report["hermes_capability_utilization"]
+    assert utilization["status"] == "PASS"
+    assert utilization["observed_jobs"] == 16
+    assert utilization["configured_profiles"] == 9
+    assert report["summary"]["hermes_capability_audit_status"] == "PASS"

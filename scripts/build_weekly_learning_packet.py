@@ -171,6 +171,14 @@ def build_packet(*, week_ending: str) -> dict[str, Any]:
         "unresolved_contradictions": unresolved_contradictions(events, run_rows),
         "skill_usage": skill_usage(events, run_rows),
         "previous_proposal_effectiveness": proposal_effectiveness(proposals),
+        "promotion_gate": {
+            "required_repeated_runs": 3,
+            "minimum_evidence_completeness_pct": 90,
+            "owner_approval_required": True,
+            "rollback_and_checkpoint_required": True,
+            "ready_for_owner_approval_count": 0,
+            "note": "Candidates become eligible only after evaluate_learning_proposal.py reports three passing runs; this packet never applies proposals.",
+        },
         "recommended_council_questions": [
             "Which target/workflow lacks mature outcomes most urgently?",
             "Which source or supplier recommendation has enough evidence to become a formal proposal?",

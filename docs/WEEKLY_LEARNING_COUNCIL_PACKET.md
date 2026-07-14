@@ -14,6 +14,7 @@ The packet includes:
 - policy denials;
 - unresolved contradictions;
 - skill/profile usage;
-- previous proposal effectiveness.
+- previous proposal effectiveness;
+- promotion-gate readiness: repeated-pass count, rollback/checkpoint presence, and owner-approval state.
 
 This is an internal learning artifact only. It does not apply proposals, change source weights, promote suppliers, train/promote models, send messages, submit tenders, or make financial/legal/compliance commitments.

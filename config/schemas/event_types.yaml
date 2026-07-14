@@ -68,6 +68,9 @@ events:
   drive.lock_timeout: {object_type: drive_lock, required_payload_fields: [lock_name]}
   kanban.reconciliation_planned: {object_type: kanban_reconciliation, citation_required: true}
   kanban.reconciliation_applied: {object_type: kanban_reconciliation, citation_required: true}
+  kanban.event_routed: {object_type: kanban_route, citation_required: true, required_payload_fields: [event_id, rule_id, rule_version, status]}
+  kanban.event_ignored: {object_type: kanban_route, citation_required: true, required_payload_fields: [event_id, rule_id, rule_version, reason]}
+  kanban.event_route_failed: {object_type: kanban_route, citation_required: true, required_payload_fields: [event_id, rule_id, rule_version, reason]}
   kanban.task_graph_created: {object_type: kanban_task_graph, citation_required: true}
   source_adapter.mock_ran: {object_type: source_adapter, citation_required: true}
   source_adapter.external_probe_ran: {object_type: source_adapter, citation_required: true}
@@ -167,6 +170,7 @@ events:
   case_outcome.snapshot_imported: {object_type: case_outcome, citation_required: true}
   case.outcome_recorded: {object_type: case_outcome, citation_required: true, required_payload_fields: [row]}
   payment.received: {object_type: payment, citation_required: true, required_payload_fields: [outcome_id, evidence_sha256]}
+  payment.overdue: {object_type: payment, citation_required: true, required_payload_fields: [outcome_id, due_date, evidence_sha256]}
   forecast.matured: {object_type: forecast_observation, citation_required: true, required_payload_fields: [forecast_id, outcome_id]}
   learning_proposal.snapshot_imported: {object_type: learning_proposal, citation_required: true}
   learning.proposal_staged: {object_type: learning_proposal, citation_required: true, required_payload_fields: [row]}

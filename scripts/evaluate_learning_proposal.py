@@ -144,6 +144,12 @@ def evaluate_payload(payload: dict[str, Any], *, root: Path = PROJECT_ROOT) -> d
         "proposal_id": proposal_id,
         "evaluation_status": "PASS" if not errors else "FAIL",
         "errors": sorted(set(errors)),
+        "promotion_gate": {
+            "required_repeated_runs": 3,
+            "passing_repeated_runs": sum(row["status"] == "PASS" for row in rows),
+            "rollback_artifact_present": bool(rollback_path and (root / rollback_path).exists()) or bool(rollback_path and Path(rollback_path).expanduser().exists()),
+            "ready_for_owner_approval": not errors and len(rows) == 3 and all(row["status"] == "PASS" for row in rows),
+        },
         "rows": rows,
         "cost_latency_comparison": {
             "current_latency_ms": current_latency,
