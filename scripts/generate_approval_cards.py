@@ -55,7 +55,10 @@ def esc(value) -> str:
 
 
 def rel(path: Path) -> str:
-    return str(path.relative_to(PROJECT_ROOT))
+    try:
+        return str(path.resolve().relative_to(PROJECT_ROOT.resolve()))
+    except ValueError:
+        return str(path)
 
 
 def get_action(approval: dict) -> str:
