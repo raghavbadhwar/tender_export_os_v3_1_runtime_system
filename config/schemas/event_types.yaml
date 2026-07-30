@@ -152,6 +152,7 @@ events:
   hermes.agent_step: {object_type: hermes_run, citation_required: true, required_payload_fields: [profile, session_id, iteration, status]}
   hermes.agent_completed: {object_type: hermes_run, citation_required: true, required_payload_fields: [profile, session_id, status]}
   policy.decision_recorded: {object_type: policy_decision, citation_required: true, required_payload_fields: [decision_id, action, tier, allowed, status, reason_code, approval_required, receipt_path, policy_sha256]}
+  business_effect.attempt_recorded: {object_type: business_effect_attempt, citation_required: true, required_payload_fields: [attempt_id, status, action, approval_id, policy_decision_id, receipt_path, external_action_executed]}
   forecast.generated: {object_type: forecast_run, citation_required: true, required_payload_fields: [run_id, forecast_count, model_version, report_path]}
   forecast.backtest_evaluated: {object_type: forecast_backtest, citation_required: true, required_payload_fields: [review_date, evaluated_count, mature_count, output_path]}
   forecast.calibration_evaluated: {object_type: forecast_calibration, citation_required: true, required_payload_fields: [review_date, status, mature_sample_size, report_path]}

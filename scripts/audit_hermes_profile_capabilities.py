@@ -566,7 +566,9 @@ def main(argv: list[str] | None = None) -> int:
         manifest,
         config or {},
         profile_home,
-        cron_output=run_hermes(profile, "cron", "list"),
+        # Paused jobs remain installed capabilities and must still appear in a
+        # capability-preservation audit. The default list hides them.
+        cron_output=run_hermes(profile, "cron", "list", "--all"),
         gateway_output=run_hermes(profile, "gateway", "status"),
         insights_output=run_hermes(profile, "insights", "--days", "7"),
         kanban_output=run_hermes(profile, "kanban", "stats", "--json"),

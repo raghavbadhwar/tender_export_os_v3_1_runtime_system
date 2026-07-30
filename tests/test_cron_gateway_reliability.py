@@ -77,3 +77,29 @@ jobs:
     )
 
     assert [item["job_id"] for item in report["stale_or_missed_runs"]] == ["evening_job"]
+
+
+def test_latest_failed_enabled_job_blocks_reliability(tmp_path: Path) -> None:
+    cron = tmp_path / "cron.yaml"
+    cron.write_text(
+        """
+owner_gateway: local
+jobs:
+  - id: midday_radar
+    cadence: "0 13 * * *"
+    run_log_agent: midday_agent
+""",
+        encoding="utf-8",
+    )
+    report = build_report(
+        cron_paths=[cron],
+        run_rows=[
+            {"run_date": "2026-07-29", "run_time": "13:00:00", "status": "SUCCESS", "agent_name": "midday_agent"},
+            {"run_date": "2026-07-30", "run_time": "13:00:00", "status": "FAILURE", "agent_name": "midday_agent"},
+        ],
+        cron_status={"gateway_running": True, "active_jobs": 1, "next_run": "soon"},
+        now=dt.datetime(2026, 7, 30, 14, tzinfo=dt.timezone.utc),
+    )
+
+    assert report["status"] == "BLOCKED"
+    assert any(item["code"] == "LATEST_JOB_RUN_FAILED" for item in report["findings"])

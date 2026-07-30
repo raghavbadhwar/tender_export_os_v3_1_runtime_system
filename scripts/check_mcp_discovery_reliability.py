@@ -19,6 +19,8 @@ import time
 from pathlib import Path
 from typing import Any, Callable
 
+import yaml
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = (
@@ -35,6 +37,31 @@ returns, output ONLY this JSON object with JSON booleans and no markdown:
 If the tool is unavailable or fails, output the same object with
 `mcp_tools_visible` false and `status` set to `failed`.
 """
+
+
+def load_mcp_expectations(
+    profile: str,
+    server: str,
+    *,
+    config_path: Path | None = None,
+) -> dict[str, Any]:
+    """Load the expected tool allowlist and timeout from the active profile."""
+    if config_path is None:
+        base = Path.home() / ".hermes"
+        config_path = base / "config.yaml" if profile == "default" else base / "profiles" / profile / "config.yaml"
+    payload = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
+    server_config = ((payload.get("mcp_servers") or {}).get(server) or {})
+    include = ((server_config.get("tools") or {}).get("include") or [])
+    if not isinstance(include, list) or not include:
+        raise ValueError(f"MCP tool allowlist is missing for server {server!r} in {config_path}")
+    timeout = payload.get("mcp_discovery_timeout") or server_config.get("connect_timeout")
+    if not isinstance(timeout, (int, float)) or timeout <= 0:
+        raise ValueError(f"MCP discovery timeout is missing or invalid in {config_path}")
+    return {
+        "expected_tools": len(include),
+        "discovery_timeout_seconds": int(timeout),
+        "source": str(config_path),
+    }
 
 
 def now_iso() -> str:
@@ -128,6 +155,8 @@ def run_trials(
     cold_trials: int,
     warm_trials: int,
     expected_tools: int,
+    discovery_timeout_seconds: int = 20,
+    expectations_source: str = "explicit_cli_arguments",
     runner: Runner = subprocess.run,
 ) -> dict[str, Any]:
     cold: list[dict[str, Any]] = []
@@ -139,7 +168,7 @@ def run_trials(
             completed = run_process(
                 runner,
                 ["hermes", "-p", profile, "mcp", "test", server],
-                timeout=60,
+                timeout=discovery_timeout_seconds + 10,
             )
             result = parse_cold_result(
                 completed,
@@ -202,7 +231,8 @@ def run_trials(
         "status": status,
         "profile": profile,
         "server": server,
-        "configured_discovery_timeout_seconds": 20,
+        "configured_discovery_timeout_seconds": discovery_timeout_seconds,
+        "expectations_source": expectations_source,
         "expected_tools": expected_tools,
         "cold_trials": cold,
         "warm_trials": warm,
@@ -226,18 +256,24 @@ def main() -> int:
     parser.add_argument("--server", default="tender_os")
     parser.add_argument("--cold-trials", type=int, default=3)
     parser.add_argument("--warm-trials", type=int, default=10)
-    parser.add_argument("--expected-tools", type=int, default=9)
+    parser.add_argument("--expected-tools", type=int)
+    parser.add_argument("--discovery-timeout", type=int)
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
     args = parser.parse_args()
-    if args.cold_trials < 1 or args.warm_trials < 1 or args.expected_tools < 1:
-        parser.error("trial counts and expected-tools must be positive")
+    expectations = load_mcp_expectations(args.profile, args.server)
+    expected_tools = args.expected_tools or int(expectations["expected_tools"])
+    discovery_timeout = args.discovery_timeout or int(expectations["discovery_timeout_seconds"])
+    if args.cold_trials < 1 or args.warm_trials < 1 or expected_tools < 1 or discovery_timeout < 1:
+        parser.error("trial counts, expected-tools, and discovery-timeout must be positive")
 
     report = run_trials(
         profile=args.profile,
         server=args.server,
         cold_trials=args.cold_trials,
         warm_trials=args.warm_trials,
-        expected_tools=args.expected_tools,
+        expected_tools=expected_tools,
+        discovery_timeout_seconds=discovery_timeout,
+        expectations_source=str(expectations["source"]),
     )
     output = Path(args.output).expanduser()
     if not output.is_absolute():
