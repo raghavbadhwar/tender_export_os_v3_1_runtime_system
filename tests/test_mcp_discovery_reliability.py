@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import json
 import subprocess
+from pathlib import Path
 
 from scripts.check_mcp_discovery_reliability import (
+    load_mcp_expectations,
     parse_cold_result,
     parse_warm_result,
     run_trials,
@@ -83,3 +85,21 @@ def test_run_trials_reports_pass_only_when_every_trial_passes() -> None:
     assert report["warm_passed"] == 3
     assert len(calls) == 5
     assert report["external_actions_executed"] is False
+
+
+def test_mcp_expectations_come_from_profile_config(tmp_path: Path) -> None:
+    config = tmp_path / "config.yaml"
+    config.write_text(
+        """
+mcp_discovery_timeout: 45
+mcp_servers:
+  tender_os:
+    tools:
+      include: [capability_status, get_case, search_cases]
+""",
+        encoding="utf-8",
+    )
+
+    expectations = load_mcp_expectations("tender-export-os", "tender_os", config_path=config)
+
+    assert expectations == {"expected_tools": 3, "discovery_timeout_seconds": 45, "source": str(config)}

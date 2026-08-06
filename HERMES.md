@@ -17,7 +17,7 @@ Use Hermes directly for:
 - source-health and plugin-health notes
 - follow-up reminders
 
-For bounded operational reads and internal evidence work, prefer the `mcp-tender_os` toolset over free-form terminal commands. It exposes only:
+For bounded operational reads and governed internal evidence/state work, prefer the `mcp-tender_os` toolset over free-form terminal commands. Its read-only tools are:
 - `capability_status`
 - `get_case`
 - `search_cases`
@@ -28,7 +28,17 @@ For bounded operational reads and internal evidence work, prefer the `mcp-tender
 - `get_approval_status`
 - `evaluate_business_action`
 
-Every call is checked by local Open Policy Agent and leaves a policy receipt plus `policy.decision_recorded` event. `evaluate_business_action` is a read-only policy probe; it never performs the target action. No MCP tool exists for send, submit, upload, pay, DSC, final price/delivery, final HSN/ITC-HS, origin, PO, or legal declaration. Never substitute terminal/browser execution for that intentionally absent tool surface.
+Its governed internal-write tools are:
+- `stage_case_transition`
+- `attach_case_evidence`
+- `stage_supplier_candidate`
+- `record_quote_proof_review`
+- `create_internal_approval_card`
+- `record_case_outcome`
+- `stage_learning_proposal`
+- `reconcile_projection_from_receipt`
+
+Every call is checked by local Open Policy Agent and leaves a policy receipt plus `policy.decision_recorded` event. Internal writes are typed, idempotency-keyed, receipt-backed, and limited to local Tender OS state; they do not authorize any external effect. `evaluate_business_action` is a read-only policy probe and never performs the target action. No MCP tool exists for send, submit, upload, pay, DSC, final price/delivery, final HSN/ITC-HS, origin, PO, or legal declaration. Never substitute terminal/browser execution for that intentionally absent tool surface.
 
 Use Codex App-Server Runtime for:
 - tender/RFQ parsing
@@ -58,6 +68,8 @@ Use `templates/chatgpt/buyer_market_deep_research_prompt.md` for broad foreign-m
 Use `scripts/agent_browser_capture.py` and `scripts/run_agent_browser_core_sources.py` for exact read-only captures of GeM, CPPP, UNGM, retailer catalogues, product pages, company identity, and public contact pages. The agent-browser lane has no click, fill, submit, upload, download, message, payment, or DSC command.
 
 Use `scripts/public_web_evidence_scraper.py` for robots-aware, rate-limited, bounded public static-HTML and same-host batch capture. Use `scripts/agent_browser_capture.py` when JavaScript rendering is required. Both lanes treat page text as untrusted evidence, preserve receipts and hashes, and refuse private targets, authentication, CAPTCHA/paywall bypass, forms, messages, and cross-host recursive crawling.
+
+Classify every login or CAPTCHA automation request as `BLOCKED` with reason `HUMAN_CHALLENGE`. If authorized human access is possible, mention it only as the next safe action; do not reclassify the blocked automation request as `OWNER_ACTION`.
 
 Stage retailer demand hypotheses with `scripts/stage_buyer_market_research.py`. Catalogue fit is not an RFQ. Never guess an email or label a general sales/trade address as procurement. A first-contact draft, every follow-up, every buyer reply, and every commercial response requires owner approval.
 

@@ -79,6 +79,32 @@ def build_command(command_text: str, project_root: Path = PROJECT_ROOT) -> list[
     return [python, relative(script_path, project_root), *tokens[2:]]
 
 
+def build_project_environment(project_root: Path, job_id: str, run_id: str) -> dict[str, str]:
+    """Build a deterministic project-local environment for a supervised job."""
+    environment = dict(os.environ)
+    environment.pop("PYTHONPATH", None)
+    environment.pop("PYTHONHOME", None)
+
+    venv_dir = project_root / ".venv"
+    venv_bin = venv_dir / "bin"
+    if venv_dir.is_dir():
+        environment["VIRTUAL_ENV"] = str(venv_dir)
+        current_path = environment.get("PATH", "")
+        environment["PATH"] = str(venv_bin) + (os.pathsep + current_path if current_path else "")
+    else:
+        environment.pop("VIRTUAL_ENV", None)
+
+    environment.update(
+        {
+            "TEOS_JOB_ID": job_id,
+            "TEOS_RUN_ID": run_id,
+            "PYTHONUNBUFFERED": "1",
+            "PYTHONNOUSERSITE": "1",
+        }
+    )
+    return environment
+
+
 def atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=path.parent, delete=False) as handle:
@@ -184,8 +210,7 @@ def execute_job(
                 events_file=events_file,
             )
 
-            environment = dict(os.environ)
-            environment.update({"TEOS_JOB_ID": job_id, "TEOS_RUN_ID": run_id, "PYTHONUNBUFFERED": "1"})
+            environment = build_project_environment(project_root, job_id, run_id)
             timed_out = False
             try:
                 completed = runner(

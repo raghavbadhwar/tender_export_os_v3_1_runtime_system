@@ -1,8 +1,16 @@
-from scripts.check_codex_runtime_readiness import evaluate_readiness
+from scripts.check_codex_runtime_readiness import build_commands, evaluate_readiness
 
 
 def healthy_check(stdout: str = "") -> dict:
     return {"available": True, "returncode": 0, "timed_out": False, "stdout": stdout, "stderr": ""}
+
+
+def test_runtime_probes_target_the_requested_hermes_profile() -> None:
+    commands = build_commands("tender-export-os")
+
+    assert commands["hermes_doctor"] == ["hermes", "--profile", "tender-export-os", "doctor"]
+    assert commands["hermes_kanban_help"][:3] == ["hermes", "--profile", "tender-export-os"]
+    assert commands["codex_doctor"] == ["codex", "doctor"]
 
 
 def test_preferred_runtime_requires_functional_doctor_checks() -> None:

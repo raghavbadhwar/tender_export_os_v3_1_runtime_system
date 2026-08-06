@@ -1,11 +1,21 @@
 from __future__ import annotations
 
+import datetime as dt
 import json
 from pathlib import Path
 
 import subprocess
 
-from scripts.check_runtime_slos import build_exception_cards, check_age, check_operational_metrics, pass_fail, run_checks
+import scripts.check_runtime_slos as runtime_slos
+from scripts.check_runtime_slos import (
+    build_exception_cards,
+    check_age,
+    check_json_age,
+    check_operational_metrics,
+    check_scheduler,
+    pass_fail,
+    run_checks,
+)
 
 
 def test_check_age_fails_when_no_matching_artifact() -> None:
@@ -14,6 +24,38 @@ def test_check_age_fails_when_no_matching_artifact() -> None:
     assert result["status"] == "FAIL"
     assert result["path"] == ""
     assert result["age_hours"] is None
+
+
+def test_check_json_age_fails_when_fresh_report_status_is_not_allowed(
+    tmp_path: Path, monkeypatch
+) -> None:
+    report = tmp_path / "report.json"
+    report.write_text('{"status": "FAIL"}\n', encoding="utf-8")
+    monkeypatch.setattr(runtime_slos, "latest_match", lambda _: report)
+    monkeypatch.setattr(runtime_slos, "file_age_hours", lambda _: 0.25)
+
+    result = check_json_age("source_canary", "ignored.json", 24, {"PASS"})
+
+    assert result["status"] == "FAIL"
+    assert result["artifact_status"] == "FAIL"
+    assert result["allowed_statuses"] == ["PASS"]
+
+
+def test_scheduler_heartbeat_interprets_log_timestamp_in_local_timezone(monkeypatch) -> None:
+    monkeypatch.setattr(
+        runtime_slos,
+        "load_csv",
+        lambda _: [{"run_date": "2026-07-30", "run_time": "20:30:00"}],
+    )
+
+    result = check_scheduler(
+        24,
+        now=dt.datetime(2026, 7, 30, 15, 5, tzinfo=dt.timezone.utc),
+        local_tz=dt.timezone(dt.timedelta(hours=5, minutes=30)),
+    )
+
+    assert result["status"] == "PASS"
+    assert result["age_hours"] == 0.083
 
 
 def test_exception_cards_are_written_only_for_failures(tmp_path: Path) -> None:
@@ -33,9 +75,9 @@ def test_exception_cards_are_written_only_for_failures(tmp_path: Path) -> None:
 
 def test_runtime_slo_includes_production_readiness_gate_freshness(tmp_path: Path) -> None:
     def runner(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
-        if command[:2] == ["hermes", "gateway"]:
+        if "gateway" in command:
             return subprocess.CompletedProcess(command, 0, stdout="gateway running", stderr="")
-        if command[:2] == ["hermes", "kanban"]:
+        if "kanban" in command:
             return subprocess.CompletedProcess(command, 0, stdout="[]", stderr="")
         return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
 
@@ -51,6 +93,39 @@ def test_runtime_slo_includes_production_readiness_gate_freshness(tmp_path: Path
     readiness = next(check for check in report["checks"] if check["name"] == "production_readiness_gate_freshness")
     assert "production_readiness_gate_freshness" in names
     assert readiness["max_age_hours"] == 24.0
+
+
+def test_runtime_slo_targets_the_configured_profile(tmp_path: Path) -> None:
+    calls: list[list[str]] = []
+
+    def runner(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        calls.append(command)
+        stdout = "[]" if "kanban" in command else "gateway running"
+        return subprocess.CompletedProcess(command, 0, stdout=stdout, stderr="")
+
+    run_checks(
+        config={
+            "profile": "tender-export-os",
+            "exception_routing": {"output_dir": str(tmp_path / "cards")},
+        },
+        runner=runner,
+    )
+
+    assert ["hermes", "-p", "tender-export-os", "gateway", "status"] in calls
+    assert ["hermes", "-p", "tender-export-os", "kanban", "--board", "tender-export-os", "list", "--json"] in calls
+
+
+def test_runtime_slo_main_returns_nonzero_for_failed_report(tmp_path: Path, monkeypatch) -> None:
+    config = tmp_path / "runtime_slo.yaml"
+    config.write_text("{}\n", encoding="utf-8")
+    monkeypatch.setattr(
+        runtime_slos,
+        "run_checks",
+        lambda **_: {"status": "FAIL", "exception_cards": ["failure.json"]},
+    )
+    monkeypatch.setattr(runtime_slos, "write_report", lambda report: str(tmp_path / "report.json"))
+
+    assert runtime_slos.main(["--config", str(config)]) == 1
 
 
 def test_operational_metrics_check_covers_latency_success_and_receipts(tmp_path: Path) -> None:

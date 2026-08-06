@@ -1,5 +1,6 @@
 version: 1
 purpose: "Runtime SLO checks for Tender Export OS Hermes control plane."
+profile: tender-export-os
 
 thresholds:
   disk_free_gb_min: 5

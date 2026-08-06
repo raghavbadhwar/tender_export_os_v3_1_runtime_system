@@ -31,6 +31,15 @@ COMMANDS = {
 }
 
 
+def build_commands(profile: str) -> dict[str, list[str]]:
+    """Return profile-scoped Hermes probes alongside unchanged Codex probes."""
+    commands = {name: list(command) for name, command in COMMANDS.items()}
+    for name, command in commands.items():
+        if command and command[0] == "hermes":
+            commands[name] = ["hermes", "--profile", profile, *command[1:]]
+    return commands
+
+
 KEYWORDS = {
     "hermes_path": ["cron", "kanban", "skills", "memory", "tools", "mcp", "gateway", "sessions"],
     "codex_help": ["app-server", "plugin", "doctor", "mcp", "exec"],
@@ -143,13 +152,14 @@ def evaluate_readiness(checks: dict[str, dict]) -> dict[str, bool]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Check Hermes/Codex runtime readiness")
-    parser.add_argument("--timeout", type=int, default=45, help="Per-command timeout in seconds")
+    parser.add_argument("--profile", default="tender-export-os", help="Hermes profile to probe")
+    parser.add_argument("--timeout", type=int, default=180, help="Per-command timeout in seconds")
     parser.add_argument("--json", action="store_true", help="Print full JSON report")
     args = parser.parse_args()
 
     started = time.strftime("%Y-%m-%dT%H:%M:%S%z")
     checks = {}
-    for name, command in COMMANDS.items():
+    for name, command in build_commands(args.profile).items():
         checks[name] = run_command(
             command,
             args.timeout,
@@ -170,6 +180,7 @@ def main() -> int:
     report = {
         "generated_at": started,
         "project_root": str(PROJECT_ROOT),
+        "profile": args.profile,
         "ready": ready,
         "checks": checks,
         "next_action": "Use /codex-runtime codex_app_server if preferred_runtime_ready is true; otherwise inspect the failed checks.",

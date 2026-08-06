@@ -96,13 +96,49 @@ def check_age(name: str, pattern: str, max_age_hours: float) -> dict[str, Any]:
     return pass_fail(name, ok, {"path": str(path or ""), "age_hours": round(age, 3) if age is not None else None, "max_age_hours": max_age_hours})
 
 
+def check_json_age(
+    name: str,
+    pattern: str,
+    max_age_hours: float,
+    allowed_statuses: set[str],
+) -> dict[str, Any]:
+    """Require both fresh evidence and an explicitly acceptable report status."""
+    path = latest_match(pattern)
+    age = file_age_hours(path) if path else None
+    artifact_status = ""
+    if path:
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            if isinstance(payload, dict):
+                artifact_status = str(payload.get("status") or "")
+        except (OSError, json.JSONDecodeError):
+            pass
+    ok = age is not None and age <= max_age_hours and artifact_status in allowed_statuses
+    return pass_fail(
+        name,
+        ok,
+        {
+            "path": str(path or ""),
+            "age_hours": round(age, 3) if age is not None else None,
+            "max_age_hours": max_age_hours,
+            "artifact_status": artifact_status,
+            "allowed_statuses": sorted(allowed_statuses),
+        },
+    )
+
+
 def check_disk(min_free_gb: float) -> dict[str, Any]:
     usage = shutil.disk_usage(PROJECT_ROOT)
     free_gb = usage.free / (1024 ** 3)
     return pass_fail("disk_headroom", free_gb >= min_free_gb, {"free_gb": round(free_gb, 2), "min_free_gb": min_free_gb})
 
 
-def check_scheduler(max_age_hours: float) -> dict[str, Any]:
+def check_scheduler(
+    max_age_hours: float,
+    *,
+    now: dt.datetime | None = None,
+    local_tz: dt.tzinfo | None = None,
+) -> dict[str, Any]:
     rows = load_csv(PROJECT_ROOT / "data" / "agent_run_log.csv")
     latest_date = ""
     for row in rows:
@@ -113,11 +149,13 @@ def check_scheduler(max_age_hours: float) -> dict[str, Any]:
     if not latest_date:
         return pass_fail("scheduler_heartbeat", False, {"latest_run": "", "age_hours": None, "max_age_hours": max_age_hours})
     try:
-        latest = dt.datetime.fromisoformat(latest_date).replace(tzinfo=dt.timezone.utc)
-        age = (now_utc() - latest).total_seconds() / 3600
+        latest = dt.datetime.fromisoformat(latest_date)
+        if latest.tzinfo is None:
+            latest = latest.replace(tzinfo=local_tz or dt.datetime.now().astimezone().tzinfo)
+        age = ((now or now_utc()) - latest.astimezone(dt.timezone.utc)).total_seconds() / 3600
     except ValueError:
         age = None
-    return pass_fail("scheduler_heartbeat", age is not None and age <= max_age_hours, {"latest_run": latest_date, "age_hours": round(age, 3) if age is not None else None, "max_age_hours": max_age_hours})
+    return pass_fail("scheduler_heartbeat", age is not None and 0 <= age <= max_age_hours, {"latest_run": latest_date, "age_hours": round(age, 3) if age is not None else None, "max_age_hours": max_age_hours})
 
 
 def check_projection_rebuild(max_age_hours: float) -> dict[str, Any]:
@@ -133,15 +171,15 @@ def check_projection_rebuild(max_age_hours: float) -> dict[str, Any]:
     return pass_fail("projection_rebuild", age is not None and age <= max_age_hours, {"path": str(path), "age_hours": round(age, 3) if age is not None else None, "max_age_hours": max_age_hours})
 
 
-def check_gateway(runner: Runner) -> dict[str, Any]:
-    result = run_command(["hermes", "gateway", "status"], runner=runner, timeout=20)
+def check_gateway(runner: Runner, profile: str) -> dict[str, Any]:
+    result = run_command(["hermes", "-p", profile, "gateway", "status"], runner=runner, timeout=20)
     text = (result["stdout_tail"] + result["stderr_tail"]).lower()
     ok = result["returncode"] == 0 and ("running" in text or "gateway" in text)
     return pass_fail("gateway_health", ok, {"command": result})
 
 
-def check_kanban(runner: Runner) -> dict[str, Any]:
-    result = run_command(["hermes", "kanban", "--board", "tender-export-os", "list", "--json"], runner=runner, timeout=20)
+def check_kanban(runner: Runner, profile: str) -> dict[str, Any]:
+    result = run_command(["hermes", "-p", profile, "kanban", "--board", "tender-export-os", "list", "--json"], runner=runner, timeout=20)
     ok = result["returncode"] == 0 and not result["timed_out"]
     stale_count = 0
     if ok:
@@ -221,17 +259,18 @@ def build_exception_cards(checks: list[dict[str, Any]], output_dir: Path) -> lis
 
 def run_checks(*, config: dict[str, Any], runner: Runner = subprocess.run) -> dict[str, Any]:
     thresholds = config.get("thresholds") if isinstance(config.get("thresholds"), dict) else {}
+    profile = str(config.get("profile") or "tender-export-os")
     cards_dir = PROJECT_ROOT / str((config.get("exception_routing") or {}).get("output_dir") or "outputs/runtime_slo/exception_cards")
     checks = [
-        check_gateway(runner),
-        check_age("mcp_discovery", "outputs/upgrade_baseline/mcp_discovery_reliability.json", float(thresholds.get("mcp_discovery_max_age_hours", 168))),
-        check_kanban(runner),
+        check_gateway(runner, profile),
+        check_json_age("mcp_discovery", "outputs/upgrade_baseline/mcp_discovery_reliability.json", float(thresholds.get("mcp_discovery_max_age_hours", 168)), {"PASS"}),
+        check_kanban(runner, profile),
         check_scheduler(float(thresholds.get("scheduler_heartbeat_max_age_hours", 24))),
-        check_age("source_canary", "outputs/source_canary/*/canary_report.json", float(thresholds.get("source_canary_max_age_hours", 24))),
+        check_json_age("source_canary", "outputs/source_canary/*/canary_report.json", float(thresholds.get("source_canary_max_age_hours", 24)), {"PASS"}),
         check_projection_rebuild(float(thresholds.get("projection_rebuild_max_age_hours", 168))),
-        check_age("behavioral_eval_freshness", "outputs/hermes_behavioral_eval/HBEVAL-*/report.json", float(thresholds.get("behavioral_eval_max_age_hours", 168))),
+        check_json_age("behavioral_eval_freshness", "outputs/hermes_behavioral_eval/HBEVAL-*/report.json", float(thresholds.get("behavioral_eval_max_age_hours", 168)), {"PASS"}),
         check_disk(float(thresholds.get("disk_free_gb_min", 5))),
-        check_age("backup_age", "outputs/disaster_recovery_drill/DR-*/disaster_recovery_drill_report.json", float(thresholds.get("disaster_recovery_drill_max_age_hours", 168))),
+        check_json_age("backup_age", "outputs/disaster_recovery_drill/DR-*/disaster_recovery_drill_report.json", float(thresholds.get("disaster_recovery_drill_max_age_hours", 168)), {"PASS"}),
         check_age("production_readiness_gate_freshness", "outputs/production_readiness/production_readiness_gate_*.json", float(thresholds.get("production_readiness_gate_max_age_hours", 24))),
     ]
     checks.extend(
@@ -269,7 +308,7 @@ def main(argv: list[str] | None = None) -> int:
     path = write_report(report)
     payload = {"status": report["status"], "report": path, "exception_cards": len(report["exception_cards"])}
     print(json.dumps(payload, indent=2) if args.json else f"Runtime SLO {report['status']}: {path}")
-    return 0
+    return 0 if report["status"] == "PASS" else 1
 
 
 if __name__ == "__main__":

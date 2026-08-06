@@ -10,17 +10,15 @@ import sys
 import uuid
 from pathlib import Path
 
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "source_runs"
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 try:
     from scripts.event_ledger import append_event
 except ModuleNotFoundError:  # pragma: no cover - direct script execution
     from event_ledger import append_event
-
-
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-SCRIPTS_DIR = PROJECT_ROOT / "scripts"
-DEFAULT_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "source_runs"
-sys.path.insert(0, str(PROJECT_ROOT))
-sys.path.insert(0, str(SCRIPTS_DIR))
 
 from scripts.source_adapters.adapter_registry import ADAPTERS, create_adapter  # noqa: E402
 from scripts.source_runtime.credential_policy import sanitize_payload  # noqa: E402
