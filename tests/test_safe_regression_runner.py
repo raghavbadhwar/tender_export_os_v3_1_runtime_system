@@ -1,4 +1,9 @@
+from pathlib import Path
+
 from scripts.run_full_safe_regression import SAFE_COMMANDS
+
+
+PUBLIC_MASTER_CASES_FIXTURE = Path("tests/fixtures/safe_regression/master_cases.csv")
 
 
 def test_safe_regression_runner_contains_required_public_checks() -> None:
@@ -11,6 +16,8 @@ def test_safe_regression_runner_contains_required_public_checks() -> None:
     assert any("capture_historical_gov_intelligence.py --dry-run --json" in command for command in joined)
     assert any("gov_historical_intelligence.py --case-id GOV-20260630-001 --json" in command for command in joined)
     assert any("gov_supplier_532_gate.py --case-id GOV-20260630-001 --allow-blocked --json" in command for command in joined)
+    assert PUBLIC_MASTER_CASES_FIXTURE.is_file()
+    assert sum("--master-cases tests/fixtures/safe_regression/master_cases.csv" in command for command in joined) == 2
     assert any("buyer_repeat_purchase_analyzer.py --dry-run" in command for command in joined)
     assert any("supplier_ready_category_matcher.py --dry-run" in command for command in joined)
     assert any("stage_deep_research_leads.py --input tests/fixtures/deep_research_leads/good_leads.json --dry-run" in command for command in joined)

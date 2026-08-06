@@ -23,7 +23,7 @@ def write_csv(path: Path, fields: list[str], rows: list[dict[str, str]]) -> None
 
 
 def fixture_register(path: Path) -> None:
-    headers, _ = memory.load_csv(Path(__file__).parents[1] / "data" / "relationship_memory.csv")
+    headers, _ = memory.load_csv(Path(__file__).parents[1] / "data" / "examples" / "relationship_memory.example.csv")
     write_csv(path, headers, [])
 
 

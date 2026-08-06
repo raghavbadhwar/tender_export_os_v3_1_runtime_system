@@ -32,6 +32,16 @@ NEW_EVENTS = {
 }
 
 
+def public_example_projections() -> dict:
+    projections = {}
+    for name, spec in PROJECTIONS.items():
+        source = Path(spec["file"])
+        example = ROOT / "data" / "examples" / f"{source.stem}.example.csv"
+        assert example.is_file(), f"missing public example for {source.name}"
+        projections[name] = spec | {"file": example}
+    return projections
+
+
 def test_phase3_event_types_and_object_types_are_registered() -> None:
     schema = json.loads((ROOT / "config/schemas/event.schema.json").read_text(encoding="utf-8"))
     registry = yaml.safe_load((ROOT / "config/schemas/event_types.yaml").read_text(encoding="utf-8"))
@@ -118,13 +128,10 @@ def test_four_learning_grade_registers_match_schemas_and_examples() -> None:
     }
     for name, required in expected.items():
         schema = json.loads((ROOT / f"config/schemas/{name}.schema.json").read_text(encoding="utf-8"))
-        with (ROOT / f"data/{name}.csv").open(newline="", encoding="utf-8") as handle:
-            live_headers = set(next(csv.reader(handle)))
         with (ROOT / f"data/examples/{name}.example.csv").open(newline="", encoding="utf-8") as handle:
             example_headers = set(next(csv.reader(handle)))
         assert required <= set(schema["required_columns"])
-        assert set(schema["required_columns"]) <= live_headers
-        assert live_headers == example_headers
+        assert set(schema["required_columns"]) <= example_headers
 
 
 def test_new_registers_are_snapshot_seeded_and_rebuildable() -> None:
@@ -172,7 +179,8 @@ def test_new_registers_are_snapshot_seeded_and_rebuildable() -> None:
                 "case_id": "GOV-HISTORICAL",
                 "payload": {"new_status": "LOST"},
             },
-        ]
+        ],
+        projections=public_example_projections(),
     )["case_outcome"]
 
     assert [row["outcome_id"] for row in rows] == ["OUT-1", "OUT-2"]

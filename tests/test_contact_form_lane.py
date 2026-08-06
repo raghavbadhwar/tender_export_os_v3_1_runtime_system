@@ -1,9 +1,42 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
 from scripts.validate_contact_form_lane import load_config, validate_contact_form_lane
+
+
+def synthetic_approved_disabled_config(tmp_path: Path) -> dict:
+    config = load_config()
+    project_root = Path(__file__).resolve().parents[1]
+    design_doc = "config/contact_form_connector_design.yaml"
+    design_sha256 = hashlib.sha256((project_root / design_doc).read_bytes()).hexdigest()
+    receipt_path = tmp_path / "approved_design.json"
+    receipt_path.write_text(
+        json.dumps(
+            {
+                "approval_id": "CFCD-TEST-001",
+                "approved_at": "2099-01-01T00:00:00+00:00",
+                "approved_by": "owner@example.test",
+                "design_doc": design_doc,
+                "design_sha256": design_sha256,
+                "approved": True,
+                "production_enabled": False,
+                "external_actions_authorized": False,
+                "form_submission_authorized": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+    config["status"] = "APPROVED_DESIGN_EXECUTION_DISABLED"
+    config["approved_connector_design"] = {
+        "approval_id": "CFCD-TEST-001",
+        "approval_receipt": str(receipt_path),
+        "design_doc": design_doc,
+        "approved_at": "2099-01-01T00:00:00+00:00",
+    }
+    return config
 
 
 def test_canonical_contact_form_lane_is_disabled_and_safe() -> None:
@@ -12,8 +45,16 @@ def test_canonical_contact_form_lane_is_disabled_and_safe() -> None:
 
     assert result["status"] == "PASS"
     assert result["production_enabled"] is False
+    assert result["has_approved_design"] is False
+    assert config["status"] == "DISABLED_PENDING_APPROVED_CONNECTOR_DESIGN"
+
+
+def test_contact_form_lane_accepts_a_synthetic_approved_disabled_design(tmp_path: Path) -> None:
+    result = validate_contact_form_lane(synthetic_approved_disabled_config(tmp_path))
+
+    assert result["status"] == "PASS"
+    assert result["production_enabled"] is False
     assert result["has_approved_design"] is True
-    assert config["status"] == "APPROVED_DESIGN_EXECUTION_DISABLED"
 
 
 def test_contact_form_lane_cannot_enable_without_approved_design_and_maps() -> None:
@@ -50,14 +91,11 @@ def test_contact_form_lane_requires_a_verifiable_approval_receipt() -> None:
 
 
 def test_contact_form_lane_rejects_tampered_approval_receipt(tmp_path) -> None:
-    config = load_config()
-    project_root = Path(__file__).resolve().parents[1]
-    source_receipt = project_root / config["approved_connector_design"]["approval_receipt"]
-    receipt = json.loads(source_receipt.read_text(encoding="utf-8"))
+    config = synthetic_approved_disabled_config(tmp_path)
+    receipt_path = Path(config["approved_connector_design"]["approval_receipt"])
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
     receipt["form_submission_authorized"] = True
-    receipt_path = tmp_path / "receipt.json"
     receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
-    config["approved_connector_design"]["approval_receipt"] = str(receipt_path)
 
     result = validate_contact_form_lane(config)
 
