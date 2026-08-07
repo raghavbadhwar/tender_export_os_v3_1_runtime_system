@@ -16,49 +16,47 @@ Tender Export OS v4.1 is a **Hermes-native operating system** for Indian governm
 
 ## System Architecture Layers
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         TENDER EXPORT OS v4.1                               │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐              │
-│  │   CONTROL PLANE │  │  ARTIFACT FACTORY│  │  STRATEGY ROOM  │              │
-│  │   (Hermes)      │  │   (Codex)       │  │  (ChatGPT)      │              │
-│  ├─────────────────┤  ├─────────────────┤  ├─────────────────┤              │
-│  │ • Daily rhythm  │  │ • File/script   │  │ • Deep research │              │
-│  │ • Kanban board  │  │ • Plugins       │  │ • Market intel  │              │
-│  │ • Approvals     │  │ • PDF/DOCX/PPTX │  │ • Weekly review │              │
-│  │ • Memory/skills │  │ • Spreadsheets  │  │ • Citations     │              │
-│  │ • Routing       │  │ • Dashboards    │  │ • Strategy      │              │
-│  └────────┬────────┘  └────────┬────────┘  └────────┬────────┘              │
-│           │                    │                    │                       │
-│           └────────────────────┼────────────────────┘                       │
-│                                ▼                                            │
-│                    ┌─────────────────────┐                                  │
-│                    │  KNOWLEDGE BUS      │                                  │
-│                    │  (Google Drive)     │                                  │
-│                    ├─────────────────────┤                                  │
-│                    │ • Registers         │                                  │
-│                    │ • Artifacts         │                                  │
-│                    │ • Approvals/Receipts│                                  │
-│                    │ • Snapshots         │                                  │
-│                    └─────────────────────┘                                  │
-│                                │                                            │
-│                    ┌───────────▼───────────┐                                │
-│                    │  CANONICAL STATE      │                                │
-│                    │  (data/events.jsonl)  │                                │
-│                    ├───────────────────────┤                                │
-│                    │ Append-only event log │                                │
-│                    │ All projections       │                                │
-│                    │ rebuild from here     │                                │
-│                    └───────────────────────┘                                │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph "CONTROL PLANE"
+        H[Hermes<br/>Chief Operating Agent]
+        HK[Hermes Kanban<br/>Durable Workboard]
+    end
+    
+    subgraph "ARTIFACT FACTORY"
+        CX[Codex App-Server Runtime<br/>Plugin-Powered Artifact Factory]
+    end
+    
+    subgraph "STRATEGY ROOM"
+        CG[ChatGPT Project<br/>Deep Research Boardroom]
+    end
+    
+    subgraph "KNOWLEDGE BUS"
+        GD[Google Drive<br/>Shared Registers & Artifacts]
+    end
+    
+    subgraph "CANONICAL STATE"
+        EL[(data/events.jsonl<br/>Append-Only Event Ledger)]
+    end
+
+    H --> HK
+    H --> CX
+    H --> CG
+    H --> GD
+    HK -.-> EL
+    CX -.-> EL
+    CG -.-> GD
+    GD -.-> EL
+    
+    style H fill:#1e3a5f,color:#fff
+    style HK fill:#1e3a5f,color:#fff
+    style CX fill:#2d5a27,color:#fff
+    style CG fill:#5a2d5a,color:#fff
+    style GD fill:#5a4a1e,color:#fff
+    style EL fill:#5a1e1e,color:#fff
 ```
 
----
-
-## Five-Layer Architecture
+### Five-Layer Architecture
 
 | Layer | System | Role | Key Contracts |
 |-------|--------|------|---------------|
@@ -72,38 +70,133 @@ Tender Export OS v4.1 is a **Hermes-native operating system** for Indian governm
 
 ## Canonical State Model
 
-```
-data/events.jsonl  ←  APPEND-ONLY CANONICAL STATE STREAM
-        │
-        ├──► data/master_cases.csv          (Case register projection)
-        ├──► data/approvals_receipts.csv    (Approval register projection)
-        ├──► data/supplier_master.csv       (Supplier register projection)
-        ├──► data/quote_master.csv          (Quote register projection)
-        ├──► data/source_health.csv         (Source health projection)
-        ├──► data/plugin_health.csv         (Plugin health projection)
-        ├──► data/buyer_demand_signals.csv  (Buyer demand projection)
-        ├──► data/outreach_queue.csv        (Outreach queue projection)
-        ├──► data/communication_log.csv     (Communication log projection)
-        ├──► Hermes Kanban cards            (Working view)
-        ├──► Daily briefs                   (Working view)
-        ├──► Approval cards                 (Working view)
-        └──► Artifact manifests             (Working view)
+```mermaid
+flowchart TB
+    EL[(data/events.jsonl<br/>Append-Only Canonical<br/>Event Ledger)]
+    
+    EL --> MC[(master_cases.csv<br/>Case Register)]
+    EL --> AR[(approvals_receipts.csv<br/>Approval Register)]
+    EL --> SM[(supplier_master.csv<br/>Supplier Register)]
+    EL --> QM[(quote_master.csv<br/>Quote Register)]
+    EL --> SH[(source_health.csv<br/>Source Health)]
+    EL --> PH[(plugin_health.csv<br/>Plugin Health)]
+    EL --> BD[(buyer_demand_signals.csv<br/>Buyer Demand)]
+    EL --> OQ[(outreach_queue.csv<br/>Outreach Queue)]
+    EL --> CL[(communication_log.csv<br/>Comm Log)]
+    
+    EL --> KB[Hermes Kanban<br/>Working View]
+    EL --> DB[Daily Briefs<br/>Working View]
+    EL --> AC[Approval Cards<br/>Working View]
+    EL --> AM[Artifact Manifests<br/>Working View]
+    
+    style EL fill:#5a1e1e,color:#fff,stroke:#ff6b6b,stroke-width:3px
+    style MC fill:#2d3a5a,color:#fff
+    style AR fill:#2d3a5a,color:#fff
+    style SM fill:#2d3a5a,color:#fff
+    style QM fill:#2d3a5a,color:#fff
+    style SH fill:#2d3a5a,color:#fff
+    style PH fill:#2d3a5a,color:#fff
+    style BD fill:#2d3a5a,color:#fff
+    style OQ fill:#2d3a5a,color:#fff
+    style CL fill:#2d3a5a,color:#fff
+    style KB fill:#1e4a2e,color:#fff
+    style DB fill:#1e4a2e,color:#fff
+    style AC fill:#1e4a2e,color:#fff
+    style AM fill:#1e4a2e,color:#fff
 ```
 
-**Key Scripts:**
-- `scripts/initialize_event_ledger.py` — Seeds ledger from reviewed registers
-- `scripts/rebuild_projections_from_events.py` — Rebuilds CSVs from ledger
-- `scripts/validate_register_schemas.py` — Validates schemas and event shapes
-- `scripts/validate_case_readiness.py` — Checks quote, approval, compliance gates
-- `scripts/process_owner_decision.py` — Records decisions and receipts
-- `scripts/generate_artifact_manifest.py` — Maps artifacts and receipts per case
-- `scripts/reconcile_hermes_kanban.py` — Creates reconciliation plan
+### Key State Management Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/initialize_event_ledger.py` | Seeds ledger from reviewed registers |
+| `scripts/rebuild_projections_from_events.py` | Rebuilds CSV projections from ledger |
+| `scripts/validate_register_schemas.py` | Validates schemas and event shapes |
+| `scripts/validate_case_readiness.py` | Checks quote, approval, compliance gates |
+| `scripts/process_owner_decision.py` | Records decisions and receipts |
+| `scripts/generate_artifact_manifest.py` | Maps artifacts and receipts per case |
+| `scripts/reconcile_hermes_kanban.py` | Creates reconciliation plan |
 
 ---
 
 ## Hybrid Research + Operational Capture Model
 
-This is the **routing contract** that prevents scope creep between discovery and proof.
+```mermaid
+flowchart LR
+    subgraph "DISCOVERY [ChatGPT Deep Research]"
+        DR1[Broad Market Discovery]
+        DR2[Category Intelligence]
+        DR3[Source Landscape Review]
+        DR4[Buyer Pattern Discovery]
+        DR5[Competitor Landscape]
+        DR6[Strategic Opportunity Theses]
+    end
+    
+    subgraph "STAGING [Repo]"
+        ST1[stage_deep_research_leads.py]
+        ST2[Evidence Level Check]
+        ST3[Owner Review & Selection]
+    end
+    
+    subgraph "OPERATIONAL CAPTURE [Python/Playwright/Codex]"
+        OC1[Exact Source Monitoring]
+        OC2[Portal Listing Capture]
+        OC3[Document Download & Parse]
+        OC4[Corrigenda Diffing]
+        OC5[Dedupe & Case ID Gen]
+        OC6[Event Ledger Update]
+        OC7[Schema Validation]
+    end
+    
+    subgraph "CONTROL [Hermes]"
+        CT[Routing & Approvals]
+    end
+    
+    subgraph "DECISION [Owner]"
+        OW[External/Money/Legal/DSC<br/>Price/Classification/Origin]
+    end
+    
+    DR1 --> ST1
+    DR2 --> ST1
+    DR3 --> ST1
+    DR4 --> ST1
+    DR5 --> ST1
+    DR6 --> ST1
+    
+    ST1 --> ST2
+    ST2 --> ST3
+    ST3 --> OC1
+    ST3 --> OC2
+    
+    OC1 --> OC3
+    OC2 --> OC3
+    OC3 --> OC4
+    OC4 --> OC5
+    OC5 --> OC6
+    OC6 --> OC7
+    
+    OC7 --> CT
+    CT --> OW
+    
+    style DR1 fill:#5a2d5a,color:#fff
+    style DR2 fill:#5a2d5a,color:#fff
+    style DR3 fill:#5a2d5a,color:#fff
+    style DR4 fill:#5a2d5a,color:#fff
+    style DR5 fill:#5a2d5a,color:#fff
+    style DR6 fill:#5a2d5a,color:#fff
+    style ST1 fill:#2d5a27,color:#fff
+    style ST2 fill:#2d5a27,color:#fff
+    style ST3 fill:#2d5a27,color:#fff
+    style OC1 fill:#1e3a5f,color:#fff
+    style OC2 fill:#1e3a5f,color:#fff
+    style OC3 fill:#1e3a5f,color:#fff
+    style OC4 fill:#1e3a5f,color:#fff
+    style OC5 fill:#1e3a5f,color:#fff
+    style OC6 fill:#1e3a5f,color:#fff
+    style OC7 fill:#1e3a5f,color:#fff
+    style CT fill:#5a4a1e,color:#fff
+    style OW fill:#5a1e1e,color:#fff
+```
 
 ### Decision Rule
 
@@ -115,363 +208,420 @@ This is the **routing contract** that prevents scope creep between discovery and
 | Market/category/source discovery | **ChatGPT Deep Research** |
 | Memory, dedupe, approvals, tests, schema validation | **Repo/Python (local)** |
 
-### Workflow Examples
-
-**Workflow A: New Category Discovery**
-```
-1. Deep Research → finds low-competition categories
-2. Owner selects categories
-3. Repo adds source/keyword watch
-4. Python scans known sources repeatedly
-```
-
-**Workflow B: Specific Tender Proof**
-```
-1. Deep Research flags possible retender
-2. Lead staged via `stage_deep_research_leads.py`
-3. Python/Playwright checks known source
-4. Documents/evidence captured
-5. Case enters Fast Kill/Deep Read only if evidence supports
-```
-
-**Workflow C: Export Opportunity**
-```
-1. Deep Research identifies buyer/product market
-2. Lead staged
-3. Repo validates buyer evidence, supplier readiness, compliance, quote-proof
-3. Owner approves any external buyer/supplier action
-```
-
 ### Evidence Levels (Critical Distinction)
 
-| Level | Meaning | Actionable? |
-|-------|---------|-------------|
-| `PUBLIC_LISTING_ONLY` | Lead from listing/teaser only | ❌ Lead only, not bid-ready |
-| `DETAIL_PAGE_READ` | Detail page read, no documents | ❌ Needs documents |
-| `DOCUMENTS_DISCOVERED` | Document links found | ⚠️ Operational capture can attempt |
-| `DOCUMENTS_DOWNLOADED` | Documents downloaded/parsed | ✅ Can support case candidate |
-| `DEEP_READ_COMPLETE` | Full extraction with evidence | ✅ Bid-ready candidate |
-| `BLOCKED_*` | Login/CAPTCHA/paywall/manual | 🛑 Requires owner decision |
+```mermaid
+graph LR
+    A[PUBLIC_LISTING_ONLY<br/>Lead only] --> B[DETAIL_PAGE_READ<br/>No documents]
+    B --> C[DOCUMENTS_DISCOVERED<br/>Links found]
+    C --> D[DOCUMENTS_DOWNLOADED<br/>Parsed evidence]
+    D --> E[DEEP_READ_COMPLETE<br/>Bid-ready candidate]
+    
+    A -.-> X[❌ Not actionable]
+    B -.-> X
+    C -.-> Y[⚠️ Capture can attempt]
+    D -.-> Z[✅ Case candidate]
+    E -.-> Z
+    
+    F[BLOCKED_LOGIN<br/>BLOCKED_CAPTCHA<br/>BLOCKED_PAYWALL<br/>MANUAL_UPLOAD_REQUIRED] -.-> W[🛑 Owner decision needed]
+    
+    style A fill:#ff6b6b,color:#fff
+    style B fill:#ff6b6b,color:#fff
+    style C fill:#ffd93d,color:#000
+    style D fill:#6bcb77,color:#fff
+    style E fill:#4dabf7,color:#fff
+    style F fill:#ff8787,color:#fff
+```
 
 > **Never:** Treat `PUBLIC_LISTING_ONLY` as bid-ready. Never let Deep Research bypass Fast Kill, supplier proof, or approval gates.
+
+---
+
+## Agent Pipeline Flow
+
+```mermaid
+flowchart TB
+    subgraph "DISCOVERY"
+        R[Radar Agent<br/>Daily 05:30]
+    end
+    
+    subgraph "TRIAGE"
+        FK[Fast Kill Agent<br/>06:00]
+    end
+    
+    subgraph "EXTRACTION"
+        DR[Deep Read Agent<br/>On DEEP_READ]
+    end
+    
+    subgraph "SOURCING"
+        SE[Supplier Engine<br/>5-3-2 Rule]
+    end
+    
+    subgraph "PRICING"
+        PA[Pricing Agent<br/>Cost Waterfall]
+    end
+    
+    subgraph "COMPLIANCE"
+        CA[Compliance Agent<br/>Draft-Only]
+    end
+    
+    subgraph "ASSEMBLY"
+        PB[Pack Builder<br/>Bid/Quote Packs]
+    end
+    
+    subgraph "APPROVAL"
+        AD[Approval Desk<br/>Decision Cards]
+    end
+    
+    subgraph "EXECUTION"
+        ET[Execution Tracker<br/>Monitor & Receipt]
+    end
+    
+    subgraph "INTELLIGENCE"
+        OB[Owner Briefing<br/>Daily 08:30]
+        CF[Codex Plugin Factory<br/>Artifact Production]
+    end
+    
+    R -->|status=NEW| FK
+    FK -->|REJECTED| REJ[(REJECTED)]
+    FK -->|WATCHLIST| WL[(WATCHLIST)]
+    FK -->|DEEP_READ| DR
+    DR -->|SUPPLIER_SEARCH| SE
+    DR -->|WATCHLIST| WL
+    DR -->|REJECTED| REJ
+    SE -->|PRICING_READY| PA
+    SE -->|WATCHLIST| WL
+    PA -->|ARTIFACT_PRODUCTION| PB
+    CA -.->|Export cases| PB
+    PB -->|APPROVAL_REQUIRED| AD
+    AD -->|APPROVED| ET
+    AD -->|CHANGES_REQUESTED| PB
+    AD -->|REJECTED| REJ
+    ET -->|SENT_OR_SUBMITTED| FU[FOLLOW_UP]
+    FU -->|WON| WON[(WON)]
+    FU -->|LOST| LOST[(LOST)]
+    WON --> ARCH[(ARCHIVED)]
+    LOST --> ARCH
+    
+    OB -.->|Reads all| R
+    OB -.->|Reads all| FK
+    OB -.->|Reads all| DR
+    OB -.->|Reads all| SE
+    OB -.->|Reads all| PA
+    OB -.->|Reads all| PB
+    OB -.->|Reads all| AD
+    OB -.->|Reads all| ET
+    
+    CF -.->|Produces| PB
+    CF -.->|Produces| DR
+    CF -.->|Produces| PA
+    CF -.->|Produces| CA
+    
+    style R fill:#1e3a5f,color:#fff
+    style FK fill:#ff6b6b,color:#fff
+    style DR fill:#4dabf7,color:#fff
+    style SE fill:#6bcb77,color:#fff
+    style PA fill:#ffd93d,color:#000
+    style CA fill:#ff8787,color:#fff
+    style PB fill:#a67c52,color:#fff
+    style AD fill:#5a1e1e,color:#fff
+    style ET fill:#2d5a27,color:#fff
+    style OB fill:#5a4a1e,color:#fff
+    style CF fill:#2d5a27,color:#fff
+```
 
 ---
 
 ## Agent Roster (11 Agents)
 
 ### Agent 0 — Hermes Chief Operator (Control Plane)
-- **File:** `agents/hermes_chief_operator.md`
-- **Purpose:** Daily rhythm, Kanban, approvals, routing, briefings, memory/skills, source/plugin health
-- **Runs:** Always-on via cron, owner commands, Kanban events
-- **Capabilities:** `operations`, `productivity`, `enterprise-search`, `data` + `tender-export-ops` skill bundle
-- **Quality Gates:** One owner action, blockers surfaced, approval gates intact, Kanban current
+| Aspect | Detail |
+|--------|--------|
+| **Role** | COO + Program Manager + Risk Controller |
+| **Runs** | Always-on via cron, owner commands, Kanban events |
+| **Capability Bundle** | `operations`, `productivity`, `enterprise-search`, `data` + `teos-ops` skill bundle |
+| **Quality Gates** | One owner action, blockers surfaced, approval gates intact, Kanban current |
+| **Key Configs** | `config/kanban_board.yaml`, `config/hermes_cron.yaml`, `config/approval_policy.yaml`, `config/memory_policy.yaml` |
 
 ### Agent 1 — Radar Agent (Discovery)
-- **File:** `agents/radar_agent.md`
-- **Purpose:** Find tenders/RFQs, assign case IDs, create starter records
-- **Runs:** Daily 05:30 IST (cron: `core_source_agent_browser_radar`)
-- **Inputs:** `config/sources.gov.yaml`, `config/sources.export.yaml`, `data/source_health.csv`
-- **Outputs:** New `master_cases.csv` rows (status=`NEW`), updated `source_health.csv`
-- **Capability Bundle:** `company-research`, `market-insight-product-selection`, `browser/playwright`, `data`
-- **Quality Gates:** Dedupe by URL/title+buyer+deadline, source health updated, no CAPTCHA bypass
+| Aspect | Detail |
+|--------|--------|
+| **Role** | Opportunity Intelligence Analyst |
+| **Runs** | Daily 05:30 IST (`core_source_agent_browser_radar` cron) |
+| **Capability Bundle** | `company-research`, `market-insight-product-selection`, `browser/playwright`, `data` |
+| **Quality Gates** | Dedupe by URL/title+buyer+deadline, source health updated, no CAPTCHA bypass |
+| **Case ID Format** | `GOV-YYYYMMDD-NNN` or `EXP-YYYYMMDD-NNN` |
+| **Key Configs** | `config/sources.gov.yaml`, `config/sources.export.yaml` |
 
 ### Agent 2 — Fast Kill Agent (Triage)
-- **File:** `agents/fast_kill_agent.md`
-- **Purpose:** Quick rejection of non-viable opportunities using kill rules
-- **Runs:** After each Radar scan (06:00 IST cron: `morning_opportunity_intelligence_html`)
-- **Inputs:** `config/kill_rules.yaml`, `config/scoring_weights.yaml`, `config/categories.yaml`
-- **Outputs:** Status → `REJECTED`/`WATCHLIST`/`DEEP_READ`, `no_go_reason_note.txt`, scores
-- **Capability Bundle:** `market-viability-logic-auditor`, `operations`, `data`
-- **Quality Gates:** Hard reject only with evidence; missing data = `WATCHLIST`; no-go note includes rule + evidence + reconsider condition
+| Aspect | Detail |
+|--------|--------|
+| **Role** | Bid/No-Bid Triage Committee |
+| **Runs** | After Radar (06:00 `morning_opportunity_intelligence_html`) |
+| **Capability Bundle** | `market-viability-logic-auditor`, `operations`, `data` |
+| **Quality Gates** | Hard reject only with cited evidence; missing/ambiguous = `WATCHLIST` |
+| **Scoring** | ≥60 → `DEEP_READ`, 45-59 → `WATCHLIST`, <45 → `REJECTED` |
+| **Key Configs** | `config/kill_rules.yaml`, `config/scoring_weights.yaml`, `config/categories.yaml` |
 
 ### Agent 3 — Deep Read Agent (Extraction)
-- **File:** `agents/deep_read_agent.md`
-- **Purpose:** Full document extraction from PDFs, BOQs, corrigenda, RFQs
-- **Runs:** On cases promoted from Fast Kill (status=`DEEP_READ`)
-- **Inputs:** Downloaded documents, `data/master_cases.csv`, `config/scoring_weights.yaml`
-- **Outputs:** `deep_read_<case_id>.json/.md`, eligibility assessment, BOQ, risk flags, compliance checklist
-- **Capability Bundle:** `pdf`, `docx`, `xlsx` + `pdf-viewer`, `pdf-server-mcp`, `ms_office_word`
-- **Quality Gates:** All docs/corrigenda listed, risky clauses quoted verbatim, no eligibility claim without proof
+| Aspect | Detail |
+|--------|--------|
+| **Role** | Tender/RFQ Document Analyst |
+| **Runs** | On cases with `status=DEEP_READ` |
+| **Capability Bundle** | `pdf`, `docx`, `xlsx` + `pdf-viewer`, `pdf-server-mcp`, `ms_office_word` |
+| **Quality Gates** | All docs/corrigenda listed, risky clauses quoted verbatim, no eligibility claim without proof |
+| **Validation** | `scripts/gov_deep_read_contract.py` validates against schema |
 
 ### Agent 4 — Supplier Engine (Sourcing)
-- **File:** `agents/supplier_engine_agent.md`
-- **Purpose:** Source 5+ candidates across 3+ source types with 2+ quote proofs (5-3-2 rule)
-- **Runs:** After Deep Read (status=`SUPPLIER_SEARCH`)
-- **Inputs:** `config/sources.supplier.yaml`, `data/supplier_master.csv`, Deep Read report
-- **Outputs:** `supplier_master.csv`, `quote_master.csv`, `supplier_shortlist_<case_id>.md`
-- **Capability Bundle:** `product-supplier-sourcing`, `supplier-performance-manager`, `1688-sourcing`, `company-research`
-- **Quality Gates:** 5 candidates minimum, 3 source types, 2 quote proofs, blacklist/certificate checks
+| Aspect | Detail |
+|--------|--------|
+| **Role** | Strategic Sourcing & Procurement Specialist |
+| **Runs** | After Deep Read (`status=SUPPLIER_SEARCH`) |
+| **Capability Bundle** | `product-supplier-sourcing`, `supplier-performance-manager`, `1688-sourcing`, `company-research` |
+| **Quality Gates** | **5-3-2 Rule**: 5 candidates, 3 source types, 2 quote proofs; marketplace listing ≠ quote proof |
+| **Stop Conditions** | <5 candidates → `WATCHLIST`, all blacklisted → `REJECTED` |
 
 ### Agent 5 — Pricing Agent (Cost Waterfall)
-- **File:** `agents/pricing_agent.md`
-- **Purpose:** Complete landed-cost waterfall for GOV bids and EXW/FOB/CIF export quotes
-- **Runs:** After 2+ quote proofs received (status=`PRICING_READY`)
-- **Inputs:** `data/quote_master.csv`, Deep Read report, market freight rates
-- **Outputs:** `pricing_<case_id>.json/.md` with full waterfall, margin scenarios, assumptions
-- **Capability Bundle:** `profit-margin-analyzer`, `tariff-search`, `international-shipping-customs`, `finance`, `xlsx`
-- **Quality Gates:** Complete cost waterfall, no invisible costs, unknown = conservative + flagged, price draft until approval
+| Aspect | Detail |
+|--------|--------|
+| **Role** | Commercial Finance & Pricing Analyst |
+| **Runs** | After 2+ quote proofs (`status=PRICING_READY`) |
+| **Capability Bundle** | `profit-margin-analyzer`, `tariff-search`, `international-shipping-customs`, `finance`, `xlsx` |
+| **Quality Gates** | Complete cost waterfall, unknown = conservative + flagged, price stays draft until approval |
+| **GOV Waterfall** | A: Supplier base → O: Overhead → P: Margin → Final Bid Price |
+| **EXPORT Waterfall** | A: Supplier base → O: Overhead → FOB → +Freight +Insurance = CIF |
 
 ### Agent 6 — Compliance Agent (Draft-Only)
-- **File:** `agents/compliance_agent.md`
-- **Purpose:** Clause-by-clause compliance matrix, HSN/ITC-HS candidate, export policy, SCOMET check
-- **Runs:** For export cases after Deep Read (status=`COMPLIANCE_REVIEW`)
-- **Inputs:** Deep Read report, DGFT schedules, destination requirements
-- **Outputs:** `compliance_draft_<case_id>.md/.json` (DRAFT ONLY)
-- **Capability Bundle:** `international-shipping-customs`, `tariff-search`, `regulatory-legal`, `commercial-legal`
-- **Quality Gates:** DGFT/SCOMET sources cited, HSN/origin = candidate only, SCOMET suspicion stops case
+| Aspect | Detail |
+|--------|--------|
+| **Role** | Export Compliance Drafter |
+| **Runs** | Export cases after Deep Read |
+| **Capability Bundle** | `international-shipping-customs`, `tariff-search`, `regulatory-legal`, `commercial-legal` |
+| **Quality Gates** | **DRAFT ONLY** — HSN/ITC-HS = candidate, SCOMET suspicion = immediate stop |
+| **Matrix Positions** | `COMPLIES` / `DOES_NOT_COMPLY` / `UNKNOWN` / `OWNER/EXPERT_REVIEW` |
 
 ### Agent 7 — Pack Builder (Assembly)
-- **File:** `agents/pack_builder_agent.md`
-- **Purpose:** Complete bid pack (GOV) or export quote pack (EXPORT) for owner review
-- **Runs:** After Pricing + Compliance (status=`ARTIFACT_PRODUCTION` → `APPROVAL_REQUIRED`)
-- **Inputs:** All case reports, pricing, supplier shortlist, compliance draft, templates
-- **Outputs:** `outputs/bid_packs/<case_id>/` or `outputs/export_quote_packs/<case_id>/`, approval card
-- **Capability Bundle:** `pdf`, `docx`, `xlsx`, `pptx`, `invoice-generator` + document/presentation plugins
-- **Quality Gates:** Pack includes cover, source list, risk register, missing-items list; artifacts opened/rendered/tested
+| Aspect | Detail |
+|--------|--------|
+| **Role** | Bid/Proposal Production Manager |
+| **Runs** | After Pricing + Compliance (`status=ARTIFACT_PRODUCTION`) |
+| **Capability Bundle** | `pdf`, `docx`, `xlsx`, `pptx`, `invoice-generator` + document plugins |
+| **GOV Pack (9 files)** | Cover, BOQ filled, Compliance matrix, Eligibility draft, Supplier summary, EMD plan, Delivery plan, Risk register, Missing items |
+| **EXPORT Pack (8 files)** | Cover, Proforma draft, Product spec, Compliance summary, Supplier summary, Pricing breakdown (EXW/FOB/CIF), Payment terms, Missing items |
 
 ### Agent 8 — Approval Desk (Decision Interface)
-- **File:** `agents/approval_desk_agent.md`
-- **Purpose:** Create structured approval cards for owner (decision in <2 minutes)
-- **Runs:** After Pack Builder creates pack (status=`APPROVAL_REQUIRED`)
-- **Inputs:** Pack, case record, `config/approval_policy.yaml`
-- **Outputs:** `receipts/approvals/<case_id>_approval_card.html`, `approvals_receipts.csv` row (PENDING)
-- **Capability Bundle:** `sales-negotiator`, `operations`, `legal`, `data`
-- **Quality Gates:** Card readable in <2 min, benefit/risk/recovery/missing info explicit, status stays PENDING until receipt
+| Aspect | Detail |
+|--------|--------|
+| **Role** | Executive Decision Designer |
+| **Runs** | After Pack Builder (`status=APPROVAL_REQUIRED`) |
+| **Capability Bundle** | `sales-negotiator`, `operations`, `legal`, `data` |
+| **Required Card Fields (12)** | case_id, workflow_type, proposed_action, business_object, amount_or_price, expected_benefit, concrete_risk, recovery_rollback_path, documents_sources_used, confidence_score, missing_information, approval_options |
+| **Timeout** | Default 48h → `CHANGES_REQUESTED`; never infer approval from silence |
 
 ### Agent 9 — Execution Tracker (Post-Approval Monitor)
-- **File:** `agents/execution_tracker_agent.md`
-- **Purpose:** Track outcomes after approval; alert on divergence; never re-execute
-- **Runs:** Daily 17:00 IST (cron: `supplier_followup_review`) + 30-min buyer monitor
-- **Inputs:** Approved cases, `approvals_receipts.csv`, `quote_master.csv`
-- **Outputs:** Status transitions, receipts, follow-up flags, daily brief contributions
-- **Capability Bundle:** `supplier-performance-manager`, `gmail-assistant`, `operations`, `productivity`
-- **Quality Gates:** Receipts evidence-backed, overdue escalated not auto-sent, WON/LOST requires evidence
+| Aspect | Detail |
+|--------|--------|
+| **Role** | Operations Follow-Up Controller |
+| **Runs** | Daily 17:00 + Buyer Reply Monitor every 30min 09:00-21:59 |
+| **Capability Bundle** | `supplier-performance-manager`, `gmail-assistant`, `operations`, `productivity` |
+| **Tracks** | Supplier response (48h), bid ack/opening/result, quote validity (7d/24h), delivery (7d/3d), payment (3d overdue) |
+| **Evidence States** | `EVIDENCE_PRESENT` (recorded) → `VERIFIED` (advances status) |
 
 ### Agent 10 — Owner Briefing Agent (Intelligence)
-- **File:** `agents/owner_briefing_agent.md`
-- **Purpose:** One crisp daily brief with one recommended action
-- **Runs:** Daily 08:30 IST (cron: `morning_operator_brief`)
-- **Inputs:** All registers, agent run logs, approvals, source health, scoring
-- **Outputs:** `outputs/daily_briefs/brief_YYYYMMDD.html`
-- **Capability Bundle:** `company-research`, `internal-comms`, `data`, `productivity`, `enterprise-search`
-- **Quality Gates:** Signal over noise, top approvals/blockers/deadlines, ONE owner action
+| Aspect | Detail |
+|--------|--------|
+| **Role** | Daily Intelligence Officer |
+| **Runs** | Daily 08:30 IST (`morning_operator_brief` cron) |
+| **Capability Bundle** | `company-research`, `internal-comms`, `data`, `productivity`, `enterprise-search` |
+| **Brief Sections (9)** | New Opportunities, Auto-Rejected, Best Opportunities (Top 3), Pending Supplier Proof, Approval Required, Risks & Blockers, Low-Competition Radar, Deep Research Intel, **ONE Recommended Action** |
+| **Quality Gates** | Signal over noise, ONE action only, trailing 30-day metrics |
 
 ### Agent 11 — Codex Plugin Factory (Artifact Production)
-- **File:** `agents/codex_plugin_factory_agent.md`
-- **Purpose:** Use Codex runtime + plugins for spreadsheets, PDFs, DOCX, dashboards, packs
-- **Runs:** After Hermes routing, on-demand for artifact production
-- **Inputs:** `config/plugin_routing.yaml`, `data/capability_registry.csv`, `data/plugin_health.csv`
-- **Outputs:** Artifacts under `outputs/`, plugin receipts under `receipts/plugin_runs/`
-- **Capability Bundle:** All document/spreadsheet/presentation plugins + `claude-code-setup`, `github`, `testing-automation`
-- **Quality Gates:** Plugin choice recorded, artifact validated, plugin receipt saved, bid-pack/quote-pack verification receipts match
+| Aspect | Detail |
+|--------|--------|
+| **Role** | Artifact/Runtime Production Lead |
+| **Runs** | Hermes routes + on-demand |
+| **Capability Bundle** | All doc/sheet/pres plugins + `claude-code-setup`, `github`, `testing-automation` |
+| **GOV Gate** | `verify-bid-pack`: manifest + mandatory artifacts + missing-items + plugin receipt + open/render checks |
+| **EXPORT Gate** | `verify-export-quote-pack`: DRAFT_READY commercial-readiness + 2 strict quote proofs + EXW/FOB/CIF + draft-only classification |
 
 ---
 
 ## Status Flow (Canonical)
 
+```mermaid
+stateDiagram-v2
+    [*] --> NEW: Radar creates case
+    
+    NEW --> FAST_KILL: Auto triage
+    FAST_KILL --> REJECTED: Hard kill with evidence
+    FAST_KILL --> WATCHLIST: Borderline/missing data
+    FAST_KILL --> DEEP_READ: Score ≥60
+    
+    WATCHLIST --> DEEP_READ: Human review / more data
+    WATCHLIST --> REJECTED: Confirmed fail
+    
+    DEEP_READ --> SUPPLIER_SEARCH: Extraction complete
+    DEEP_READ --> WATCHLIST: Ambiguous eligibility
+    DEEP_READ --> REJECTED: Clear ineligibility / SCOMET
+    
+    SUPPLIER_SEARCH --> PRICING_READY: 5-3-2 gate PASS + 2 quotes
+    SUPPLIER_SEARCH --> WATCHLIST: <5 candidates / no quotes
+    
+    PRICING_READY --> ARTIFACT_PRODUCTION: Waterfall complete
+    
+    ARTIFACT_PRODUCTION --> APPROVAL_REQUIRED: Pack assembled
+    
+    APPROVAL_REQUIRED --> APPROVED: Owner approves
+    APPROVAL_REQUIRED --> CHANGES_REQUESTED: Owner asks changes
+    APPROVAL_REQUIRED --> REJECTED: Owner rejects
+    
+    CHANGES_REQUESTED --> ARTIFACT_PRODUCTION: Loop back
+    CHANGES_REQUESTED --> PRICING_READY: Loop back
+    CHANGES_REQUESTED --> SUPPLIER_SEARCH: Loop back
+    
+    APPROVED --> SENT_OR_SUBMITTED: External action executed
+    
+    SENT_OR_SUBMITTED --> FOLLOW_UP: Tracking response
+    
+    FOLLOW_UP --> WON: Bid won / PO received
+    FOLLOW_UP --> LOST: Bid lost / No response
+    
+    WON --> ARCHIVED: Closed
+    LOST --> ARCHIVED: Closed
+    REJECTED --> ARCHIVED: Closed
+    
+    state REJECTED {
+        [*] --> HARD_KILL
+        HARD_KILL --> NO_GO_NOTE
+    }
+    
+    state WATCHLIST {
+        [*] --> EVIDENCE_GAP
+        EVIDENCE_GAP --> HUMAN_REVIEW
+    }
 ```
-NEW → FAST_KILL → REJECTED
-NEW → FAST_KILL → WATCHLIST → DEEP_READ → SUPPLIER_SEARCH → PRICING_READY
-                                                        → ARTIFACT_PRODUCTION
-                                                        → APPROVAL_REQUIRED
-                                                        → APPROVED → SENT_OR_SUBMITTED
-                                                        → CHANGES_REQUESTED (loop back)
-                                                        → REJECTED (owner rejected)
-SENT_OR_SUBMITTED → FOLLOW_UP → WON / LOST → ARCHIVED
-```
-
-**Status Definitions:**
-- `NEW` — Radar created, not yet triaged
-- `FAST_KILL` — Being evaluated by kill rules
-- `REJECTED` — Hard kill with evidence-backed reason
-- `WATCHLIST` — Borderline, needs human review or more data
-- `DEEP_READ` — Full document extraction in progress/complete
-- `SUPPLIER_SEARCH` — 5-3-2 sourcing active
-- `PRICING_READY` — 2+ quote proofs received, waterfall built
-- `ARTIFACT_PRODUCTION` — Pack Builder assembling pack
-- `APPROVAL_REQUIRED` — Pack complete, approval card pending
-- `APPROVED` — Owner approved, ready for execution
-- `CHANGES_REQUESTED` — Owner asked for changes, loops to relevant stage
-- `SENT_OR_SUBMITTED` — External action executed (bid sent, quote sent)
-- `FOLLOW_UP` — Tracking response, delivery, payment
-- `WON` / `LOST` — Terminal outcome with evidence
-- `ARCHIVED` — Closed case
 
 ---
 
 ## Approval Boundaries (Non-Negotiable)
 
-### Mode A — Autopilot (No Approval Required)
+```mermaid
+flowchart TB
+    subgraph "MODE A — AUTOPILOT [No Approval]"
+        A1[Scan sources]
+        A2[Extract PDF fields]
+        A3[Read tender docs]
+        A4[Score opportunities]
+        A5[Create case IDs]
+        A6[Fast kill scoring]
+        A7[Deep read extraction]
+        A8[Identify suppliers]
+        A9[Draft pricing]
+        A10[Draft compliance]
+        A11[Daily brief]
+        A12[Internal registers]
+        A13[Kanban tasks]
+        A14[Artifact drafts]
+    end
+    
+    subgraph "MODE B — APPROVAL-GATED [Owner Approval + Card]"
+        B1[Send supplier quote request]
+        B2[Supplier clarification]
+        B3[Supplier follow-up]
+        B4[Request price/avail]
+        B5[Portal login/signup]
+        B6[Portal creds]
+        B7[Send buyer RFQ reply]
+        B8[Buyer outreach]
+        B9[Send export quotation]
+        B10[**Submit tender bid**]
+        B11[Upload tender docs]
+        B12[Commit final price]
+        B13[Commit delivery]
+        B14[Accept payment terms]
+        B15[Confirm HSN/ITC-HS]
+        B16[Claim origin]
+        B17[Pay EMD]
+        B18[Pay security deposit]
+        B19[Pay advance]
+        B20[Place supplier PO]
+        B21[**Use DSC**]
+        B22[Send invoice]
+        B23[Blacklist supplier]
+        B24[Patch pricing skill]
+        B25[Enable cred-heavy plugin]
+        B26[Expose service publicly]
+    end
+    
+    subgraph "MODE C — EXECUTION TRACKER [Post-Approval Auto]"
+        C1[Track supplier response]
+        C2[Track bid status]
+        C3[Track buyer follow-up]
+        C4[Track quote validity]
+        C5[Track delivery]
+        C6[Track payment]
+        C7[Record receipts]
+        C8[Update case status]
+        C9[Internal reminders]
+        C10[Update Kanban]
+        C11[Sync to Drive]
+    end
+    
+    style A1 fill:#6bcb77,color:#fff
+    style A2 fill:#6bcb77,color:#fff
+    style A3 fill:#6bcb77,color:#fff
+    style A4 fill:#6bcb77,color:#fff
+    style A5 fill:#6bcb77,color:#fff
+    style A6 fill:#6bcb77,color:#fff
+    style A7 fill:#6bcb77,color:#fff
+    style A8 fill:#6bcb77,color:#fff
+    style A9 fill:#6bcb77,color:#fff
+    style A10 fill:#6bcb77,color:#fff
+    style A11 fill:#6bcb77,color:#fff
+    style A12 fill:#6bcb77,color:#fff
+    style A13 fill:#6bcb77,color:#fff
+    style A14 fill:#6bcb77,color:#fff
+    
+    style B1 fill:#ff6b6b,color:#fff
+    style B2 fill:#ff6b6b,color:#fff
+    style B3 fill:#ff6b6b,color:#fff
+    style B4 fill:#ff6b6b,color:#fff
+    style B5 fill:#ff6b6b,color:#fff
+    style B6 fill:#ff6b6b,color:#fff
+    style B7 fill:#ff6b6b,color:#fff
+    style B8 fill:#ff6b6b,color:#fff
+    style B9 fill:#ff6b6b,color:#fff
+    style B10 fill:#ff0000,color:#fff,stroke:#fff,stroke-width:2px
+    style B11 fill:#ff6b6b,color:#fff
+    style B12 fill:#ff6b6b,color:#fff
+    style B13 fill:#ff6b6b,color:#fff
+    style B14 fill:#ff6b6b,color:#fff
+    style B15 fill:#ff6b6b,color:#fff
+    style B16 fill:#ff6b6b,color:#fff
+    style B17 fill:#ff6b6b,color:#fff
+    style B18 fill:#ff6b6b,color:#fff
+    style B19 fill:#ff6b6b,color:#fff
+    style B20 fill:#ff6b6b,color:#fff
+    style B21 fill:#ff0000,color:#fff,stroke:#fff,stroke-width:2px
+    style B22 fill:#ff6b6b,color:#fff
+    style B23 fill:#ff6b6b,color:#fff
+    style B24 fill:#ff6b6b,color:#fff
+    style B25 fill:#ff6b6b,color:#fff
+    style B26 fill:#ff6b6b,color:#fff
+    
+    style C1 fill:#4dabf7,color:#fff
+    style C2 fill:#4dabf7,color:#fff
+    style C3 fill:#4dabf7,color:#fff
+    style C4 fill:#4dabf7,color:#fff
+    style C5 fill:#4dabf7,color:#fff
+    style C6 fill:#4dabf7,color:#fff
+    style C7 fill:#4dabf7,color:#fff
+    style C8 fill:#4dabf7,color:#fff
+    style C9 fill:#4dabf7,color:#fff
+    style C10 fill:#4dabf7,color:#fff
+    style C11 fill:#4dabf7,color:#fff
 ```
-✓ Scan sources, extract fields from PDF
-✓ Read tender documents
-✓ Score opportunities
-✓ Create case IDs
-✓ Fast kill scoring
-✓ Deep read extraction
-✓ Identify candidate suppliers
-✓ Prepare draft pricing
-✓ Prepare draft compliance notes
-✓ Generate daily brief
-✓ Update internal registers
-✓ Create Kanban tasks internally
-✓ Produce internal artifact drafts
-```
-
-### Mode B — Approval-Gated (Owner Approval REQUIRED)
-| Action | Type | Card Required |
-|--------|------|---------------|
-| Send supplier quote request | Per-case | ✅ |
-| Send supplier clarification | Per-case | ✅ |
-| Send supplier follow-up | Per-case | ✅ |
-| Request supplier price/availability | Per-case | ✅ |
-| Portal login/signup/credential creation | Per-source | ✅ |
-| Send buyer RFQ reply | Per-case | ✅ |
-| Send buyer introductory outreach | Per-case | ✅ |
-| Send export quotation | Per-case | ✅ |
-| **Submit tender bid** | Per-case + DSC | ✅ |
-| Upload tender documents | Per-case | ✅ |
-| Commit final price | Per-case | ✅ |
-| Commit delivery timeline | Per-case | ✅ |
-| Accept payment terms | Per-case | ✅ |
-| Confirm HSN/ITC-HS classification | Per-case + Expert | ✅ |
-| Claim country of origin | Per-case + Expert | ✅ |
-| Pay EMD/bid security | Per-case | ✅ |
-| Pay security deposit | Per-case | ✅ |
-| Pay advance to supplier | Per-case | ✅ |
-| Place supplier purchase order | Per-case | ✅ |
-| Use DSC | Per-action | ✅ |
-| Send invoice externally | Per-case | ✅ |
-| Blacklist supplier permanently | Per-supplier | ✅ |
-| Patch pricing/compliance skill | Per-change | ✅ |
-| Enable credential-heavy plugin | Per-plugin | ✅ |
-| Expose Hermes/Codex publicly | Per-action | ✅ |
-
-### Mode C — Execution Tracker (Post-Approval Auto)
-```
-✓ Track supplier response
-✓ Track bid submission status
-✓ Track buyer follow-up
-✓ Track quote validity
-✓ Track delivery deadline
-✓ Track payment status
-✓ Record receipts
-✓ Update case status
-✓ Send internal reminders
-✓ Update Kanban
-✓ Sync approved artifacts to Drive
-```
-
----
-
-## Scheduled Operating Rhythm (Hermes Cron)
-
-| Time (IST) | Job | Purpose | Runtime |
-|------------|-----|---------|---------|
-| 05:30 | Core Source Agent-Browser Radar | Capture GeM/CPPP/UNGM via read-only agent-browser | `hermes_no_agent_script` |
-| 06:00 | Morning Opportunity Intelligence | Public intake, requirements, supplier 5-3-2, pricing drafts, HTML report | `hermes_no_agent_script` |
-| 06:50 | Daily Shadow Profile Probe | Local profile evidence checks | `hermes_no_agent_script` |
-| 07:05 | Daily Production Readiness Gate | Safe production-readiness gate + owner action packet | `hermes_no_agent_script` |
-| 07:15 | V5 Prediction Shadow | Shadow-run demand forecast + low-competition intelligence | `hermes_no_agent_script` |
-| 07:20 | Hermes Capability Truth Audit | Configured vs observed capabilities | `hermes_no_agent_script` |
-| 08:30 | **Morning Operator Brief** | Canonical control tower from cases, approvals, health | `hermes_default` |
-| 08:45 | Morning Agentic Review Enqueue | Create Kanban review card | `hermes_no_agent_script` |
-| 09:00–21:59 (30min) | Buyer Reply Monitor | Gmail plugin inbound classification | `hermes_no_agent_script` |
-| 12:30 | Daily Retender/Corrigenda Watch | Detect retenders, corrigenda, BOQ changes | `hermes_no_agent_script` |
-| 13:00 | Midday Opportunity Radar | Canary-test live sources, evidence-only | `hermes_plus_codex_when_needed` |
-| 17:00 | Supplier Follow-up Review | Check quotes, external inbox, blocked cases | `hermes_default` |
-| 18:00 (Fri) | Weekly Learning Review | Wins/losses, source quality, propose memory/skill updates | `hermes_plus_chatgpt_snapshot` |
-| 18:30 (Fri) | Weekly Learning Enqueue | Create Kanban review card | `hermes_no_agent_script` |
-| 20:30 | Evening Execution Close | Reconcile, update Kanban, list blockers, tomorrow's action | `hermes_default` |
-
-**Plus:** Monthly Strategy Deep Research (owner-approved only, ChatGPT Project)
-
----
-
-## Key Configuration Files
-
-```
-config/
-├── approval_policy.yaml          # What requires owner approval
-├── agent_capability_routing.yaml # Best-in-class capability bundles per agent
-├── agent_loops.json              # Bounded loop contracts
-├── loop_schedule.json            # Scheduled cadence
-├── kanban_board.yaml             # Board config, statuses, profiles
-├── hermes_cron.yaml              # Cron job definitions
-├── memory_policy.yaml            # Memory write approvals
-├── plugin_routing.yaml           # Plugin routing rules
-├── codex_runtime_policy.yaml     # Codex app-server policy
-├── sources.gov.yaml              # Government tender sources
-├── sources.export.yaml           # Export RFQ sources
-├── sources.supplier.yaml         # Supplier sourcing channels
-├── categories.yaml               # Product categories, active flags
-├── kill_rules.yaml               # Ordered kill rules
-├── scoring_weights.yaml          # Scoring factors
-├── low_competition_keywords.yaml # Low-competition signals
-├── sync_policy.yaml              # Google Drive sync rules
-├── research_capture_routing.yaml # Deep Research vs operational capture
-├── schemas/                      # JSON schemas for all registers
-│   ├── master_cases.schema.json
-│   ├── approvals_receipts.schema.json
-│   ├── quote_master.schema.json
-│   ├── supplier_master.schema.json
-│   ├── event.schema.json
-│   ├── approval_card.schema.json
-│   ├── drive_manifest.schema.json
-│   └── plugin_run_receipt.schema.json
-└── compliance_by_category.yaml   # Category-specific compliance
-```
-
----
-
-## Data Registers (CSV Projections)
-
-| Register | Purpose | Key Fields |
-|----------|---------|------------|
-| `master_cases.csv` | All tender/export cases | case_id, workflow_type, status, buyer, deadline, scores |
-| `approvals_receipts.csv` | Approval cards + decisions | approval_id, case_id, action, status, approved_by/at |
-| `supplier_master.csv` | Supplier directory + scores | supplier_id, products, certs, scores, quote history |
-| `quote_master.csv` | Quote requests + responses | quote_id, case_id, supplier_id, price, status, proof |
-| `source_health.csv` | Source reliability tracking | source_name, health_status, last_checked, relevance |
-| `plugin_health.csv` | Plugin/tool health | plugin_or_tool, health_status, version, blocker |
-| `buyer_demand_signals.csv` | Staged demand hypotheses | buyer, category, evidence_level, confidence |
-| `outreach_queue.csv` | Approved outbound queue | case_id, target, message_type, status |
-| `communication_log.csv` | All external comms log | case_id, direction, counterparty, timestamp |
-| `agent_run_log.csv` | Every agent run record | agent_name, trigger, cases_processed, status, blockers |
-
----
-
-## Output Artifacts Structure
-
-```
-outputs/
-├── daily_briefs/              # brief_YYYYMMDD.html
-├── case_reports/              # Per-case reports (deep_read, pricing, supplier, compliance)
-├── bid_packs/                 # GOV bid packs per case_id
-├── export_quote_packs/        # EXPORT quote packs per case_id
-├── dashboards/                # Founder dashboards, scorecards
-├── operating_desk/            # Daily operating desk reports
-├── intraday_monitor/          # Intraday exception packets
-├── learning_packets/          # Weekly learning packets
-├── low_competition_radar/     # Radar outputs
-├── demand_forecasting/        # V5 forecasts + calibration
-├── source_canary/             # Live source canary results
-├── evidence/                  # Captured evidence (private + redacted)
-├── historical_intelligence/   # Gov historical captures
-└── regression/                # Test matrix results
-
-receipts/
-├── approvals/                 # Approval cards + decision receipts
-├── submissions/               # Bid/RFQ submission receipts
-├── supplier_quotes/           # Quote proof receipts
-├── owner_decisions/           # Owner decision receipts
-├── executions/                # Execution milestone receipts
-└── plugin_runs/               # Codex plugin run receipts
-```
-
----
-
-## Safety & Compliance Contracts
 
 ### Never Automated (Hard Blocks)
 ```
@@ -490,57 +640,258 @@ receipts/
 ❌ Credential/session/cookie/token/DSC/bank storage in repo
 ```
 
-### Always Required
+---
+
+## Scheduled Operating Rhythm (Hermes Cron)
+
+```mermaid
+gantt
+    title Daily Operating Rhythm (IST)
+    dateFormat HH:mm
+    axisFormat %H:%M
+    
+    section Morning Pipeline
+    Core Source Radar           :a1, 05:30, 8m
+    Morning Opp Intelligence    :a2, 06:00, 3m
+    Shadow Profile Probe        :a3, 06:50, 2m
+    Production Readiness Gate   :a4, 07:05, 8m
+    V5 Prediction Shadow        :a5, 07:15, 5m
+    Capability Truth Audit      :a6, 07:20, 5m
+    
+    section Owner Interaction
+    Morning Operator Brief      :crit, b1, 08:30, 20m
+    Agentic Review Enqueue      :b2, 08:45, 2m
+    
+    section Midday
+    Retender/Corrigenda Watch   :c1, 12:30, 10m
+    Midday Opportunity Radar    :c2, 13:00, 60m
+    
+    section Afternoon/Evening
+    Supplier Follow-up Review   :d1, 17:00, 30m
+    Weekly Learning Review      :d2, Fri 18:00, 60m
+    Weekly Learning Enqueue     :d3, Fri 18:30, 2m
+    Evening Execution Close     :d4, 20:30, 30m
+    
+    section Continuous
+    Buyer Reply Monitor         :active, e1, 09:00, 780m
+    
+    section Monthly
+    Strategy Deep Research      :milestone, f1, Manual, 180m
 ```
-✅ Case_id on every action, file, receipt, decision
-✅ Source citations on every owner-facing output
-✅ Approval gate stops execution
-✅ Agent run log row after every run
-✅ Event ledger append for every durable state change
-✅ No fabricated documents, certifications, eligibility, verification, claims, prices
-✅ Codex App-Server Runtime for plugin-heavy work
-✅ Hermes Kanban as default durable workboard
-✅ ChatGPT receives bounded snapshots only
-✅ data/events.jsonl = canonical state stream
-✅ Owner decisions create receipts but never execute externally
-```
+
+### Cron Job Details
+
+| Time (IST) | Job ID | Purpose | Runtime |
+|------------|--------|---------|---------|
+| 05:30 | `core_source_agent_browser_radar` | GeM/CPPP/UNGM via read-only agent-browser | `hermes_no_agent_script` |
+| 06:00 | `morning_opportunity_intelligence_html` | Public intake, 5-3-2 pass, pricing drafts, HTML report | `hermes_no_agent_script` |
+| 06:50 | `daily_shadow_profile_probe` | Local profile evidence checks | `hermes_no_agent_script` |
+| 07:05 | `daily_production_readiness_gate` | Production-readiness gate + owner action packet | `hermes_no_agent_script` |
+| 07:15 | `v5_demand_forecast_low_competition_shadow` | Demand forecast + low-competition intelligence | `hermes_no_agent_script` |
+| 07:20 | `hermes_capability_truth_audit` | Configured vs observed capabilities | `hermes_no_agent_script` |
+| 08:30 | `morning_operator_brief` | **Canonical control tower** | `hermes_default` |
+| 08:45 | `morning_agentic_review_enqueue` | Kanban review card | `hermes_no_agent_script` |
+| 09:00-21:59 (30m) | `buyer_reply_monitor` | Gmail plugin inbound classification | `hermes_no_agent_script` |
+| 12:30 | `daily_retender_corrigenda_watch` | Retenders, corrigenda, BOQ changes | `hermes_no_agent_script` |
+| 13:00 | `midday_opportunity_radar` | Canary-test live sources, evidence-only | `hermes_plus_codex_when_needed` |
+| 17:00 | `supplier_followup_review` | Quotes, external inbox, blocked cases | `hermes_default` |
+| 18:00 (Fri) | `weekly_learning_review` | Wins/losses, propose memory/skill updates | `hermes_plus_chatgpt_snapshot` |
+| 18:30 (Fri) | `weekly_learning_enqueue` | Kanban review card | `hermes_no_agent_script` |
+| 20:30 | `evening_execution_close` | Reconcile, blockers, tomorrow's action | `hermes_default` |
 
 ---
 
 ## MCP Server (Bounded Tool Gateway)
 
-The FastMCP server (`scripts/tender_os_mcp_server.py`) exposes **17 governed tools** to Hermes:
+```mermaid
+flowchart LR
+    subgraph "Hermes"
+        H[Hermes Control Plane]
+    end
+    
+    subgraph "MCP Server (FastMCP stdio)"
+        direction TB
+        
+        subgraph "READ-ONLY TOOLS (9)"
+            T1[capability_status]
+            T2[get_case]
+            T3[search_cases]
+            T4[assess_opportunity]
+            T5[get_source_health]
+            T6[parse_local_documents]
+            T7[capture_public_web]
+            T8[get_approval_status]
+            T9[evaluate_business_action]
+        end
+        
+        subgraph "INTERNAL-WRITE TOOLS (8)"
+            T10[stage_case_transition]
+            T11[attach_case_evidence]
+            T12[stage_supplier_candidate]
+            T13[record_quote_proof_review]
+            T14[create_internal_approval_card]
+            T15[record_case_outcome]
+            T16[stage_learning_proposal]
+            T17[reconcile_projection_from_receipt]
+        end
+    end
+    
+    subgraph "Policy Engine"
+        OPA[OPA Local<br/>Fail-Closed]
+        POL[policy.decision_recorded<br/>Event]
+    end
+    
+    H --> T1
+    H --> T2
+    H --> T3
+    H --> T4
+    H --> T5
+    H --> T6
+    H --> T7
+    H --> T8
+    H --> T9
+    H --> T10
+    H --> T11
+    H --> T12
+    H --> T13
+    H --> T14
+    H --> T15
+    H --> T16
+    H --> T17
+    
+    T1 --> OPA
+    T2 --> OPA
+    T3 --> OPA
+    T4 --> OPA
+    T5 --> OPA
+    T6 --> OPA
+    T7 --> OPA
+    T8 --> OPA
+    T9 --> OPA
+    T10 --> OPA
+    T11 --> OPA
+    T12 --> OPA
+    T13 --> OPA
+    T14 --> OPA
+    T15 --> OPA
+    T16 --> OPA
+    T17 --> OPA
+    
+    OPA --> POL
+    POL -.-> EL[(data/events.jsonl)]
+    
+    style H fill:#1e3a5f,color:#fff
+    style OPA fill:#5a1e1e,color:#fff
+    style POL fill:#5a1e1e,color:#fff
+```
 
-### Read-Only Tools (9)
-| Tool | Purpose |
-|------|---------|
-| `capability_status` | Live bounded stack report |
-| `get_case` | Read master-case row by case_id |
-| `search_cases` | Search cases by status/workflow |
-| `assess_opportunity` | Advisory scoring/Fast Kill |
-| `get_source_health` | Source health evidence |
-| `parse_local_documents` | Parse/hash 1-20 local docs |
-| `capture_public_web` | Robots-compliant public HTTPS capture |
-| `get_approval_status` | Read approval metadata |
-| `evaluate_business_action` | T0-T5 policy probe (read-only) |
+### Tool Categories
 
-### Internal-Write Tools (8) — All Receipt-Backed, Idempotent
-| Tool | Purpose |
-|------|---------|
-| `stage_case_transition` | Stage validated case transition |
-| `attach_case_evidence` | Attach hashed evidence artifact |
-| `stage_supplier_candidate` | Stage evidence-backed supplier |
-| `record_quote_proof_review` | Record validated/rejected quote proof |
-| `create_internal_approval_card` | Create pending approval card |
-| `record_case_outcome` | Record verified case outcome |
-| `stage_learning_proposal` | Stage reversible learning proposal |
-| `reconcile_projection_from_receipt` | Stage projection reconciliation |
+| Category | Tools | Policy |
+|----------|-------|--------|
+| **Read-Only** | `capability_status`, `get_case`, `search_cases`, `assess_opportunity`, `get_source_health`, `parse_local_documents`, `capture_public_web`, `get_approval_status`, `evaluate_business_action` | OPA checked, no state mutation |
+| **Internal-Write** | `stage_case_transition`, `attach_case_evidence`, `stage_supplier_candidate`, `record_quote_proof_review`, `create_internal_approval_card`, `record_case_outcome`, `stage_learning_proposal`, `reconcile_projection_from_receipt` | OPA checked, receipt-backed, idempotent, no external execution |
 
-**Policy Engine:** Local OPA (`policies/tender_os_authorization.rego`) — fail-closed, every call leaves `policy.decision_recorded` event.
+**Critical:** No tool can send, submit, upload, pay, use DSC, commit price/delivery, finalize HSN/ITC-HS, or make origin/legal claims. OPA `allowed` ≠ execution tool.
+
+---
+
+## Buyer Acquisition Lane
+
+```mermaid
+flowchart TB
+    subgraph "DISCOVERY"
+        DR[ChatGPT Deep Research<br/>Broad Market/Category/Buyer Discovery]
+    end
+    
+    subgraph "STAGING"
+        ST[stage_buyer_market_research.py<br/>data/buyer_demand_signals.csv]
+    end
+    
+    subgraph "VALIDATION"
+        AB[Agent-Browser Read-Only<br/>Exact Public Capture]
+        PW[Python/Playwright Adapters<br/>Portal/Catalogue Evidence]
+    end
+    
+    subgraph "VERIFICATION"
+        BV[Buyer Identity Verification]
+        PR[Procurement Role Check]
+        CE[Contact Evidence Validation]
+    end
+    
+    subgraph "OUTREACH"
+        GP[Gmail Plugin ONLY<br/>Owner-Approved Sends]
+        OP[Owner Approval<br/>Every Contact/Quote/Reply]
+    end
+    
+    DR --> ST
+    ST --> AB
+    ST --> PW
+    AB --> BV
+    PW --> BV
+    BV --> PR
+    PR --> CE
+    CE --> GP
+    GP --> OP
+    
+    style DR fill:#5a2d5a,color:#fff
+    style ST fill:#2d5a27,color:#fff
+    style AB fill:#1e3a5f,color:#fff
+    style PW fill:#1e3a5f,color:#fff
+    style BV fill:#ffd93d,color:#000
+    style PR fill:#ffd93d,color:#000
+    style CE fill:#ffd93d,color:#000
+    style GP fill:#4dabf7,color:#fff
+    style OP fill:#5a1e1e,color:#fff
+```
+
+### Critical Rules
+- Catalogue fit = hypothesis, not RFQ
+- Never guess email or label general sales address as procurement
+- Opt-outs/bounces/not-interested = auto-stop outreach
+- No auto-reply
+- **Gmail plugin only** — no gws, IMAP, Himalaya, or browser Gmail
 
 ---
 
 ## Prediction Contract (Forecasting)
+
+```mermaid
+flowchart LR
+    subgraph "FORECAST INPUTS"
+        FD[Forecast Date]
+        EF[Eligible for Backtest At]
+        FS[Feature Snapshot JSON]
+        PV[Predicted Probability]
+        MV[Model Version]
+    end
+    
+    subgraph "TRACKING"
+        OO[Observed Outcome]
+        MS[Maturity Status]
+        BC[Brier Component]
+    end
+    
+    subgraph "CALIBRATION"
+        CB[Calibration Bins]
+        BS[Brier Score]
+        N30[N ≥ 30 Mature Outcomes]
+    end
+    
+    FD --> FS
+    EF --> FS
+    FS --> PV
+    MV --> PV
+    PV --> OO
+    OO --> MS
+    MS --> BC
+    BC --> CB
+    CB --> BS
+    N30 -.->|Required for| BS
+    
+    style N30 fill:#ff6b6b,color:#fff
+    style BS fill:#4dabf7,color:#fff
+```
 
 | Property | Value |
 |----------|-------|
@@ -554,32 +905,41 @@ The FastMCP server (`scripts/tender_os_mcp_server.py`) exposes **17 governed too
 
 ---
 
-## Buyer Acquisition Lane
+## Key Configuration Files
 
+```mermaid
+mindmap
+  root((config/))
+    approval_policy.yaml
+    agent_capability_routing.yaml
+    agent_loops.json
+    loop_schedule.json
+    kanban_board.yaml
+    hermes_cron.yaml
+    memory_policy.yaml
+    plugin_routing.yaml
+    codex_runtime_policy.yaml
+    sources.gov.yaml
+    sources.export.yaml
+    sources.supplier.yaml
+    categories.yaml
+    kill_rules.yaml
+    scoring_weights.yaml
+    low_competition_keywords.yaml
+    sync_policy.yaml
+    research_capture_routing.yaml
+    compliance_by_category.yaml
+    pricing_assumptions.yaml
+    schemas/
+      master_cases.schema.json
+      approvals_receipts.schema.json
+      quote_master.schema.json
+      supplier_master.schema.json
+      event.schema.json
+      approval_card.schema.json
+      drive_manifest.schema.json
+      plugin_run_receipt.schema.json
 ```
-ChatGPT Deep Research (broad discovery)
-       │
-       ▼
-Stage via `stage_buyer_market_research.py` → data/buyer_demand_signals.csv
-       │
-       ▼
-Agent-Browser + Python/Playwright (exact capture)
-       │
-       ▼
-Validate: buyer identity, procurement role, contact evidence
-       │
-       ▼
-Gmail Plugin ONLY for approved sends
-       │
-       ▼
-Owner approval for EVERY first contact, follow-up, quote, reply
-```
-
-**Critical Rules:**
-- Catalogue fit = hypothesis, not RFQ
-- Never guess email or label general sales address as procurement
-- Opt-outs/bounces/not-interested = auto-stop outreach
-- No auto-reply
 
 ---
 
@@ -631,40 +991,40 @@ python3 scripts/supplier_ready_category_matcher.py --dry-run
 
 ---
 
-## Folder Structure (Complete)
+## Folder Structure
 
-```
-tender-export-os/
-├── README.md                    # This system overview
-├── ARCHITECTURE.md              # This file — complete architecture
-├── AGENTS.md                    # Agent roster + responsibilities
-├── HERMES.md                    # Hermes chief operator instructions
-├── SOUL.md                      # Operating identity + non-negotiables
-├── AGENT_REFERENCE.md           # Quick agent lookup card
-├── manifest.json                # System metadata
-├── docs/                        # Architecture & policy docs
-├── config/                      # All configurable rules
-│   ├── schemas/                 # JSON schemas
-│   └── *.yaml                   # Source, kill, scoring, cron, kanban, etc.
-├── data/                        # Master registers + canonical ledger
-│   ├── events.jsonl             # ← CANONICAL APPEND-ONLY STATE
-│   ├── *.csv                    # Projections
-│   └── examples/                # Public template examples
-├── agents/                      # 11 agent instruction files
-├── scripts/                     # 200+ Python utilities
-│   ├── source_adapters/         # Source-specific adapters
-│   └── tests/                   # Test fixtures
-├── templates/                   # Email, approval, brief templates
-├── outputs/                     # Generated artifacts (gitignored)
-├── receipts/                    # Immutable receipts (gitignored)
-├── cases/                       # Per-case workspaces (gitignored)
-├── runtime/                     # Codex bridge dirs (gitignored)
-├── .github/workflows/           # CI: safe regression
-├── .hermes/                     # Hermes profile config
-├── skills/                      # Hermes skills (teos-ops bundle)
-├── chatgpt_project/             # Boardroom prompts
-├── scheduled_deep_research_tasks/ # ChatGPT scheduled prompts
-└── workflows/                   # Runtime flow docs
+```mermaid
+mindmap
+  root((tender-export-os/))
+    README.md
+    ARCHITECTURE.md
+    AGENTS.md
+    HERMES.md
+    SOUL.md
+    AGENT_REFERENCE.md
+    manifest.json
+    docs/
+    config/
+      schemas/
+    data/
+      events.jsonl
+      *.csv
+      examples/
+    agents/
+    scripts/
+      source_adapters/
+      tests/
+    templates/
+    outputs/
+    receipts/
+    cases/
+    runtime/
+    .github/workflows/
+    .hermes/
+    skills/
+    chatgpt_project/
+    scheduled_deep_research_tasks/
+    workflows/
 ```
 
 ---
@@ -686,25 +1046,6 @@ tender-export-os/
 | v4.1.1 | 2026-07-12 | Max-capability upgrade: cron, Kanban, evidence bundles, task graphs |
 | v4.1.0 | 2026-06-30 | Event-ledger hardening, Hermes-native control plane, Codex runtime |
 | v3.1   | 2026-06-15 | Original runtime system |
-
----
-
-## Quick Reference: Agent → Capability Bundle Mapping
-
-| Agent | Primary Capability Bundle | Key Config |
-|-------|---------------------------|------------|
-| Hermes Chief Operator | `operations, productivity, enterprise-search, data` + `teos-ops` | `config/kanban_board.yaml`, `config/hermes_cron.yaml` |
-| Radar Agent | `company-research, market-insight-product-selection, browser/playwright, data` | `config/sources.gov.yaml`, `config/sources.export.yaml` |
-| Fast Kill Agent | `market-viability-logic-auditor, operations, data` | `config/kill_rules.yaml`, `config/scoring_weights.yaml` |
-| Deep Read Agent | `pdf, docx, xlsx` + document plugins | `config/scoring_weights.yaml` |
-| Supplier Engine | `product-supplier-sourcing, supplier-performance-manager, 1688-sourcing` | `config/sources.supplier.yaml`, 5-3-2 rule |
-| Pricing Agent | `profit-margin-analyzer, tariff-search, international-shipping-customs, finance` | `config/pricing_assumptions.yaml` |
-| Compliance Agent | `international-shipping-customs, tariff-search, regulatory-legal` | `config/compliance_by_category.yaml` |
-| Pack Builder | `pdf, docx, xlsx, pptx, invoice-generator` + doc plugins | `templates/` |
-| Approval Desk | `sales-negotiator, operations, legal, data` | `config/approval_policy.yaml` |
-| Execution Tracker | `supplier-performance-manager, gmail-assistant, operations` | `config/approval_policy.yaml` (Mode C) |
-| Owner Briefing | `company-research, internal-comms, data, productivity` | `templates/daily_brief.html` |
-| Codex Plugin Factory | All doc/sheet/pres plugins + `claude-code-setup, github, testing` | `config/plugin_routing.yaml`, `config/codex_runtime_policy.yaml` |
 
 ---
 
