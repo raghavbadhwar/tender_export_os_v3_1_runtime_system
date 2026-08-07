@@ -15,6 +15,7 @@ import datetime as dt
 import hashlib
 import json
 import shutil
+import sqlite3
 import subprocess
 import uuid
 from pathlib import Path
@@ -96,6 +97,54 @@ def display_path(path: Path, *, root: Path = PROJECT_ROOT) -> str:
         return str(path.resolve().relative_to(root.resolve()))
     except ValueError:
         return str(path.resolve())
+
+
+
+def canonical_effect_intent_hash(*, action: str, case_id: str, approval_id: str, intent: dict[str, Any] | None = None) -> str:
+    payload = {
+        "action": str(action),
+        "case_id": str(case_id),
+        "approval_id": str(approval_id),
+        "intent": intent or {},
+    }
+    return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")).hexdigest()
+
+
+class SingleUseApprovalStore:
+    """Durable local atomic claim store containing digests, never raw payloads."""
+
+    def __init__(self, path: Path) -> None:
+        self.path = path
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        with sqlite3.connect(self.path) as connection:
+            connection.execute(
+                "CREATE TABLE IF NOT EXISTS approval_claims (approval_id TEXT PRIMARY KEY, intent_hash TEXT NOT NULL, scope_hash TEXT NOT NULL, claimed_at TEXT NOT NULL)"
+            )
+
+    def claim(self, *, approval_id: str, intent_hash: str, scope_hash: str, claimed_at: str) -> dict[str, Any]:
+        if not approval_id or not intent_hash or not scope_hash:
+            return {"claimed": False, "reason_code": "APPROVAL_CLAIM_INPUT_INVALID"}
+        try:
+            with sqlite3.connect(self.path, timeout=10, isolation_level=None) as connection:
+                connection.execute("BEGIN IMMEDIATE")
+                row = connection.execute(
+                    "SELECT intent_hash, scope_hash FROM approval_claims WHERE approval_id = ?",
+                    (approval_id,),
+                ).fetchone()
+                if row is not None:
+                    connection.execute("ROLLBACK")
+                    reason = "APPROVAL_INTENT_DRIFT" if row[0] != intent_hash or row[1] != scope_hash else "APPROVAL_REPLAY"
+                    return {"claimed": False, "reason_code": reason}
+                connection.execute(
+                    "INSERT INTO approval_claims (approval_id, intent_hash, scope_hash, claimed_at) VALUES (?, ?, ?, ?)",
+                    (approval_id, intent_hash, scope_hash, claimed_at),
+                )
+                connection.execute("COMMIT")
+                return {"claimed": True, "reason_code": "APPROVAL_CLAIMED"}
+        except sqlite3.IntegrityError:
+            return {"claimed": False, "reason_code": "APPROVAL_REPLAY"}
+        except sqlite3.Error as exc:
+            return {"claimed": False, "reason_code": "APPROVAL_CLAIM_STORE_UNAVAILABLE", "error": type(exc).__name__}
 
 
 class TenderPolicyEngine:

@@ -24,6 +24,8 @@ try:
         display_path,
         iso_utc,
         now_utc,
+        SingleUseApprovalStore,
+        canonical_effect_intent_hash,
     )
 except ModuleNotFoundError:  # pragma: no cover - direct script execution
     from event_ledger import append_event  # type: ignore
@@ -33,6 +35,8 @@ except ModuleNotFoundError:  # pragma: no cover - direct script execution
         display_path,
         iso_utc,
         now_utc,
+        SingleUseApprovalStore,
+        canonical_effect_intent_hash,
     )
 
 
@@ -74,6 +78,7 @@ def guard_business_effect(
     engine: TenderPolicyEngine | None = None,
     receipt_root: Path = DEFAULT_RECEIPT_ROOT,
     record_event: bool = True,
+    intent: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     policy = engine or TenderPolicyEngine()
     decision = policy.evaluate(
@@ -85,6 +90,26 @@ def guard_business_effect(
     )
     status = classify_decision(decision)
     stamp = now_utc()
+    intent_hash = canonical_effect_intent_hash(
+        action=str(decision.get("action") or action),
+        case_id=case_id,
+        approval_id=approval_id,
+        intent=intent,
+    )
+    claim_result: dict[str, Any] = {"claimed": False, "reason_code": "NOT_REQUIRED"}
+    if bool(decision.get("allow")) and bool(decision.get("approval_required")):
+        scope_hash = str(decision.get("approval", {}).get("scope_hash", ""))
+        store = SingleUseApprovalStore(receipt_root / "approval_consumption.sqlite3")
+        claim_result = store.claim(
+            approval_id=approval_id,
+            intent_hash=intent_hash,
+            scope_hash=scope_hash,
+            claimed_at=iso_utc(stamp),
+        )
+        if not claim_result.get("claimed"):
+            status = "blocked_replay" if claim_result.get("reason_code") == "APPROVAL_REPLAY" else "blocked_intent_drift" if claim_result.get("reason_code") == "APPROVAL_INTENT_DRIFT" else "failed"
+            decision["allow"] = False
+            decision["reason_code"] = str(claim_result.get("reason_code", "APPROVAL_CLAIM_FAILED"))
     attempt_id = f"BEA-{stamp.strftime('%Y%m%dT%H%M%SZ')}-{uuid.uuid4().hex[:10]}"
     receipt_path = receipt_root / f"{attempt_id}.json"
     receipt = {
@@ -98,6 +123,11 @@ def guard_business_effect(
         "approval_receipt_id": str(
             decision.get("approval", {}).get("receipt_id", "")
         ),
+        "approval_claim": {
+            "status": str(claim_result.get("reason_code", "")),
+            "intent_sha256": intent_hash,
+            "scope_hash": str(decision.get("approval", {}).get("scope_hash", "")),
+        },
         "policy_decision_id": str(decision.get("decision_id", "")),
         "policy_receipt_path": str(decision.get("receipt_path", "")),
         "reason_code": str(decision.get("reason_code", "")),
@@ -162,7 +192,7 @@ def main() -> int:
         actor=args.actor,
     )
     print(json.dumps(result, indent=2, ensure_ascii=False))
-    return {"allowed": 0, "blocked_missing_approval": 3, "failed": 4}[result["status"]]
+    return {"allowed": 0, "blocked_missing_approval": 3, "blocked_replay": 3, "blocked_intent_drift": 3, "failed": 4}[result["status"]]
 
 
 if __name__ == "__main__":

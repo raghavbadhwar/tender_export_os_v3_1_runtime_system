@@ -1,0 +1,38 @@
+{
+  "schema_version": "completion_evidence.v1",
+  "task_id": "TEOS-05",
+  "result": "pass",
+  "base_commit": "10d4941e8e0f836ba398502ed91fca526f239a2e",
+  "files_changed": [
+    "scripts/validate_dependency_locks.py",
+    "tests/test_validate_dependency_locks.py",
+    ".github/workflows/ci.yml",
+    "completion/plan.json"
+  ],
+  "checks": [
+    {
+      "command": "python3 -m pytest -q tests/test_validate_dependency_locks.py",
+      "exit_code": 0,
+      "summary": "Ran 6 lock-coverage tests; unpinned, duplicate, conflict, URL, marker, and CI wiring cases covered."
+    },
+    {
+      "command": "python3 scripts/validate_dependency_locks.py --json",
+      "exit_code": 0,
+      "summary": "Read-only lock coverage passed; all direct requirements map to exact lock entries and warnings identify unpinned sources."
+    },
+    {
+      "command": "python3 completion/validate.py --next",
+      "exit_code": 0,
+      "summary": "Packet validator passed and selected TEOS-06 as the only ready task."
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "summary": "No whitespace errors reported."
+    }
+  ],
+  "limitations": [
+    "The validator reports, but does not resolve, unpinned source requirements; no package version was selected and no network installation was performed."
+  ],
+  "external_actions_executed": false
+}

@@ -1,0 +1,38 @@
+{
+  "schema_version": "completion_evidence.v1",
+  "task_id": "TEOS-04",
+  "result": "pass",
+  "base_commit": "10d4941e8e0f836ba398502ed91fca526f239a2e",
+  "files_changed": [
+    "scripts/tender_os_policy.py",
+    "scripts/business_effect_guard.py",
+    "tests/test_business_effect_guard.py",
+    "completion/plan.json"
+  ],
+  "checks": [
+    {
+      "command": "python3 -m pytest -q tests/test_tender_os_policy.py tests/test_business_effect_guard.py",
+      "exit_code": 0,
+      "summary": "Ran 19 approval-policy and business-effect tests with repository Python and local OPA; all passed."
+    },
+    {
+      "command": "python3 scripts/tender_os_policy.py --self-test",
+      "exit_code": 0,
+      "summary": "OPA policy self-test passed, including fail-closed prohibited/unapproved actions."
+    },
+    {
+      "command": "python3 completion/validate.py --next",
+      "exit_code": 0,
+      "summary": "Packet validator passed and selected TEOS-05 as the only ready task."
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "summary": "No whitespace errors reported."
+    }
+  ],
+  "limitations": [
+    "SQLite claim state is local and digest-only; no external effect connector, policy service, or live action was invoked."
+  ],
+  "external_actions_executed": false
+}

@@ -20,6 +20,10 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CRON = PROJECT_ROOT / "config" / "hermes_cron.yaml"
 RUN_LOG = PROJECT_ROOT / "data" / "agent_run_log.csv"
 DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "outputs" / "cron_gateway"
+DEFAULT_SOURCE_CANARY_WINDOW = PROJECT_ROOT / "outputs" / "source_canary" / "window.json"
+DEFAULT_SOURCE_ADAPTERS = ("cppp", "ungm", "gem")
+SOURCE_CANARY_REQUIRED_RUNS = 7
+SOURCE_CANARY_INTERVAL_SECONDS = 86_400
 
 LOCAL_ONLY_NOTE = (
     "Cron output visible in a local TUI/session is local-only unless the run is delivered "
@@ -279,6 +283,124 @@ def build_report(
     }
 
 
+
+def _parse_timestamp(value: object) -> dt.datetime | None:
+    if not isinstance(value, str) or not value.strip():
+        return None
+    try:
+        parsed = dt.datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return None
+    return parsed.astimezone(dt.timezone.utc)
+
+
+def evaluate_source_canary_window(
+    receipts: list[dict[str, Any]],
+    *,
+    required_adapters: list[str] | tuple[str, ...] = DEFAULT_SOURCE_ADAPTERS,
+    now: dt.datetime | None = None,
+    required_runs: int = SOURCE_CANARY_REQUIRED_RUNS,
+    interval_seconds: int = SOURCE_CANARY_INTERVAL_SECONDS,
+    max_age_seconds: int | None = None,
+) -> dict[str, Any]:
+    """Evaluate saved scheduled receipts without invoking any source adapter.
+
+    A receipt is a deterministic slot identified by ``run_id`` and
+    ``scheduled_at``.  The trailing window must contain seven exact-interval
+    slots, an exact configured adapter set, and ``PASS``/``HEALTHY`` statuses.
+    Duplicate identities, gaps, stale latest receipts, malformed receipts, and
+    unhealthy/partial adapter sets reset the consecutive suffix and block.
+    """
+    now_utc = (now or dt.datetime.now(dt.timezone.utc)).astimezone(dt.timezone.utc)
+    adapters = tuple(sorted({str(adapter).strip() for adapter in required_adapters if str(adapter).strip()}))
+    errors: list[str] = []
+    if not adapters:
+        errors.append("REQUIRED_ADAPTER_SET_EMPTY")
+    if required_runs < 1 or interval_seconds <= 0:
+        errors.append("WINDOW_CONFIGURATION_INVALID")
+    max_age = max_age_seconds if max_age_seconds is not None else interval_seconds * 2
+    normalized: list[tuple[dt.datetime, dict[str, Any]]] = []
+    seen_ids: set[str] = set()
+    seen_slots: set[dt.datetime] = set()
+    for index, receipt in enumerate(receipts):
+        if not isinstance(receipt, dict):
+            errors.append(f"RECEIPT_INVALID:{index}")
+            continue
+        run_id = str(receipt.get("run_id", "")).strip()
+        scheduled_at = _parse_timestamp(receipt.get("scheduled_at"))
+        status = str(receipt.get("status", "")).upper().strip()
+        adapter_map = receipt.get("adapters")
+        if not run_id or run_id in seen_ids:
+            errors.append(f"DUPLICATE_OR_MISSING_RUN_ID:{run_id or index}")
+        else:
+            seen_ids.add(run_id)
+        if scheduled_at is None:
+            errors.append(f"SCHEDULED_AT_INVALID:{run_id or index}")
+            continue
+        if scheduled_at in seen_slots:
+            errors.append(f"DUPLICATE_SCHEDULE_SLOT:{scheduled_at.isoformat()}")
+        seen_slots.add(scheduled_at)
+        if not isinstance(adapter_map, dict) or set(adapter_map) != set(adapters):
+            errors.append(f"ADAPTER_SET_MISMATCH:{run_id or index}")
+        normalized.append((scheduled_at, receipt))
+    normalized.sort(key=lambda item: item[0])
+    suffix = 0
+    previous_at: dt.datetime | None = None
+    healthy_flags: list[bool] = []
+    for scheduled_at, receipt in normalized:
+        run_id = str(receipt.get("run_id", "")).strip() or "<missing>"
+        adapter_map = receipt.get("adapters")
+        healthy = (
+            str(receipt.get("status", "")).upper().strip() == "PASS"
+            and isinstance(adapter_map, dict)
+            and set(adapter_map) == set(adapters)
+            and all(str(adapter_map[name]).upper().strip() == "HEALTHY" for name in adapters)
+        )
+        contiguous = previous_at is None or int((scheduled_at - previous_at).total_seconds()) == interval_seconds
+        if not contiguous:
+            errors.append(f"SCHEDULE_GAP_BEFORE:{run_id}")
+        if healthy and contiguous:
+            suffix += 1
+        else:
+            suffix = 0
+        healthy_flags.append(healthy and contiguous)
+        previous_at = scheduled_at
+    latest_at = normalized[-1][0] if normalized else None
+    stale = latest_at is None or (now_utc - latest_at).total_seconds() > max_age or latest_at > now_utc
+    if stale:
+        errors.append("LATEST_RECEIPT_STALE_OR_FUTURE")
+    if len(normalized) < required_runs:
+        errors.append("CONSECUTIVE_WINDOW_TOO_SHORT")
+    if suffix < required_runs:
+        errors.append("CONSECUTIVE_HEALTHY_WINDOW_MISSING")
+    return {
+        "schema_version": "source_canary_window.v1",
+        "status": "PASS" if not errors else "BLOCKED",
+        "required_runs": required_runs,
+        "required_adapters": list(adapters),
+        "receipts_seen": len(receipts),
+        "consecutive_healthy_runs": suffix,
+        "latest_scheduled_at": latest_at.isoformat() if latest_at else None,
+        "stale": stale,
+        "errors": list(dict.fromkeys(errors)),
+        "source_adapters_invoked": False,
+        "external_actions_executed": False,
+    }
+
+
+def load_source_canary_receipts(path: Path) -> list[dict[str, Any]]:
+    if not path.is_file():
+        return []
+    value = json.loads(path.read_text(encoding="utf-8"))
+    if isinstance(value, dict):
+        value = value.get("receipts", [])
+    if not isinstance(value, list) or not all(isinstance(item, dict) for item in value):
+        raise ValueError("source canary receipt file must contain an array of objects")
+    return value
+
+
 def write_markdown(path: Path, report: dict[str, Any]) -> None:
     lines = [
         "# Cron Gateway Reliability Report",
@@ -311,8 +433,25 @@ def main() -> int:
     parser.add_argument("--cron", default=str(DEFAULT_CRON))
     parser.add_argument("--profile-glob", action="append", default=[], help="Optional visible cron profile glob to inspect")
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR))
+    parser.add_argument("--source-canary-window", action="store_true", help="Evaluate saved seven-run source receipts without invoking adapters")
+    parser.add_argument("--source-receipts", default=str(DEFAULT_SOURCE_CANARY_WINDOW))
+    parser.add_argument("--source-adapters", default=",".join(DEFAULT_SOURCE_ADAPTERS))
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args()
+
+    if args.source_canary_window:
+        receipt_path = Path(args.source_receipts).expanduser()
+        if not receipt_path.is_absolute():
+            receipt_path = PROJECT_ROOT / receipt_path
+        try:
+            report = evaluate_source_canary_window(
+                load_source_canary_receipts(receipt_path),
+                required_adapters=[item for item in args.source_adapters.split(",") if item.strip()],
+            )
+        except (OSError, json.JSONDecodeError, ValueError) as exc:
+            report = {"schema_version": "source_canary_window.v1", "status": "BLOCKED", "errors": [f"RECEIPT_FILE_INVALID:{exc}"], "source_adapters_invoked": False, "external_actions_executed": False}
+        print(json.dumps(report, indent=2) if args.json else f"Source canary window {report['status']}: {', '.join(report['errors']) or 'healthy'}")
+        return 0 if report["status"] == "PASS" else 1
 
     cron = Path(args.cron)
     if not cron.is_absolute():

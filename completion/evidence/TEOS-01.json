@@ -1,0 +1,39 @@
+{
+  "schema_version": "completion_evidence.v1",
+  "task_id": "TEOS-01",
+  "result": "pass",
+  "base_commit": "10d4941e8e0f836ba398502ed91fca526f239a2e",
+  "files_changed": [
+    "config/canonical_runtime.json",
+    "scripts/validate_canonical_runtime.py",
+    "tests/test_validate_canonical_runtime.py",
+    "completion/plan.json",
+    "completion/evidence/TEOS-01.json"
+  ],
+  "checks": [
+    {
+      "command": "python3 -m pytest -q tests/test_validate_canonical_runtime.py",
+      "exit_code": 0,
+      "summary": "5 focused canonical-runtime tests passed using the repository virtualenv on PATH."
+    },
+    {
+      "command": "python3 scripts/validate_canonical_runtime.py --public-template --json",
+      "exit_code": 0,
+      "summary": "PASS; manifest Git identity matched and public output used no private absolute path."
+    },
+    {
+      "command": "python3 completion/validate.py --next",
+      "exit_code": 0,
+      "summary": "PASS; TEOS-02 selected after TEOS-01 completion."
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "summary": "PASS; no whitespace errors reported."
+    }
+  ],
+  "limitations": [
+    "The gate validates local Git identity and does not enable production routing or contact live services."
+  ],
+  "external_actions_executed": false
+}
