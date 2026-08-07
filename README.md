@@ -1,68 +1,124 @@
 # Tender Export OS v4.1
-**Event-ledger hardened Hermes-Native Control Plane + Codex Plugin Runtime for Indian government tenders and export RFQs.**
+
+**A safety-gated, event-ledger reference implementation for Indian government-tender and export-RFQ decision support.**
+
+[Portfolio case study](docs/PORTFOLIO.md) · [Architecture](docs/FINAL_ARCHITECTURE.md) · [Approval boundaries](docs/APPROVAL_BOUNDARIES.md)
 
 ---
 
-## What This Is
+## What This Repository Demonstrates
 
-A real company machine: Hermes runs the operating rhythm, Codex produces artifacts, ChatGPT handles deep research, and Google Drive stays the business source of truth.
-
-v4.1 adds an append-only event ledger, schema validation, projection rebuilds, owner-decision receipts, readiness gates, artifact manifests, source-adapter fixtures, and Hermes Kanban reconciliation plans.
-
-The max-capability upgrade adds live Hermes cron operating loops, per-case workspaces, evidence bundles, executable Kanban task graphs, structured approval-card JSON, founder quick commands, and an expanded event taxonomy. The agent-excellence upgrade tunes each agent to a best-in-class professional standard and maps Claude plugins/Accio skills into safe capability bundles. See `docs/MAX_CAPABILITY_UPGRADE_ROADMAP.md`, `docs/FOUNDER_QUICK_COMMANDS.md`, `docs/AGENT_EXCELLENCE_SYSTEM.md`, and `docs/ROLE_CAPABILITY_STANDARDS.md`.
-
-v4.1.2 now includes the Hybrid Research + Operational Capture correction and Low-Competition Order Radar operating lane: an internal-only prioritization layer for legally public, under-seen, boring, local, repeated, retendered, corrigendum-driven, low-EMD, and supplier-ready orders. It does not bypass portals or approval gates and does not send, submit, upload, pay, use DSC, commit final price/delivery, or certify compliance.
-
-The hybrid research + operational capture model makes that boundary executable:
-- Deep Research discovers.
-- Python/Playwright captures and proves.
-- The repo remembers and audits.
-- Hermes routes and approves.
-- The owner decides external commitments.
-
-Routing source of truth:
-- `docs/HYBRID_RESEARCH_AND_CAPTURE_MODEL.md`
-- `docs/DEEP_RESEARCH_TO_REPO_STAGING.md`
-- `docs/DRIVE_CHATGPT_PRIVACY_BOUNDARY.md`
-- `config/research_capture_routing.yaml`
-- `config/schemas/deep_research_lead_schema.yaml`
-
-Communication between ChatGPT and Codex/Hermes runs through Google Drive:
+Tender Export OS models a traceable path from opportunity discovery to internal analysis, evidence, pricing drafts, approval, and receipts:
 
 ```text
-Tender Export OS - Knowledge Bus/08_ChatGPT_Bridge/
-```
-
-Codex/Hermes writes bounded packets to `01_To_ChatGPT`; ChatGPT returns research to `02_From_ChatGPT`; Hermes/Codex stages and reviews returns before anything reaches the event ledger or registers.
-
-ChatGPT Scheduled Deep Research is for broad discovery, market/category/source intelligence, reasoning, synthesis, and cited reports. Python/Playwright Source Runtime is for exact repeatable capture from known sources, evidence downloads where allowed, BOQ/PDF parsing, dedupe, scoring, state updates, validation, and tests. Python must not become a broad arbitrary-web research machine.
-
-It runs a structured pipeline across two workflows:
-
-```
 Find → Fast Kill → Deep Read → Supplier Proof → Pricing Proof → Approval → Execution → Receipt
 ```
 
-**Automation handles:** scanning, extraction, scoring, sourcing, pricing, drafting, briefing.  
-**Humans approve:** bids, quotes, EMD/security, DSC, HSN/origin claims, supplier commitment, delivery promises, payment terms.
+The repository is declared as a `public-template` in [`config/canonical_runtime.json`](config/canonical_runtime.json). It contains local Python runtime code, policy/configuration contracts, sanitized fixtures, and tests. It is not evidence of a deployed business service.
 
----
+The design separates responsibilities:
 
-## v4 Architecture
+- broad research discovers candidates;
+- deterministic Python/Playwright paths capture and cite evidence from known sources;
+- `data/events.jsonl` is the configured canonical runtime state stream; the public template includes a sanitized [`events.example.jsonl`](data/examples/events.example.jsonl), with CSVs and external workboards treated as projections;
+- Hermes and Codex are designed as the control-plane and artifact-runtime roles;
+- the owner approves external, financial, legal, DSC, classification, origin, price, and delivery commitments.
 
-| Layer | Tool | Role |
+## Architecture at a Glance
+
+```text
+Public sources / research leads / local fixtures
+                      │
+             adapters + extraction
+                      │
+           typed, citation-aware events
+                      ▼
+       data/events.jsonl (canonical local state)
+                      │
+        projections + policy/readiness gates
+                      │
+           internal briefs and draft packs
+                      ▼
+             owner approval boundary
+                      │
+        external execution (not a demo action)
+```
+
+| Layer | Repository contract | Evidence boundary |
 |---|---|---|
-| **Control Plane** | Hermes | Chief Operating Agent, owner rhythm, approvals, Kanban, memory, skills, routing |
-| **Durable Workboard** | Hermes Kanban | Cases, tasks, blockers, approvals, handoffs, weekly learning |
-| **Artifact Runtime** | Codex App-Server Runtime | File/script work, plugins, spreadsheets, PDFs, DOCX, PPTX, dashboards, packs |
-| **Strategy Boardroom** | ChatGPT Project | Deep cited research, weekly review, category/export strategy |
-| **Knowledge Bus** | Google Drive | Registers, artifacts, approvals, receipts, snapshots |
+| State core | Append-only JSONL events, registered event types, schema checks, rebuildable projections | Local code and tests |
+| Source/evidence runtime | Fixture-backed adapters, document extraction, evidence spans, blocker detection | Mock/fixture paths are testable; live portal access is environment-dependent |
+| Control plane | Hermes profiles, Kanban/cron contracts, approval routing | Integration design is present; a running Hermes deployment is not proven here |
+| Artifact runtime | Codex routing for internal files, analyses, and draft packs | Contracts and generators are present; external Codex services are not required for local tests |
+| Research/knowledge bus | Bounded ChatGPT packets and Google Drive projection/sync contracts | Connectivity, credentials, and scheduled runs are not proven by the repository |
+| Human boundary | Scoped approval receipts and forbidden-action guards | No bounded MCP tool performs external execution |
 
-Paperclip is intentionally not used by default. Reconsider it only if Hermes Kanban is not enough.
+Paperclip is intentionally excluded from the default architecture; the design first uses the primitives already assigned to Hermes.
+
+## Verified Local Capabilities
+
+A local run on 2026-08-07 with Python 3.12.13 and pytest 9.1.1 completed **719 tests successfully**. Representative, directly inspectable evidence includes:
+
+| Capability | Test evidence |
+|---|---|
+| Concurrent ledger appends remain uniquely ordered; projection drift is reported | [`tests/test_event_ledger_concurrency.py`](tests/test_event_ledger_concurrency.py), [`tests/test_projection_integrity.py`](tests/test_projection_integrity.py) |
+| Tender fields retain exact source spans; marketplace prices remain indicative rather than final-price proof | [`scripts/tests/test_source_grounded_extraction.py`](scripts/tests/test_source_grounded_extraction.py) |
+| A mock source scan records lifecycle events while declaring no case creation or external side effects | [`tests/test_run_source_adapter_cli.py`](tests/test_run_source_adapter_cli.py) |
+| Owner text alone cannot authorize an action; case/action scope and forbidden controls are checked | [`tests/test_process_owner_decision.py`](tests/test_process_owner_decision.py), [`tests/test_forbidden_action_guard.py`](tests/test_forbidden_action_guard.py) |
+| The FastMCP surface is bounded to nine typed tools and exposes no external-execution tool | [`tests/test_tender_os_mcp_tools.py`](tests/test_tender_os_mcp_tools.py) |
+| Public-template privacy, file, JSON/YAML, example-CSV, compile, and loop checks pass locally | [`scripts/check_no_private_runtime_data.py`](scripts/check_no_private_runtime_data.py), [`scripts/system_health_check.py`](scripts/system_health_check.py) |
+
+The count is a point-in-time worktree result, not a coverage percentage or production certification. See the [portfolio evidence map](docs/PORTFOLIO.md#capability-to-evidence-map) for the claim-to-code boundary.
+
+## Quick Local Demo and Tests
+
+Python 3.12 was used for the verified run:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.lock.txt
+```
+
+Run a focused, fixture-only slice and the public-template checks:
+
+```bash
+.venv/bin/python -m pytest -q \
+  tests/test_event_ledger_concurrency.py \
+  scripts/tests/test_source_grounded_extraction.py \
+  tests/test_process_owner_decision.py \
+  tests/test_forbidden_action_guard.py \
+  tests/test_run_source_adapter_cli.py
+
+.venv/bin/python scripts/check_no_private_runtime_data.py --public-template
+.venv/bin/python scripts/system_health_check.py --public-template
+```
+
+Run the complete local suite with:
+
+```bash
+.venv/bin/python -m pytest -q
+```
+
+A safe mock scan can write all demo artifacts outside the repository:
+
+```bash
+demo_dir="$(mktemp -d)"
+TENDER_OS_EVENTS_FILE="$demo_dir/events.jsonl" \
+  .venv/bin/python scripts/run_source_adapter.py \
+  --adapter mock --mode scan --limit 2 \
+  --output "$demo_dir/scan.json" --record-event
+.venv/bin/python -m json.tool "$demo_dir/scan.json"
+```
+
+Expected invariants are `create_cases: false`, `external_side_effects: false`, and `source_adapter.scan_started` / `source_adapter.scan_completed` events in the temporary ledger.
+
+### Evidence and Non-Claims
+
+Passing local checks establishes behavior against repository code, policies, mocks, and fixtures. It does **not** establish live portal coverage, deployed Hermes/Codex/ChatGPT/Drive/MCP/OPA connectivity, credential readiness, regulatory correctness, forecast accuracy, uptime, successful bids, revenue, or other business outcomes. CAPTCHA, OTP, login, payment, DSC, submit, and upload boundaries remain blockers or separately approved actions—not targets of the local demo.
 
 ---
 
-## Workflow A — Government Tenders
+## Designed Workflow A — Government Tenders
 
 1. Radar Agent scans GeM, CPPP, eProcure, state portals daily
 2. Fast Kill Agent rejects non-starters (EMD, eligibility, deadline, experience)
@@ -75,7 +131,7 @@ Paperclip is intentionally not used by default. Reconsider it only if Hermes Kan
 
 ---
 
-## Workflow B — Export RFQs
+## Designed Workflow B — Export RFQs
 
 1. Radar Agent scans buyer portals, RFQ platforms, foreign-government sources
 2. Fast Kill Agent rejects on buyer risk, payment risk, product restriction
@@ -88,7 +144,9 @@ Paperclip is intentionally not used by default. Reconsider it only if Hermes Kan
 
 ---
 
-## How to Run the System Daily
+## Operational Runbook (After Integrations Are Configured)
+
+The steps below are an operating design. They require the named local tools, credentials, gateways, and owner-approved integrations; they are not part of the fixture-only demo above.
 
 ### Morning (5–10 minutes)
 1. Open Hermes through the configured gateway (Telegram/WhatsApp/CLI/local file).
@@ -552,4 +610,4 @@ The GeM/CPPP commands are read-only browser scans. CAPTCHA, OTP, login walls, pa
 - `scripts/stage_chatgpt_return.py`
 - `scripts/stage_deep_research_leads.py`
 
-*System version: v4.1 | Hermes-native | Event-ledger hardened | Built for one-founder operation | Safe for semi-autonomous daily use*
+*System version: v4.1 | Hermes-native design | Event-ledger hardened | Public-template reference implementation | External actions remain owner-gated*
