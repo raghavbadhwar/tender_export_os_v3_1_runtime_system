@@ -20,6 +20,7 @@ Runner = Callable[..., subprocess.CompletedProcess[str]]
 
 READINESS_COMMANDS: list[list[str]] = [
     ["scripts/validate_live_cron_installation.py", "--json"],
+    ["scripts/check_cron_gateway_reliability.py", "--source-canary-window", "--json"],
     ["scripts/run_shadow_profile_probes.py", "--write-log", "--write-evaluations", "--json"],
     ["scripts/generate_shadow_pilot_report.py", "--json"],
     ["scripts/run_profile_behavioral_eval_queue.py", "--json"],
@@ -41,6 +42,7 @@ READINESS_COMMANDS: list[list[str]] = [
 
 POST_SEAL_COMMANDS: list[list[str]] = [
     ["scripts/validate_live_cron_installation.py", "--json"],
+    ["scripts/check_cron_gateway_reliability.py", "--source-canary-window", "--json"],
     ["scripts/generate_final_readiness_receipt.py", "--json"],
     ["scripts/generate_owner_action_packet.py", "--json"],
     ["scripts/audit_upgrade_plan_status.py", "--json"],

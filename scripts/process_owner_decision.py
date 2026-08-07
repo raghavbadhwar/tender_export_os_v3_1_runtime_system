@@ -13,9 +13,11 @@ from pathlib import Path
 try:
     from event_ledger import append_event
     from approval_lifecycle import classify_approval
+    from owner_identity import load_principal_evidence, decision_scope, verify_owner_principal
 except ModuleNotFoundError:  # pragma: no cover - package import path used by pytest
     from scripts.event_ledger import append_event
     from scripts.approval_lifecycle import classify_approval
+    from scripts.owner_identity import load_principal_evidence, decision_scope, verify_owner_principal
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -126,12 +128,28 @@ def append_run_log(case_id: str, approval_id: str, decision: str, receipt_path: 
     write_csv(RUN_LOG, headers, rows)
 
 
+def verify_decision_identity(approval: dict, *, owner: str, principal_evidence: dict, now: dt.datetime) -> dict:
+    """Bind the requested decision to verified principal evidence and exact scope."""
+    scope = decision_scope(
+        approval_id=str(approval.get("approval_id", "")),
+        case_id=str(approval.get("case_id", "")),
+        action=str(approval.get("action_approved", "")),
+    )
+    return verify_owner_principal(
+        principal_evidence,
+        expected_subject=owner,
+        expected_scope=scope,
+        now=now,
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Record an owner approval decision")
     parser.add_argument("--approval-id", help="Approval ID to decide")
     parser.add_argument("--case-id", help="Case ID with one pending approval")
     parser.add_argument("--decision", required=True, choices=["approve", "reject", "ask-changes"])
-    parser.add_argument("--owner", required=True, help="Owner name or handle")
+    parser.add_argument("--owner", required=True, help="Verified principal subject; text alone is never identity proof")
+    parser.add_argument("--principal-evidence", required=True, help="JSON evidence envelope produced by an authenticated verifier")
     parser.add_argument("--reason", default="", help="Rejection or approval note")
     parser.add_argument("--changes", default="", help="Requested changes for ask-changes")
     parser.add_argument("--dry-run", action="store_true", help="Print the update plan without writing files")
@@ -171,7 +189,16 @@ def main() -> int:
         print(f"Approval card is missing: {card_path}")
         return 1
 
-    now = dt.datetime.now().replace(microsecond=0)
+    try:
+        principal_evidence = load_principal_evidence(Path(args.principal_evidence).expanduser())
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
+        print(f"Authenticated principal evidence is unavailable: {exc}")
+        return 1
+    now = dt.datetime.now(dt.timezone.utc).replace(microsecond=0)
+    identity = verify_decision_identity(approval, owner=args.owner, principal_evidence=principal_evidence, now=now)
+    if not identity.get("valid"):
+        print(f"Owner decision blocked: {identity.get('reason', 'authenticated principal verification failed')}")
+        return 1
     receipt_id = f"ODR-{now.strftime('%Y%m%d%H%M%S')}-{approval.get('approval_id')}"
     receipt_path = RECEIPTS_DIR / f"{case_id}_{approval.get('approval_id')}_{now.strftime('%Y%m%d%H%M%S')}.json"
     decision_key = args.decision.replace("-", "_")
@@ -209,6 +236,14 @@ def main() -> int:
         "decision": decision_key,
         "decision_status": decision_status,
         "owner": args.owner,
+        "authenticated_principal": {
+            "subject": identity.get("subject", ""),
+            "issuer": identity.get("issuer", ""),
+            "audience": identity.get("audience", []),
+            "scope": identity.get("scope", ""),
+            "expires_at": identity.get("expires_at", ""),
+            "verifier": identity.get("verifier", ""),
+        },
         "decided_at": now.isoformat(),
         "action_approved": action,
         "case_status_before": case.get("status", ""),
