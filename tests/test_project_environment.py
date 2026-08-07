@@ -20,3 +20,4 @@ def test_project_mcp_dependencies_load_from_project_runtime() -> None:
     for module in (fastmcp, jsonschema, pydantic_core, rpds):
         assert module.__file__ is not None
         assert ".venv" in str(Path(module.__file__).resolve())
+        assert "hermes-agent" not in str(Path(module.__file__).resolve())

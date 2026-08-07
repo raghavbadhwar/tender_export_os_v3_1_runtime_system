@@ -1,12 +1,10 @@
 version: 1
 purpose: Approved-design gate for buyer contact-form execution.
-status: APPROVED_DESIGN_EXECUTION_DISABLED
+status: DISABLED_PENDING_APPROVED_CONNECTOR_DESIGN
 production_enabled: false
-approved_connector_design:
-  approval_id: CFCD-20260713T191305Z
-  approval_receipt: receipts/contact_form_connector_approvals/CFCD-20260713T191305Z.json
-  design_doc: config/contact_form_connector_design.yaml
-  approved_at: '2026-07-13T19:13:05+00:00'
+# A public template has no owner-specific approval receipt. A private deployment
+# must add one before this lane can be treated as an approved disabled design.
+approved_connector_design: {}
 required_controls_before_enable:
 - domain_allowlist
 - exact_form_field_map

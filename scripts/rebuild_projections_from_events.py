@@ -185,15 +185,18 @@ def event_record_id(event: dict[str, Any], id_field: str) -> str:
     return record_id
 
 
-def project(events: list[dict]) -> dict[str, list[dict[str, str]]]:
-    states: dict[str, dict[str, dict[str, str]]] = {name: {} for name in PROJECTIONS}
-    headers = {name: load_headers(spec["file"]) for name, spec in PROJECTIONS.items()}
+def project(
+    events: list[dict], *, projections: dict[str, dict[str, Any]] | None = None
+) -> dict[str, list[dict[str, str]]]:
+    projection_map = PROJECTIONS if projections is None else projections
+    states: dict[str, dict[str, dict[str, str]]] = {name: {} for name in projection_map}
+    headers = {name: load_headers(spec["file"]) for name, spec in projection_map.items()}
 
     for event in events:
         object_type = event.get("object_type", "")
-        if object_type not in PROJECTIONS:
+        if object_type not in projection_map:
             continue
-        spec = PROJECTIONS[object_type]
+        spec = projection_map[object_type]
         id_field = spec["id_field"]
         payload = event.get("payload", {})
         if not isinstance(payload, dict):
@@ -241,7 +244,7 @@ def project(events: list[dict]) -> dict[str, list[dict[str, str]]]:
             states[object_type][object_id] = row
 
     return {
-        name: sorted(rows.values(), key=lambda row: row.get(PROJECTIONS[name]["id_field"], ""))
+        name: sorted(rows.values(), key=lambda row: row.get(projection_map[name]["id_field"], ""))
         for name, rows in states.items()
     }
 

@@ -1,6 +1,6 @@
 version: 1
 board: tender-export-os
-workspace: /Users/raghav/Downloads/tender_export_os_v3_1_runtime_system
+workspace: .
 external_effects_allowed: false
 max_concurrency: 2
 output_schema: config/schemas/swarm_worker_output.schema.json

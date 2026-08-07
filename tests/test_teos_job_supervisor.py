@@ -16,17 +16,21 @@ def test_supervisor_builds_project_isolated_python_environment(tmp_path, monkeyp
     (scripts_dir / "probe.py").write_text("print('ok')\n", encoding="utf-8")
     (venv_bin / "python").write_text("", encoding="utf-8")
 
+    foreign_pythonpath = tmp_path / "foreign-pythonpath"
+    foreign_pythonhome = tmp_path / "foreign-pythonhome"
+    foreign_venv = tmp_path / "foreign-venv"
+
     monkeypatch.setenv(
         "PYTHONPATH",
         os.pathsep.join(
             (
-                "/Users/example/.hermes/hermes-agent",
-                "/Users/example/.hermes/hermes-agent/venv/lib/python3.11/site-packages",
+                str(foreign_pythonpath / "site-packages"),
+                str(foreign_pythonpath / "other-site-packages"),
             )
         ),
     )
-    monkeypatch.setenv("PYTHONHOME", "/Users/example/.hermes/hermes-agent/venv")
-    monkeypatch.setenv("VIRTUAL_ENV", "/Users/example/.hermes/hermes-agent/venv")
+    monkeypatch.setenv("PYTHONHOME", str(foreign_pythonhome))
+    monkeypatch.setenv("VIRTUAL_ENV", str(foreign_venv))
 
     captured: dict[str, object] = {}
 

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from scripts.import_external_worker_skills import load_items, read_yaml
 
 
@@ -49,10 +51,37 @@ def test_pricing_and_compliance_imports_are_split() -> None:
     assert "claims" in imports["compliance-due-diligence"]["accio"]
 
 
-def test_every_selected_skill_source_exists() -> None:
+def test_public_template_requires_explicit_runtime_skill_roots(monkeypatch: pytest.MonkeyPatch) -> None:
     policy = read_yaml(POLICY)
-    items = load_items(policy)
 
+    assert policy["source_roots"] == {
+        "accio": "${TEOS_ACCIO_SKILLS_ROOT}",
+        "claude": "${TEOS_CLAUDE_SKILLS_ROOT}",
+    }
+    assert policy["profiles_root"] == "${TEOS_HERMES_PROFILES_ROOT}"
+    for variable in ("TEOS_ACCIO_SKILLS_ROOT", "TEOS_CLAUDE_SKILLS_ROOT", "TEOS_HERMES_PROFILES_ROOT"):
+        monkeypatch.delenv(variable, raising=False)
+
+    with pytest.raises(ValueError, match="TEOS_ACCIO_SKILLS_ROOT"):
+        load_items(policy)
+
+
+def test_load_items_uses_explicit_runtime_skill_roots(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    policy = read_yaml(POLICY)
+    accio_root = tmp_path / "accio"
+    claude_root = tmp_path / "claude"
+    profiles_root = tmp_path / "profiles"
+    monkeypatch.setenv("TEOS_ACCIO_SKILLS_ROOT", str(accio_root))
+    monkeypatch.setenv("TEOS_CLAUDE_SKILLS_ROOT", str(claude_root))
+    monkeypatch.setenv("TEOS_HERMES_PROFILES_ROOT", str(profiles_root))
+
+    items = load_items(policy)
     assert items
     assert {item.profile for item in items} == EXPECTED
-    assert all((item.source_dir / "SKILL.md").is_file() for item in items)
+    assert all(item.target_dir.is_relative_to(profiles_root) for item in items)
+    assert all(
+        item.source_dir.is_relative_to(accio_root if item.kind == "accio" else claude_root)
+        for item in items
+    )

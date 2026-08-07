@@ -172,7 +172,7 @@ local_capabilities:
 
 gateway_hooks:
   - name: teos-event-bridge
-    events: [gateway:startup, agent:start, agent:step, agent:end]
+    events: ["gateway:startup", "agent:start", "agent:step", "agent:end"]
     privacy_contract: "metadata allowlist only; exclude messages, responses, user IDs, raw tool arguments, and secrets"
     evidence_event_type: hermes.gateway_started
     evidence_event_source: hermes_gateway_hook

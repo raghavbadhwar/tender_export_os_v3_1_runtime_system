@@ -1,0 +1,2 @@
+case_id,workflow_type,source_name,source_url,buyer_name,category_code,product_or_service,opportunity_title,gem_registration_required
+GOV-20260630-001,GOV,Example Public Tender Portal,https://example.com/tenders/fixture,Example Buyer,,Example product,Sanitized public-template GOV regression fixture,FALSE

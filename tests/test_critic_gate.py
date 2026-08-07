@@ -37,6 +37,7 @@ def test_critic_gate_blocks_pricing_ready_without_two_strict_quotes() -> None:
             "delivery_terms": "Ex works",
             "payment_terms_offered": "30 days",
             "validity_days": "30",
+            "quote_validity_date": "2099-12-31",
             "supplier_specific_quote": "TRUE",
         }
     ]

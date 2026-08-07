@@ -30,6 +30,7 @@ def test_source_yield_tracks_access_friction_and_quote_proofs() -> None:
                 "delivery_terms": "Delivered at site",
                 "payment_terms_offered": "30 days",
                 "validity_days": "30",
+                "quote_validity_date": "2099-12-31",
                 "supplier_specific_quote": "TRUE",
             }
         ],

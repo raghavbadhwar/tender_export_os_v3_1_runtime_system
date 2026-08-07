@@ -30,6 +30,9 @@ id_ed25519
 browser_profiles/
 .hermes/
 
+# Local Codex scratch artifacts
+.codex_tmp/
+
 # Live outputs and evidence
 outputs/**
 !outputs/examples/

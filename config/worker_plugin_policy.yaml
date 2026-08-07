@@ -17,13 +17,13 @@ policy:
     - Tender Export OS approval policy
     - live task instructions
 
-# These are current, locally installed and readable skill libraries. The damaged
-# `/Volumes/RAGHAV2/...` source roots are deliberately not used for live imports.
+# Private deployments supply these explicit roots at runtime. The public template
+# bundles no external skills and skips imports until all three variables are set.
 source_roots:
-  accio: /Users/raghav/.codex/skills
-  claude: /Users/raghav/.agents/skills
+  accio: "${TEOS_ACCIO_SKILLS_ROOT}"
+  claude: "${TEOS_CLAUDE_SKILLS_ROOT}"
 
-profiles_root: /Users/raghav/.hermes/profiles
+profiles_root: "${TEOS_HERMES_PROFILES_ROOT}"
 import_category_path: tender-export-os/plugin-imports
 
 # Candidates only. Nothing in this section is enabled by the importer.
