@@ -13,16 +13,17 @@ from typing import Any, Callable
 import yaml
 
 try:
-    from agent_browser_capture import capture
+    from agent_browser_capture import PRIVATE_EVIDENCE_ROOT, capture
     from event_ledger import append_event
 except ModuleNotFoundError:  # pragma: no cover
-    from scripts.agent_browser_capture import capture
+    from scripts.agent_browser_capture import PRIVATE_EVIDENCE_ROOT, capture
     from scripts.event_ledger import append_event
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CONFIG = PROJECT_ROOT / "config" / "agent_browser_research.yaml"
 OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "core_source_browser"
+CAPTURE_OUTPUT_ROOT = PRIVATE_EVIDENCE_ROOT / "agent_browser" / "core_sources"
 CaptureFunction = Callable[..., tuple[dict[str, Any], Path]]
 
 
@@ -65,15 +66,22 @@ def run_core_sources(
     sources: dict[str, dict[str, Any]],
     *,
     capture_func: CaptureFunction = capture,
-    output_root: Path = OUTPUT_ROOT,
+    output_root: Path = CAPTURE_OUTPUT_ROOT,
+    capture_timeout_seconds: int = 90,
 ) -> dict[str, Any]:
+    if not 5 <= capture_timeout_seconds <= 120:
+        raise ValueError("capture_timeout_seconds must be between 5 and 120")
     results = []
     for source_id, source in sources.items():
+        source_timeout_seconds = int(source.get("timeout_seconds") or capture_timeout_seconds)
+        if not 5 <= source_timeout_seconds <= 120:
+            raise ValueError(f"{source_id} timeout_seconds must be between 5 and 120")
         try:
             receipt, receipt_path = capture_func(
                 url=source["start_url"],
                 source_name=source["source_name"],
                 output_root=output_root / "captures",
+                timeout=source_timeout_seconds,
                 record_event=True,
             )
             extracted = parse_gem_page_text(artifact_text(receipt)) if source_id == "gem" else {
@@ -89,6 +97,7 @@ def run_core_sources(
                     "blockers": receipt.get("blockers", []),
                     "capture_id": receipt.get("capture_id", ""),
                     "receipt_path": relative(receipt_path),
+                    "timeout_seconds": source_timeout_seconds,
                     **extracted,
                 }
             )
@@ -102,6 +111,7 @@ def run_core_sources(
                     "blockers": [str(exc)],
                     "capture_id": "",
                     "receipt_path": "",
+                    "timeout_seconds": source_timeout_seconds,
                     "records_reported": 0,
                     "sample_references": [],
                 }
@@ -150,7 +160,9 @@ def main() -> int:
     selected = {source_id: configured[source_id] for source_id in args.sources.split(",") if source_id in configured}
     if not selected:
         raise SystemExit("No configured core sources selected")
-    report = run_core_sources(selected)
+    policy = config.get("policy", {}) if isinstance(config.get("policy"), dict) else {}
+    capture_timeout_seconds = int(policy.get("timeout_seconds") or 90)
+    report = run_core_sources(selected, capture_timeout_seconds=capture_timeout_seconds)
     output_dir = OUTPUT_ROOT / report["run_id"]
     output_dir.mkdir(parents=True, exist_ok=True)
     json_path = output_dir / "report.json"

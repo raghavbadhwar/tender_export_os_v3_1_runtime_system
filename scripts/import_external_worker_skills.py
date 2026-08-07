@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import shutil
 import sys
@@ -59,6 +60,41 @@ def read_yaml(path: Path) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise ValueError(f"Policy must be a YAML mapping: {path}")
     return data
+
+
+def configured_root(value: Any) -> Path | None:
+    """Return an explicit absolute runtime root, or ``None`` when unset.
+
+    Public-template policy values intentionally use environment-variable
+    placeholders.  Leaving one unresolved must never turn it into a relative
+    path that an import operation could accidentally use.
+    """
+    raw = str(value or "").strip()
+    expanded = os.path.expandvars(raw)
+    if not raw or "$" in expanded:
+        return None
+    candidate = Path(expanded).expanduser()
+    return candidate if candidate.is_absolute() else None
+
+
+def configured_roots(policy: dict[str, Any]) -> tuple[Path, Path, Path]:
+    """Resolve all roots required for a worker-skill import.
+
+    Imports are an opt-in private-deployment action.  The public repository
+    deliberately has no bundled external skill library, so a missing root is
+    treated as unconfigured rather than as a source to probe or create.
+    """
+    roots = policy.get("source_roots") or {}
+    accio_root = configured_root(roots.get("accio"))
+    claude_root = configured_root(roots.get("claude"))
+    profiles_root = configured_root(policy.get("profiles_root"))
+    if not all((accio_root, claude_root, profiles_root)):
+        raise ValueError(
+            "Worker skill imports are unconfigured. Set "
+            "TEOS_ACCIO_SKILLS_ROOT, TEOS_CLAUDE_SKILLS_ROOT, and "
+            "TEOS_HERMES_PROFILES_ROOT to explicit absolute paths."
+        )
+    return accio_root, claude_root, profiles_root
 
 
 def extract_frontmatter(text: str) -> tuple[dict[str, str], str]:
@@ -173,10 +209,7 @@ Hard limits:
 
 
 def load_items(policy: dict[str, Any], profiles: set[str] | None = None) -> list[ImportItem]:
-    roots = policy.get("source_roots") or {}
-    accio_root = Path(roots.get("accio", ""))
-    claude_root = Path(roots.get("claude", ""))
-    profiles_root = Path(policy.get("profiles_root", ""))
+    accio_root, claude_root, profiles_root = configured_roots(policy)
     category = policy.get("import_category_path", "tender-export-os/plugin-imports")
     imports = policy.get("profile_imports") or {}
 
@@ -336,7 +369,26 @@ def main(argv: list[str] | None = None) -> int:
     policy = read_yaml(policy_path)
     selected = set(args.profile or []) or None
     imported_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    items = load_items(policy, selected)
+    try:
+        items = load_items(policy, selected)
+    except ValueError as exc:
+        summary = {
+            "mode": "write" if args.write else "dry-run",
+            "policy": str(policy_path),
+            "items": 0,
+            "profiles": [],
+            "status": "SKIPPED_UNCONFIGURED",
+            "reason": str(exc),
+            "status_counts": {},
+            "errors": [],
+            "report_path": None,
+        }
+        if args.json:
+            print(json.dumps(summary, indent=2, sort_keys=True))
+        else:
+            print(f"TEOS worker plugin import skipped: {exc}")
+        # A dry run is a safe no-op; an explicit write must fail closed.
+        return 2 if args.write else 0
     if not items:
         print("No import items selected", file=sys.stderr)
         return 1

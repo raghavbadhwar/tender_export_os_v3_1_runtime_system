@@ -1,0 +1,52 @@
+model:
+  default: gpt-5.6-terra
+  provider: openai-codex
+mcp_discovery_timeout: 20
+agent:
+  max_turns: 35
+  verify_on_stop: true
+  reasoning_effort: high
+terminal:
+  backend: local
+  cwd: /Users/raghav/Downloads/tender_export_os_v3_1_runtime_system
+  timeout: 600
+kanban:
+  dispatch_in_gateway: false
+  auto_decompose: false
+  auto_promote_children: false
+memory:
+  memory_enabled: true
+  user_profile_enabled: false
+  write_approval: true
+skills:
+  guard_agent_created: true
+  write_approval: true
+approvals:
+  mode: manual
+  cron_mode: deny
+  deny: ["gws *", "*/gws *", "himalaya *", "*/himalaya *"]
+security:
+  allow_private_urls: false
+  redact_secrets: true
+  website_blocklist:
+    enabled: true
+    domains: [mail.google.com, gmail.com]
+plugins:
+  enabled: []
+  disabled: []
+mcp_servers:
+  tender_os:
+    command: /Users/raghav/Downloads/tender_export_os_v3_1_runtime_system/.venv/bin/python
+    args: [/Users/raghav/Downloads/tender_export_os_v3_1_runtime_system/scripts/tender_os_mcp_server.py]
+    enabled: true
+    timeout: 300
+    connect_timeout: 60
+    supports_parallel_tool_calls: false
+    sampling: {enabled: false}
+    elicitation: {enabled: false}
+    tools:
+      include: [get_case, search_cases, parse_local_documents, capture_public_web, get_approval_status]
+      resources: false
+      prompts: false
+platform_toolsets:
+  cli: [web, file, skills, memory, todo]

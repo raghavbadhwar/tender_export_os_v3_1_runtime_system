@@ -36,6 +36,7 @@
     "drive_upload",
     "drive_lock",
     "kanban_reconciliation",
+    "kanban_route",
     "source_adapter",
     "evidence",
     "case_workspace",
@@ -44,6 +45,7 @@
     "rfq",
     "demand_research",
     "memory_proposal",
+    "relationship_memory",
     "skill_proposal",
     "external_task",
     "pricing_draft",
@@ -57,6 +59,7 @@
     "retender_corrigenda_watch",
     "buyer_repeat_purchase",
     "supplier_ready_category",
+    "supplier_performance",
     "deep_research_lead",
     "execution",
     "monitor_run",
@@ -71,6 +74,17 @@
     ,"communication"
     ,"reply_monitor"
     ,"policy_decision"
+    ,"business_effect_attempt"
+    ,"case_outcome"
+    ,"learning_proposal"
+    ,"model_registry"
+    ,"agent_evaluation"
+    ,"payment"
+    ,"buyer_reply"
+    ,"forecast_observation"
+    ,"historical_notice"
+    ,"historical_award"
+    ,"computer_use_canary"
   ],
   "event_types": [
     "system.snapshot_started",
@@ -78,6 +92,8 @@
     "case.snapshot_imported",
     "case.created",
     "case.updated",
+    "case.deep_read_recorded",
+    "case.historical_intelligence_recorded",
     "case.status_changed",
     "case.workspace_created",
     "case.updated_from_corrigendum",
@@ -97,6 +113,7 @@
     "supplier.updated",
     "supplier.verification_drafted",
     "supplier.match_candidates_created",
+    "supplier.readiness_evaluated",
     "supplier.quote_proof_validated",
     "supplier.quote_proof_rejected",
     "quote.snapshot_imported",
@@ -107,6 +124,9 @@
     "plugin_health.snapshot_imported",
     "plugin_health.updated",
     "artifact.manifest_generated",
+    "artifact.bid_pack_verified",
+    "artifact.export_quote_pack_verified",
+    "artifact.pack_readiness_validated",
     "chatgpt.packet_prepared",
     "chatgpt.return_staged",
     "chatgpt.return_rejected_schema_invalid",
@@ -118,6 +138,9 @@
     "drive.lock_timeout",
     "kanban.reconciliation_planned",
     "kanban.reconciliation_applied",
+    "kanban.event_routed",
+    "kanban.event_ignored",
+    "kanban.event_route_failed",
     "kanban.task_graph_created",
     "source_adapter.mock_ran",
     "source_adapter.external_probe_ran",
@@ -143,6 +166,7 @@
     "buyer.updated",
     "buyer.shipment_export_imported",
     "buyer.verification_drafted",
+    "buyer.account_verified",
     "buyer.verification_stage_changed",
     "rfq.snapshot_imported",
     "rfq.created",
@@ -151,11 +175,16 @@
     "demand_research.created",
     "demand_research.updated",
     "pricing.draft_created",
+    "pricing.gov_draft_recorded",
+    "pricing.export_draft_recorded",
+    "pricing.scenarios_drafted",
     "pricing.waterfall_drafted",
     "pricing.working_capital_drafted",
     "pricing.l1_sensitivity_drafted",
     "pricing.emd_cost_drafted",
     "compliance.risk_drafted",
+    "compliance.matrix_drafted",
+    "compliance.critic_reviewed",
     "corrigendum.detected",
     "corrigendum.reviewed",
     "source_weight.recommendation_generated",
@@ -164,10 +193,12 @@
     "retender_corrigenda.watch_generated",
     "buyer.repeat_purchase_analyzed",
     "supplier_ready.categories_matched",
+    "supplier.performance_projected",
     "deep_research.leads_staged",
     "system.intraday_monitor_completed",
     "intraday_monitor.completed",
     "memory.proposal_staged",
+    "relationship_memory.recorded",
     "skill.proposal_staged",
     "job.started",
     "job.completed",
@@ -182,6 +213,7 @@
     "forecast.calibration_evaluated"
     ,"browser.capture_completed"
     ,"browser.capture_failed"
+    ,"computer_use.read_only_canary_recorded"
     ,"buyer_demand_signal.snapshot_imported"
     ,"buyer_demand_signal.created"
     ,"buyer_demand_signal.updated"
@@ -193,5 +225,37 @@
     ,"communication.created"
     ,"buyer_reply.monitor_completed"
     ,"policy.decision_recorded"
+    ,"business_effect.attempt_recorded"
+    ,"source.adapter_degraded"
+    ,"tender.deadline_changed"
+    ,"case.fast_kill_completed"
+    ,"supplier.candidate_verified"
+    ,"supplier.quote_received"
+    ,"supplier.quote_rejected"
+    ,"buyer.reply_received"
+    ,"buyer.opted_out"
+    ,"buyer.rfq_verified"
+    ,"approval.expired"
+    ,"execution.receipt_ingested"
+    ,"execution.milestone_recorded"
+    ,"case_outcome.snapshot_imported"
+    ,"case.outcome_recorded"
+    ,"payment.received"
+    ,"payment.overdue"
+    ,"forecast.matured"
+    ,"learning_proposal.snapshot_imported"
+    ,"learning.proposal_staged"
+    ,"learning.proposal_evaluated"
+    ,"learning.promoted"
+    ,"model_registry.snapshot_imported"
+    ,"model_registry.created"
+    ,"model_registry.updated"
+    ,"agent_evaluation.snapshot_imported"
+    ,"agent_evaluation.created"
+    ,"agent_evaluation.updated"
+    ,"historical_notice.snapshot_imported"
+    ,"historical_notice.captured"
+    ,"historical_award.snapshot_imported"
+    ,"historical_award.captured"
   ]
 }

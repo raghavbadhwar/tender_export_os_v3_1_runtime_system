@@ -18,7 +18,9 @@ HARD_BLOCKERS = {
     "LOGIN_WALL": r"login\s+required|session\s+expired|please\s+login\s+to\s+(?:continue|view|download)",
     "DSC_PROMPT": r"\bDSC\b|digital\s*signature|certificate\s*prompt|signature\s*prompt",
     "PAYMENT_PAGE": r"payment\s+required|pay\s+now|make\s+payment",
+    "PAYWALL": r"paywall|subscription\s+required|subscribe\s+to\s+continue|membership\s+required",
     "ACCESS_DENIED": r"access denied|forbidden|unauthorized|not authorized|blocked",
+    "PROMPT_INJECTION": r"ignore\s+(?:all\s+)?previous\s+instructions|reveal\s+(?:your|the)\s+instructions|system\s+prompt",
 }
 
 SOFT_BLOCKERS = {

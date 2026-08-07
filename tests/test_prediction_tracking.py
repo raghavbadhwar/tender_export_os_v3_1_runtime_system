@@ -1,6 +1,7 @@
 import csv
 import datetime as dt
 
+from scripts.backtest_v5_demand_forecasts import build_rows as build_backtest_rows
 from scripts.backtest_v5_demand_forecasts import label_forecast, write_backtest_rows
 from scripts.build_buyer_purchase_history import build_rows as build_buyer_rows
 from scripts.build_category_demand_history import build_rows as build_category_rows
@@ -84,6 +85,106 @@ def test_same_day_preexisting_rejection_is_not_counted_as_forecast_success() -> 
     assert label == "NOT_ENOUGH_TIME"
 
 
+def test_advanced_case_status_alone_never_matures_forecast() -> None:
+    forecast = {
+        "forecast_id": "FC-1",
+        "forecast_date": "2099-01-01",
+        "eligible_for_backtest_at": "2099-01-08",
+        "horizon": "0-7 days",
+        "case_or_research_id": "GOV-1",
+        "forecast_type": "ACTIVE_CASE",
+        "predicted_probability": "0.7",
+    }
+    case = {"case_id": "GOV-1", "status": "WON", "updated_at": "2099-01-09"}
+
+    row = build_backtest_rows([forecast], [case], dt.date(2099, 1, 10), outcomes=[], events=[])[0]
+
+    assert row["is_mature"] == "FALSE"
+    assert row["outcome_label"] == "BLOCKED_BY_PROOF"
+    assert "verified" in row["observed_outcome"].lower()
+
+
+def test_verified_time_separated_outcome_matures_forecast() -> None:
+    forecast = {
+        "forecast_id": "FC-1",
+        "forecast_date": "2099-01-01",
+        "eligible_for_backtest_at": "2099-01-08",
+        "horizon": "0-7 days",
+        "case_or_research_id": "GOV-1",
+        "forecast_type": "ACTIVE_CASE",
+        "predicted_probability": "0.7",
+    }
+    outcome = {
+        "outcome_id": "OUT-1",
+        "case_id": "GOV-1",
+        "outcome_type": "WON",
+        "outcome_value": "Awarded",
+        "occurred_at": "2099-01-09T09:00:00+00:00",
+        "recorded_at": "2099-01-09T10:00:00+00:00",
+        "verification_status": "VERIFIED",
+        "evidence_path": "receipts/award.json",
+        "evidence_sha256": "a" * 64,
+    }
+    event = {
+        "event_id": "EVT-OUT-1",
+        "event_type": "case.outcome_recorded",
+        "object_id": "OUT-1",
+        "case_id": "GOV-1",
+        "event_time": "2099-01-09T10:00:00+00:00",
+    }
+
+    row = build_backtest_rows(
+        [forecast],
+        [{"case_id": "GOV-1", "status": "WON"}],
+        dt.date(2099, 1, 10),
+        outcomes=[outcome],
+        events=[event],
+    )[0]
+
+    assert row["is_mature"] == "TRUE"
+    assert row["binary_outcome"] == 1
+    assert row["outcome_label"] == "HIT"
+
+
+def test_outcome_that_predates_forecast_is_excluded() -> None:
+    forecast = {
+        "forecast_id": "FC-1",
+        "forecast_date": "2099-01-10",
+        "eligible_for_backtest_at": "2099-01-11",
+        "horizon": "0-7 days",
+        "case_or_research_id": "GOV-1",
+        "forecast_type": "ACTIVE_CASE",
+    }
+    outcome = {
+        "outcome_id": "OUT-OLD",
+        "case_id": "GOV-1",
+        "outcome_type": "WON",
+        "occurred_at": "2099-01-09T09:00:00+00:00",
+        "recorded_at": "2099-01-09T10:00:00+00:00",
+        "verification_status": "VERIFIED",
+        "evidence_path": "receipts/award.json",
+        "evidence_sha256": "a" * 64,
+    }
+    event = {
+        "event_id": "EVT-OLD",
+        "event_type": "case.outcome_recorded",
+        "object_id": "OUT-OLD",
+        "case_id": "GOV-1",
+        "event_time": "2099-01-09T10:00:00+00:00",
+    }
+
+    row = build_backtest_rows(
+        [forecast],
+        [{"case_id": "GOV-1", "status": "WON"}],
+        dt.date(2099, 1, 20),
+        outcomes=[outcome],
+        events=[event],
+    )[0]
+
+    assert row["is_mature"] == "FALSE"
+    assert row["outcome_label"] == "BLOCKED_BY_PROOF"
+
+
 def test_terminal_cases_are_removed_from_stale_low_competition_candidates() -> None:
     candidates = [{"case_id": "GOV-1"}, {"case_id": "GOV-2"}, {"case_id": ""}]
     cases = [{"case_id": "GOV-1", "status": "REJECTED"}, {"case_id": "GOV-2", "status": "WATCHLIST"}]
@@ -137,6 +238,32 @@ def test_forecast_history_is_upserted_without_erasing_prior_dates(tmp_path) -> N
     assert next(row for row in rows if row["forecast_date"] == "2099-01-02")["evidence_level"] == "RFQ_VERIFIED"
 
 
+def test_forecast_candidates_store_explicit_target_and_maturity_metadata(tmp_path) -> None:
+    output = tmp_path / "forecasts.csv"
+
+    new_rows = write_forecast_candidates(output, _payload("2099-01-01", "GOV-1"))
+
+    assert new_rows[0]["target_id"] == "GOV_PROGRESS_JUSTIFIED_KILL_30D"
+    assert new_rows[0]["horizon_days"] == 30
+    assert new_rows[0]["prediction_timestamp"] == "2099-01-01T00:00:00+00:00"
+    assert new_rows[0]["maturity_timestamp"] == "2099-01-31T23:59:59+00:00"
+    assert len(new_rows[0]["feature_schema_hash"]) == 64
+    assert new_rows[0]["probability_status"] == "PRIOR_UNCALIBRATED"
+    assert new_rows[0]["eligible_for_backtest_at"] == "2099-01-31"
+
+
+def test_export_forecasts_use_export_rfq_conversion_target(tmp_path) -> None:
+    payload = _payload("2099-01-01", "EXP-1", "RFQ_VERIFIED")
+    payload["active_case_forecasts"][0]["workflow_type"] = "EXPORT"
+    output = tmp_path / "forecasts.csv"
+
+    new_rows = write_forecast_candidates(output, payload)
+
+    assert new_rows[0]["target_id"] == "EXPORT_RFQ_CONVERSION_60D"
+    assert new_rows[0]["horizon_days"] == 60
+    assert new_rows[0]["eligible_for_backtest_at"] == "2099-03-02"
+
+
 def test_expert_prior_probability_is_monotonic_and_bounded() -> None:
     weak, _ = estimate_operational_probability(
         {
@@ -186,6 +313,8 @@ def test_calibration_requires_enough_mature_outcomes() -> None:
                 "predicted_probability": "0.7",
                 "binary_outcome": "1",
                 "model_version": "teos-expert-prior-v1",
+                "target_id": "GOV_PROGRESS_JUSTIFIED_KILL_30D",
+                "workflow_type": "GOV",
             }
         ],
         minimum_sample=30,
@@ -193,4 +322,32 @@ def test_calibration_requires_enough_mature_outcomes() -> None:
 
     assert report["status"] == "INSUFFICIENT_MATURE_SAMPLE"
     assert report["mature_sample_size"] == 1
-    assert report["brier_score"] == 0.09
+    assert report["brier_score"] is None
+    assert report["target_evaluations"][0]["brier_score"] is None
+    assert report["target_evaluations"][0]["status"] == "PRIOR_UNCALIBRATED"
+
+
+def test_calibration_is_reported_only_per_exact_target_workflow_after_gate() -> None:
+    rows = [
+        {
+            "forecast_id": f"FC-{index}",
+            "is_mature": "TRUE",
+            "predicted_probability": "0.7",
+            "binary_outcome": "1" if index < 20 else "0",
+            "model_version": "teos-expert-prior-v1",
+            "target_id": "EXPORT_BUYER_REPLY_21D",
+            "workflow_type": "EXPORT",
+        }
+        for index in range(30)
+    ]
+
+    report = evaluate_rows(rows, minimum_sample=30)
+
+    assert report["status"] == "CALIBRATION_MEASURED"
+    target = report["target_evaluations"][0]
+    assert target["target_id"] == "EXPORT_BUYER_REPLY_21D"
+    assert target["workflow_type"] == "EXPORT"
+    assert target["calibration_ready"] is True
+    assert target["training_ready"] is False
+    assert target["brier_score"] is not None
+    assert report["brier_score"] is None

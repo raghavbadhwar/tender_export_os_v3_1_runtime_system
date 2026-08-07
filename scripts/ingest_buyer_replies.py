@@ -75,15 +75,21 @@ def classify_reply(text: str) -> dict[str, Any]:
             "requires_owner_action": False,
             "recommended_next_action": "Close or cool the target; do not follow up unless the buyer explicitly reopens the conversation.",
         }
+    if any(marker in normalized for marker in ("rfq", "request for quotation", "request for quote", "please quote against")):
+        return {
+            "classification": "RFQ",
+            "requires_owner_action": True,
+            "recommended_next_action": "Verify the buyer-specific RFQ, then prepare supplier, pricing, compliance, and quote drafts behind owner approval gates.",
+        }
     if any(marker in normalized for marker in ("quote", "price", "pricing", "fob", "cif", "incoterm", "payment term", "discount", "ex works")):
         return {
-            "classification": "NEGOTIATION",
+            "classification": "SUBSTANTIVE",
             "requires_owner_action": True,
             "recommended_next_action": "Review commercially; prepare a draft only after supplier proof, pricing, compliance, and owner approval gates.",
         }
     if any(marker in normalized for marker in ("interested", "please send", "send the catalogue", "send catalogue", "send details", "would like to see", "open to reviewing")):
         return {
-            "classification": "POSITIVE_INTEREST",
+            "classification": "SUBSTANTIVE",
             "requires_owner_action": True,
             "recommended_next_action": "Review the request, verify the requested products, and prepare a factual response draft for owner approval.",
         }
@@ -94,10 +100,28 @@ def classify_reply(text: str) -> dict[str, Any]:
             "recommended_next_action": "Answer only with verified facts in a new owner-approved response draft.",
         }
     return {
-        "classification": "NEEDS_REVIEW",
+        "classification": "UNKNOWN",
         "requires_owner_action": True,
         "recommended_next_action": "Read the reply and choose the next action; no automatic response is allowed.",
     }
+
+
+def write_owner_action_card(communication: dict[str, str], *, path: Path) -> None:
+    """Write metadata-only owner action guidance; never duplicate raw reply content."""
+    value = {
+        "schema_version": "buyer_reply_owner_action_card.v1",
+        "communication_id": communication["communication_id"],
+        "case_id": communication["case_id"],
+        "buyer_id": communication["buyer_id"],
+        "classification": communication["classification"],
+        "recommended_next_action": communication["recommended_next_action"],
+        "source_receipt": communication["source_receipt"],
+        "content_path": communication["content_path"],
+        "owner_options": ["Review", "Prepare Draft", "Close"],
+        "external_actions_executed": False,
+        "privacy_note": "The card stores only metadata and a private content path; it does not copy the raw reply body.",
+    }
+    path.write_text(json.dumps(value, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
 def resolve_outreach(message: dict[str, Any], outreach_rows: list[dict[str, str]]) -> dict[str, str] | None:
@@ -156,6 +180,7 @@ def ingest_payload(payload: dict[str, Any], *, input_path: Path, persist: bool) 
         communication_id = f"COM-{stable_id(external_id)}"
         content_path = REPLY_RECEIPTS / f"{communication_id}.txt"
         source_receipt = REPLY_RECEIPTS / f"{communication_id}.json"
+        owner_action_card = REPLY_RECEIPTS / f"{communication_id}_owner_action.json"
         if persist:
             REPLY_RECEIPTS.mkdir(parents=True, exist_ok=True)
             content_path.write_text(text + "\n", encoding="utf-8")
@@ -219,6 +244,8 @@ def ingest_payload(payload: dict[str, Any], *, input_path: Path, persist: bool) 
             event_for_row("communication", communication_id, communication, created, citations, case_id=outreach["case_id"])
             upsert_csv(DATA_DIR / "outreach_queue.csv", "outreach_id", updated_outreach)
             event_for_row("outreach", outreach["outreach_id"], updated_outreach, False, citations, case_id=outreach["case_id"])
+            if classification["requires_owner_action"]:
+                write_owner_action_card(communication, path=owner_action_card)
         ingested.append(
             {
                 "communication_id": communication_id,
@@ -227,6 +254,7 @@ def ingest_payload(payload: dict[str, Any], *, input_path: Path, persist: bool) 
                 "classification": classification["classification"],
                 "requires_owner_action": classification["requires_owner_action"],
                 "recommended_next_action": classification["recommended_next_action"],
+                "owner_action_card": relative(owner_action_card) if persist and classification["requires_owner_action"] else "",
                 "persisted": persist,
             }
         )

@@ -23,16 +23,15 @@ Required statuses:
   triage, todo, ready, running, blocked, done, archived
 
 Profiles:
-  hermes-chief-operator
-  gov-tender-radar
-  export-rfq-radar
-  supplier-sourcing
-  pricing-compliance
-  codex-artifact-factory
-  sales-followup
-  source-health
-  learning-review
-  chatgpt-boardroom-handoff
+  tender-export-os
+  teos-orchestrator
+  gov-tender-intelligence
+  export-buyer-intelligence
+  supplier-commercial
+  pricing-risk
+  compliance-due-diligence
+  relationship-ops
+  learning-evaluation
 
 Run local help first:
   hermes kanban --help

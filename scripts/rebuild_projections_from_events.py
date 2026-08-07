@@ -23,6 +23,7 @@ PROJECTIONS = {
         "file": PROJECT_ROOT / "data" / "master_cases.csv",
         "id_field": "case_id",
         "snapshot_event": "case.snapshot_imported",
+        "upsert_events": ["case.updated_from_corrigendum", "case.historical_intelligence_recorded"],
     },
     "approval": {
         "file": PROJECT_ROOT / "data" / "approvals_receipts.csv",
@@ -78,6 +79,40 @@ PROJECTIONS = {
         "file": PROJECT_ROOT / "data" / "communication_log.csv",
         "id_field": "communication_id",
         "snapshot_event": "communication.snapshot_imported",
+    },
+    "case_outcome": {
+        "file": PROJECT_ROOT / "data" / "case_outcomes.csv",
+        "id_field": "outcome_id",
+        "snapshot_event": "case_outcome.snapshot_imported",
+        "upsert_events": ["case.outcome_recorded"],
+    },
+    "learning_proposal": {
+        "file": PROJECT_ROOT / "data" / "learning_proposals.csv",
+        "id_field": "proposal_id",
+        "snapshot_event": "learning_proposal.snapshot_imported",
+        "upsert_events": ["learning.proposal_staged", "learning.proposal_evaluated", "learning.promoted"],
+    },
+    "model_registry": {
+        "file": PROJECT_ROOT / "data" / "model_registry.csv",
+        "id_field": "model_id",
+        "snapshot_event": "model_registry.snapshot_imported",
+    },
+    "agent_evaluation": {
+        "file": PROJECT_ROOT / "data" / "agent_evaluations.csv",
+        "id_field": "evaluation_id",
+        "snapshot_event": "agent_evaluation.snapshot_imported",
+    },
+    "historical_notice": {
+        "file": PROJECT_ROOT / "data" / "historical_tender_notices.csv",
+        "id_field": "notice_id",
+        "snapshot_event": "historical_notice.snapshot_imported",
+        "upsert_events": ["historical_notice.captured"],
+    },
+    "historical_award": {
+        "file": PROJECT_ROOT / "data" / "historical_awards.csv",
+        "id_field": "award_id",
+        "snapshot_event": "historical_award.snapshot_imported",
+        "upsert_events": ["historical_award.captured"],
     },
 }
 
@@ -150,15 +185,18 @@ def event_record_id(event: dict[str, Any], id_field: str) -> str:
     return record_id
 
 
-def project(events: list[dict]) -> dict[str, list[dict[str, str]]]:
-    states: dict[str, dict[str, dict[str, str]]] = {name: {} for name in PROJECTIONS}
-    headers = {name: load_headers(spec["file"]) for name, spec in PROJECTIONS.items()}
+def project(
+    events: list[dict], *, projections: dict[str, dict[str, Any]] | None = None
+) -> dict[str, list[dict[str, str]]]:
+    projection_map = PROJECTIONS if projections is None else projections
+    states: dict[str, dict[str, dict[str, str]]] = {name: {} for name in projection_map}
+    headers = {name: load_headers(spec["file"]) for name, spec in projection_map.items()}
 
     for event in events:
         object_type = event.get("object_type", "")
-        if object_type not in PROJECTIONS:
+        if object_type not in projection_map:
             continue
-        spec = PROJECTIONS[object_type]
+        spec = projection_map[object_type]
         id_field = spec["id_field"]
         payload = event.get("payload", {})
         if not isinstance(payload, dict):
@@ -171,7 +209,11 @@ def project(events: list[dict]) -> dict[str, list[dict[str, str]]]:
             row = normalize_row(payload["row"], headers[object_type])
             row[id_field] = str(object_id)
             states[object_type][object_id] = row
-        elif event.get("event_type") in {f"{object_type}.updated", f"{object_type}.created"}:
+        elif event.get("event_type") in {
+            f"{object_type}.updated",
+            f"{object_type}.created",
+            *spec.get("upsert_events", []),
+        }:
             if not has_projection_fields(payload, headers[object_type], id_field):
                 continue
             existing = states[object_type].get(object_id, {field: "" for field in headers[object_type]})
@@ -202,7 +244,7 @@ def project(events: list[dict]) -> dict[str, list[dict[str, str]]]:
             states[object_type][object_id] = row
 
     return {
-        name: sorted(rows.values(), key=lambda row: row.get(PROJECTIONS[name]["id_field"], ""))
+        name: sorted(rows.values(), key=lambda row: row.get(projection_map[name]["id_field"], ""))
         for name, rows in states.items()
     }
 

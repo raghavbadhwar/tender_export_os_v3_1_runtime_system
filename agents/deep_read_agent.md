@@ -24,15 +24,23 @@ Deep Read starts only after operational evidence exists:
 - Downloaded tender PDFs, BOQs, corrigenda, RFQ attachments, buyer notes
 - `config/scoring_weights.yaml` — for full scoring
 - `config/kill_rules.yaml` — for re-checking after full read
+- Official, source-provenanced history in `data/historical_tender_notices.csv`,
+  `data/historical_awards.csv`, and `data/historical_competition_signals.csv`
+  when available
 
 Do not start Deep Read from a `PUBLIC_LISTING_ONLY` Deep Research lead. Missing documents require `MANUAL_SOURCE_CHECK` or `MANUAL_DOCUMENT_UPLOAD`, not extraction conclusions.
 
 ---
 
 ## Outputs
-- Updated `data/master_cases.csv` row (all fields populated)
-- `outputs/case_reports/<case_id>/deep_read_<case_id>.md` — full case extraction report
-- Status updated to `SUPPLIER_SEARCH` (or back to `REJECTED` if new kill triggers)
+- Versioned structured record validated by `scripts/gov_deep_read_contract.py` for GOV cases
+- `outputs/case_reports/<case_id>/deep_read_<case_id>.json` and `.md` — cited extraction report
+- A `case.deep_read_recorded` ledger event after the validated report is written
+- For GOV cases, an internal historical-commercial brief from
+  `scripts/gov_historical_intelligence.py` when official history is available;
+  bidder counts and L1 prices remain `UNKNOWN` unless directly observed in a
+  source-provenanced official record
+- A recommended status (`SUPPLIER_SEARCH`, `WATCHLIST`, or `REJECTED`) only; case movement remains evidence- and policy-gated
 - Row added to `data/agent_run_log.csv`
 
 ---
@@ -131,7 +139,16 @@ List every document the buyer requires in the bid:
 ---
 
 ## Deep Read Report Structure
-Save to `outputs/case_reports/<case_id>/deep_read_<case_id>.md`
+For GOV work, produce `gov_deep_read.v1` JSON matching
+`config/schemas/gov_deep_read.schema.json`, then validate and render it with
+`scripts/gov_deep_read_contract.py`. The Markdown report remains the readable
+projection at `outputs/case_reports/<case_id>/deep_read_<case_id>.md`.
+
+Every extracted or ambiguous fact requires a document path and positive page
+number. An `UNKNOWN` or `NOT_APPLICABLE` fact requires a reason. Never embed
+raw PDF text, portal sessions, credentials, or DSC material in the report.
+
+The rendered report has this shape:
 
 ```markdown
 # Deep Read Report — <case_id>

@@ -28,6 +28,7 @@ DATA_DIR = os.path.join(PROJECT_ROOT, 'data')
 TEMPLATES_DIR = os.path.join(PROJECT_ROOT, 'templates')
 OUTPUTS_DIR = os.path.join(PROJECT_ROOT, 'outputs', 'daily_briefs')
 LOW_COMPETITION_DIR = os.path.join(PROJECT_ROOT, 'outputs', 'low_competition_radar')
+OPERATING_DESK_DIR = os.path.join(PROJECT_ROOT, 'outputs', 'operating_desk')
 
 MASTER_CASES_FILE = os.path.join(DATA_DIR, 'master_cases.csv')
 APPROVALS_FILE = os.path.join(DATA_DIR, 'approvals_receipts.csv')
@@ -361,6 +362,63 @@ def load_latest_low_competition_report(date_str=None):
         return None
 
 
+def load_latest_operating_desk_report(date_str=None):
+    candidates = []
+    if date_str:
+        preferred = os.path.join(OPERATING_DESK_DIR, f'operating_desk_{date_str}.json')
+        if os.path.exists(preferred):
+            candidates.append(preferred)
+    if os.path.isdir(OPERATING_DESK_DIR):
+        for name in os.listdir(OPERATING_DESK_DIR):
+            if name.startswith('operating_desk_') and name.endswith('.json'):
+                candidates.append(os.path.join(OPERATING_DESK_DIR, name))
+    if not candidates:
+        return None
+    latest = max(set(candidates), key=lambda path: os.path.getmtime(path))
+    try:
+        with open(latest, 'r', encoding='utf-8') as f:
+            report = json.load(f)
+            return report if isinstance(report, dict) else None
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
+def render_exception_first_owner_summary(report):
+    if not report or not report.get('exception_first'):
+        return ''
+    section = report['exception_first']
+    pieces = []
+    pieces.append(
+        f'<div class="risk-item"><div class="risk-label">Primary action</div>{esc(section.get("one_primary_action", "No primary action recorded."))}</div>'
+    )
+    for item in section.get('top_three_evidenced_opportunities', [])[:3]:
+        pieces.append(
+            f'<div class="risk-item"><div class="risk-label">Top evidenced opportunity</div>'
+            f'{esc(item.get("case_id", ""))} — {esc(item.get("title", ""))} '
+            f'[{esc(item.get("workflow_type", ""))}] · Evidence: {esc(item.get("evidence_level", ""))}</div>'
+        )
+    counts = [
+        ('Exceptions', len(section.get('exceptions', []))),
+        ('Pending owner decisions', len(section.get('pending_owner_decisions', []))),
+        ('Expiring deadlines/approvals', len(section.get('expiring_deadlines_or_approvals', []))),
+        ('Substantive replies', len(section.get('substantive_replies', []))),
+        ('Missing strict proofs', len(section.get('missing_strict_proofs', []))),
+        ('Overdue payments', len(section.get('overdue_payments', []))),
+    ]
+    pieces.append(
+        '<div class="risk-item"><div class="risk-label">Exception counts</div>'
+        + ' · '.join(f'{esc(label)}: {count}' for label, count in counts)
+        + '</div>'
+    )
+    forecast = section.get('forecast_maturity', {})
+    pieces.append(
+        f'<div class="risk-item"><div class="risk-label">Forecast maturity</div>'
+        f'{esc(forecast.get("status", "NOT_EVALUATED"))}; mature={esc(forecast.get("mature_sample_size", 0))}/'
+        f'{esc(forecast.get("minimum_mature_sample", 30))}</div>'
+    )
+    return '\n'.join(pieces)
+
+
 def render_low_competition_radar(report):
     if not report:
         return '<p style="color:#94a3b8">No low-competition radar report found. Run the radar dry-run to generate a local internal report.</p>'
@@ -464,6 +522,7 @@ def generate_brief(date_str=None, send_gateway=False, gateway='telegram', log_ru
     plugin_health = load_csv(PLUGIN_HEALTH_FILE)
     rfqs = load_csv(RFQ_MASTER_FILE)
     low_competition_report = load_latest_low_competition_report(date_str)
+    operating_desk_report = load_latest_operating_desk_report(date_str)
 
     # Compute data
     stats = get_todays_stats(cases, run_log, date_str)
@@ -497,8 +556,12 @@ def generate_brief(date_str=None, send_gateway=False, gateway='telegram', log_ru
     for reason, count in sorted(reason_counts.items(), key=lambda x: -x[1]):
         rejection_reasons_html += f'<div class="risk-item"><span class="risk-label">{reason}</span>: {count} case(s)</div>\n'
 
+    exception_summary_html = render_exception_first_owner_summary(operating_desk_report)
+
     # Recommended action
-    if pending_approvals:
+    if operating_desk_report and operating_desk_report.get('exception_first', {}).get('one_primary_action'):
+        rec = operating_desk_report['exception_first']['one_primary_action']
+    elif pending_approvals:
         rec = f"Review and decide on approval card for {pending_approvals[0].get('case_id', '?')} — action required."
     elif urgent_deadlines:
         d = urgent_deadlines[0]
@@ -518,7 +581,7 @@ def generate_brief(date_str=None, send_gateway=False, gateway='telegram', log_ru
         '{{VERIFIED_BUYER_DEMAND}}': render_verified_buyer_demand(rfqs),
         '{{PENDING_SUPPLIER_PROOF}}': render_pending_supplier_proof(cases),
         '{{APPROVAL_REQUIRED}}': render_approval_cards(pending_approvals, cases_by_id),
-        '{{RISKS_BLOCKERS}}': render_risks(source_issues, plugin_issues, urgent_deadlines, cases, rfqs),
+        '{{RISKS_BLOCKERS}}': exception_summary_html or render_risks(source_issues, plugin_issues, urgent_deadlines, cases, rfqs),
         '{{LOW_COMPETITION_RADAR}}': render_low_competition_radar(low_competition_report),
         '{{RECOMMENDED_ACTION}}': rec,
         '{{TRAILING_30_METRICS}}': render_trailing_metrics(trailing_metrics),

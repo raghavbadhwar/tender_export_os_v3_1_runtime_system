@@ -17,8 +17,10 @@ Verified on 2026-07-12:
 - Gateway: launchd-supervised service `ai.hermes.gateway-tender-export-os`.
 - Cron: nine active no-agent jobs; every job calls the repository supervisor and produces an immutable receipt plus event pair. The added jobs capture core sources through agent-browser and monitor Gmail-plugin reply packets.
 - Kanban: board `tender-export-os`, dispatcher embedded in the gateway, one in-progress task per profile and two globally.
-- Skills: 78 available profile skills, including `teos-chief-operator`, `teos-evidence-verifier`, `teos-prediction-calibration`, `teos-buyer-acquisition`, `teos-recovered-context`, and `teos-public-web-scraping`, with those six governed operating skills bundled as `/teos-ops`.
+- Skills: 87 enabled profile skills at the upgrade baseline, including `teos-chief-operator`, `teos-evidence-verifier`, `teos-prediction-calibration`, `teos-buyer-acquisition`, `teos-recovered-context`, and `teos-public-web-scraping`, with those six governed operating skills bundled as `/teos-ops`.
 - Compatibility commands: the former Tender specialist aliases (`hermes-chief-operator`, `gov-tender-radar`, `export-rfq-radar`, `supplier-sourcing`, `pricing-compliance`, `sales-followup`, `learning-review`, `source-health`, `codex-artifact-factory`, and `chatgpt-boardroom-handoff`) now route to this unified profile. Unrelated legacy persona aliases remain archived and inactive.
+- Profile boundary: those compatibility commands are shell wrappers, not Hermes profiles. The current on-disk business profiles are `brained`, `freshos`, and `tender-export-os`; specialist isolation is not present until the planned specialist profiles are provisioned and validated.
+- Profile memory: `memories/MEMORY.md` and `memories/USER.md` both exist under the Tender profile. Built-in memory is active; no external memory provider is configured.
 - Hook: `teos-event-bridge`, recording privacy-safe lifecycle metadata in `data/events.jsonl`.
 - Web discovery: DDGS is installed as the no-key search fallback; exact evidence capture still uses agent-browser/Python because DDGS is search-only.
 - Web scraping: `scripts/public_web_evidence_scraper.py` handles robots-aware, rate-limited public static HTML and bounded same-host crawling with raw HTML, structured JSON/text, final URLs, blockers, and hashes. JavaScript pages route to the existing agent-browser evidence lane.
@@ -28,10 +30,11 @@ Verified on 2026-07-12:
 - Rollback safety: Hermes filesystem checkpoints are enabled with 12 snapshots per project, a 300 MB total cap, 10 MB per-file cap, seven-day retention, and automatic pruning. A live canary created one restorable checkpoint in 3.5 seconds using 1.19 MB. A local bug fix makes Hermes' 50,000-file guard count files rather than directory entries.
 - Deterministic Gmail boundary: browser/web access to `mail.google.com` and `gmail.com` is blocked in Hermes, and terminal use of `gws` or Himalaya is denied even under YOLO. Google Drive and public Tender sources remain available.
 - Behavioral reliability: `scripts/evaluate_hermes_behavioral_contracts.py` runs nine critical approval/evidence/injection cases three times with only the `clarify` toolset. The verified run passed 27/27 cases, including the rule that an OPA `allowed` probe is not execution when no execution tool exists. The profile audit requires a passing report no older than seven days.
-- Governed MCP: a local FastMCP `3.4.4` stdio server now gives Hermes nine typed Tender OS tools for case/source/approval reads, advisory scoring, local document evidence, robots-compliant public capture, capability health, and policy probing. Hermes exposes only the explicit allowlist; MCP resources, prompts, parallel calls, server-initiated sampling, and elicitation are disabled.
+- Governed MCP: a local FastMCP `3.4.4` stdio server now gives Hermes nine typed Tender OS tools for case/source/approval reads, advisory scoring, local document evidence, robots-compliant public capture, capability health, and policy probing. Hermes exposes only the explicit allowlist; MCP resources, prompts, parallel calls, server-initiated sampling, and elicitation are disabled. Because measured cold discovery takes roughly two to three seconds, `mcp_discovery_timeout` is 20 seconds and one-shot startup waits before the agent snapshots tools. The reliability receipt passes 3/3 cold and 10/10 warm canaries at `outputs/upgrade_baseline/mcp_discovery_reliability.json`.
 - Infrastructure policy: Open Policy Agent `1.16.2` evaluates T0–T5 rules before every MCP call. It rejects model-supplied approval claims and verifies the local register, structured card, owner-decision receipt, exact case/action scope hash, expiry, unused execution state, and T5 controls. Decisions produce receipts and canonical `policy.decision_recorded` events.
 - Runtime security: newly published Python dependency advisories were patched locally and `hermes security audit` reports no known vulnerabilities; see `docs/HERMES_RUNTIME_SECURITY_PATCH_20260712.md`.
 - Checkpoint runtime patch: see `docs/HERMES_RUNTIME_CHECKPOINT_PATCH_20260712.md`; a future Hermes update may supersede it and should rerun the checkpoint canary.
+- Safe regression: the earlier FAIL snapshot is historical. The canonical `outputs/regression/full_safe_regression_report.json` was regenerated with `.venv/bin/python` and passes all 16 checks.
 
 The reproducible desired state is in `config/hermes_profile_capabilities.yaml`. Secrets and platform credentials are intentionally excluded.
 
@@ -106,6 +109,8 @@ opa check policies/tender_os_authorization.rego
 .venv/bin/python scripts/public_web_evidence_scraper.py --url https://example.com --max-pages 1 --max-depth 0
 .venv/bin/python scripts/run_v5_shadow_cycle.py
 .venv/bin/python scripts/validate_register_schemas.py
+.venv/bin/python scripts/check_mcp_discovery_reliability.py --cold-trials 3 --warm-trials 10 --output outputs/upgrade_baseline/mcp_discovery_reliability.json
+.venv/bin/python scripts/run_full_safe_regression.py --output outputs/regression/full_safe_regression_report.json
 ```
 
 ## Primary Hermes references

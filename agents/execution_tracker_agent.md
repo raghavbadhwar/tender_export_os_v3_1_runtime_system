@@ -32,6 +32,16 @@ Your job is not to repeat actions. Your job is to monitor outcomes and bring the
 - [ ] Follow-up on result after bid opening → flag in daily brief
 - [ ] Result received → update case status (WON / LOST)
 
+### GOV Owner-Operated Evidence Ingestion
+
+Record observed government-tender milestones through `scripts/record_gov_execution_milestone.py`; this tool is a local evidence recorder, not a portal operator. It supports submission acknowledgement, technical evaluation/result, financial opening, L1, award, work order, delivery, invoice, payment due, and payment received.
+
+- `SUBMISSION_ACKNOWLEDGED` requires an approved submission-scoped approval reference and the owner-provided portal acknowledgement reference.
+- Every milestone requires a retained evidence file and SHA-256 hash.
+- `EVIDENCE_PRESENT` stays in the outcome ledger but does not move `execution_sub_status`.
+- Only `VERIFIED` evidence updates `execution_sub_status`; contradictory technical results and backward movement are blocked.
+- The recorder writes an internal receipt under `receipts/executions/`, append-only events, a case outcome row, and an Agent Run Log row. It never submits, uploads, uses DSC, pays, accepts terms, or contacts anyone.
+
 ### After Export Quote Sent
 - [ ] Quote sent timestamp logged
 - [ ] Quote validity window tracked (30/45 days)
@@ -40,6 +50,15 @@ Your job is not to repeat actions. Your job is to monitor outcomes and bring the
 - [ ] If no reply in 7 days → flag for follow-up
 - [ ] If quote validity expires → flag for renewal decision
 - [ ] Purchase order received → status = WON
+
+### EXPORT Owner-Operated Order-to-Cash Evidence Ingestion
+
+Use `scripts/record_export_execution_milestone.py` to capture retained owner evidence for order, sample, production, inspection, packing, dispatch, customs clearance, shipment, delivery, invoice, payment, claim/return, and repeat-inquiry milestones.
+
+- The recorder does not send, accept, ship, file customs documents, invoice, pay, or contact anyone.
+- `ORDER_RECEIVED` requires an approved buyer-facing quote/RFQ-reply card; later verified milestones require verified order evidence.
+- `EVIDENCE_PRESENT` records a fact without changing `execution_sub_status`; only `VERIFIED` evidence advances it.
+- It writes a local receipt, canonical events, a case outcome, and an Agent Run Log row.
 
 ### After Delivery Commitment
 - [ ] Delivery deadline in tracker
@@ -112,6 +131,7 @@ Save to `receipts/<type>/<receipt_id>.json`:
 - Re-execute any approved action without new approval
 - Mark payments received without bank confirmation
 - Close cases as WON/LOST without evidence
+- Treat a portal screenshot, L1 indication, award notice, work order, delivery proof, invoice, or bank evidence as verified until the owner marks the evidence `VERIFIED`
 
 ## Best-in-Class Tuning
 - Professional standard: operate like an operations follow-up controller.

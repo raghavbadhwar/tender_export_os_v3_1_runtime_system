@@ -11,9 +11,22 @@ Usage:
 import argparse
 import csv
 import datetime
+import json
 import os
 import shutil
 import subprocess
+import sys
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from scripts.event_ledger import append_event
+from scripts.validate_business_state_consistency import (
+    load_csv as load_contract_csv,
+    load_execution_receipts,
+    validate_business_state,
+)
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'data')
 MASTER_CASES_FILE = os.path.join(DATA_DIR, 'master_cases.csv')
@@ -41,13 +54,40 @@ VALID_STATUS_TRANSITIONS = {
 VALID_STATUSES = set(VALID_STATUS_TRANSITIONS.keys())
 
 
+def validate_protected_state(
+    candidate_case: dict,
+    *,
+    quotes: list[dict],
+    approvals: list[dict],
+    outcomes: list[dict],
+    execution_receipts: list[dict],
+    suppliers: list[dict] | None = None,
+    supplier_candidates_by_case: dict[str, list[dict]] | None = None,
+) -> dict:
+    """Apply non-bypassable evidence gates to a proposed protected state."""
+    report = validate_business_state(
+        [candidate_case],
+        quotes,
+        approvals,
+        outcomes,
+        execution_receipts,
+        suppliers=suppliers,
+        supplier_candidates_by_case=supplier_candidates_by_case,
+    )
+    return {
+        "ok": report["status"] == "PASS",
+        "codes": sorted({row["code"] for row in report["findings"]}),
+        "findings": report["findings"],
+    }
+
+
 def validate_status_transition(current_status: str, new_status: str) -> bool:
     """Check if status transition is valid."""
     allowed = VALID_STATUS_TRANSITIONS.get(current_status, [])
     return new_status in allowed or new_status == 'ARCHIVED'
 
 
-def update_case(case_id: str, updates: dict, force: bool = False) -> bool:
+def update_case(case_id: str, updates: dict, force: bool = False, actor: str = "update_master_case") -> bool:
     """
     Update a case in master_cases.csv.
 
@@ -63,6 +103,7 @@ def update_case(case_id: str, updates: dict, force: bool = False) -> bool:
     rows = []
     case_found = False
     fieldnames = []
+    candidate_case = None
 
     with open(MASTER_CASES_FILE, 'r', newline='', encoding='utf-8') as f:
         reader = csv.DictReader(f)
@@ -92,12 +133,49 @@ def update_case(case_id: str, updates: dict, force: bool = False) -> bool:
 
                 # Always update updated_at
                 row['updated_at'] = datetime.datetime.now().strftime('%Y-%m-%d')
+                candidate_case = dict(row)
 
             rows.append(row)
 
     if not case_found:
         print(f"  ❌ Case not found: {case_id}")
         return False
+
+    if candidate_case is not None and ({'status', 'execution_sub_status'} & set(updates)):
+        gate = validate_protected_state(
+            candidate_case,
+            quotes=load_contract_csv(PROJECT_ROOT / "data" / "quote_master.csv"),
+            approvals=load_contract_csv(PROJECT_ROOT / "data" / "approvals_receipts.csv"),
+            outcomes=load_contract_csv(PROJECT_ROOT / "data" / "case_outcomes.csv"),
+            execution_receipts=load_execution_receipts(
+                [
+                    PROJECT_ROOT / "receipts" / "executions",
+                    PROJECT_ROOT / "receipts" / "submissions",
+                    PROJECT_ROOT / "outputs" / "approved_execution_outbox",
+                ]
+            ),
+            suppliers=load_contract_csv(PROJECT_ROOT / "data" / "supplier_master.csv"),
+        )
+        if not gate["ok"]:
+            print("  ❌ Evidence gate rejected the proposed business state:")
+            for finding in gate["findings"]:
+                print(f"     {finding['code']}: {finding['detail']}")
+            print("  --force cannot bypass quote, execution, payment, or outcome evidence requirements.")
+            return False
+
+    event = append_event(
+        "case.updated",
+        actor,
+        case_id=case_id,
+        object_type="case",
+        object_id=case_id,
+        payload={"updates": {key: str(value) for key, value in updates.items()} | {"updated_at": candidate_case.get("updated_at", "")}},
+        citations=["data/master_cases.csv"],
+        idempotency_key=(
+            f"case-update:{case_id}:"
+            + datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
+        ),
+    )
 
     # Write backup
     backup_file = f"{MASTER_CASES_FILE}.bak"
@@ -112,7 +190,7 @@ def update_case(case_id: str, updates: dict, force: bool = False) -> bool:
         writer.writeheader()
         writer.writerows(rows)
 
-    print(f"  ✅ Case {case_id} updated. Backup: {backup_file}")
+    print(f"  ✅ Case {case_id} updated. Canonical event: {event['event_id']}. Backup: {backup_file}")
     return True
 
 

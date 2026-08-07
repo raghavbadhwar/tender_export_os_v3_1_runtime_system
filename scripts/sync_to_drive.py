@@ -68,6 +68,13 @@ PUBLIC_TEMPLATE_SYNC_GROUPS = {
         "docs/GOOGLE_DRIVE_KNOWLEDGE_BUS.md",
         "docs/CHATGPT_CODEX_HERMES_DRIVE_COMMUNICATION.md",
     ],
+    "00_Project_Context/02_State_Snapshots": [
+        "outputs/drive_knowledge_bus_setup.json",
+        "outputs/drive_revalidation/*.json",
+    ],
+    "00_Project_Context/03_Context_Receipts": [
+        "receipts/drive_setup/*.json",
+    ],
     "00_Schemas": [
         "config/schemas/*.json",
         "config/schemas/event_types.yaml",

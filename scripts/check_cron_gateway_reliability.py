@@ -77,6 +77,24 @@ def parse_date(value: str) -> dt.date | None:
         return None
 
 
+def matching_run_rows(job: dict[str, Any], run_rows: list[dict[str, str]]) -> list[dict[str, str]]:
+    selectors = [
+        str(job.get("run_log_agent", "") or "").strip(),
+        str(job.get("run_log_trigger", "") or "").strip(),
+        str(job.get("id", "") or "").strip(),
+    ]
+    selectors = [selector.lower() for selector in selectors if selector]
+    matching: list[dict[str, str]] = []
+    for row in run_rows:
+        haystack = " ".join(
+            str(row.get(field, "") or "")
+            for field in ("agent_name", "trigger_type", "actions_taken", "run_id", "notes")
+        ).lower()
+        if selectors and any(selector in haystack for selector in selectors):
+            matching.append(row)
+    return matching
+
+
 def visible_cron_paths(default_path: Path, profile_globs: list[str]) -> list[Path]:
     paths = [default_path] if default_path.exists() else []
     for pattern in profile_globs:
@@ -111,20 +129,7 @@ def stale_run_findings(config: dict[str, Any], run_rows: list[dict[str, str]], t
         cadence = str(job.get("cadence", "")).lower()
         if "daily" not in cadence and "* * *" not in cadence:
             continue
-        selectors = [
-            str(job.get("run_log_agent", "") or "").strip(),
-            str(job.get("run_log_trigger", "") or "").strip(),
-            str(job.get("id", "") or "").strip(),
-        ]
-        selectors = [selector.lower() for selector in selectors if selector]
-        matching_rows = []
-        for row in run_rows:
-            haystack = " ".join(
-                str(row.get(field, "") or "")
-                for field in ("agent_name", "trigger_type", "actions_taken", "run_id", "notes")
-            ).lower()
-            if selectors and any(selector in haystack for selector in selectors):
-                matching_rows.append(row)
+        matching_rows = matching_run_rows(job, run_rows)
         latest_success = max(
             (
                 parse_date(row.get("run_date", ""))
@@ -141,6 +146,31 @@ def stale_run_findings(config: dict[str, Any], run_rows: list[dict[str, str]], t
                     "job_id": job.get("id", ""),
                     "status": "STALE_SUCCESS_RECORDS",
                     "detail": f"latest SUCCESS row is {latest_success.isoformat()}",
+                }
+            )
+    return findings
+
+
+def latest_failed_run_findings(config: dict[str, Any], run_rows: list[dict[str, str]]) -> list[dict[str, Any]]:
+    """Report enabled jobs whose most recent matching run did not succeed."""
+    findings: list[dict[str, Any]] = []
+    for job in config.get("jobs", []) or []:
+        if job.get("enabled") is False:
+            continue
+        matching_rows = matching_run_rows(job, run_rows)
+        if not matching_rows:
+            continue
+        latest = max(
+            matching_rows,
+            key=lambda row: f"{row.get('run_date', '')}T{row.get('run_time', '00:00:00')}",
+        )
+        status = str(latest.get("status", "") or "").upper()
+        if not status.startswith("SUCCESS"):
+            findings.append(
+                {
+                    "job_id": str(job.get("id", "") or ""),
+                    "status": status or "UNKNOWN",
+                    "run_at": f"{latest.get('run_date', '')}T{latest.get('run_time', '')}",
                 }
             )
     return findings
@@ -197,6 +227,7 @@ def build_report(
     run_rows = load_run_log() if run_rows is None else run_rows
     duplicates = duplicate_jobs(configs)
     stale = stale_run_findings(primary, run_rows, now.date()) if configs else []
+    latest_failed = latest_failed_run_findings(primary, run_rows) if configs else []
     hermes_cli = shutil.which("hermes")
     owner_gateway = str(primary.get("owner_gateway", "") or "")
     gateway_connected = bool(os.environ.get("HERMES_GATEWAY_URL") or os.environ.get("TELEGRAM_BOT_TOKEN"))
@@ -222,6 +253,14 @@ def build_report(
         findings.append({"severity": "WARN", "code": "DUPLICATE_JOB_ID", "detail": f"{item['job_id']} in {', '.join(item['profiles'])}"})
     for item in stale:
         findings.append({"severity": "WARN", "code": item["status"], "detail": f"{item['job_id']}: {item['detail']}"})
+    for item in latest_failed:
+        findings.append(
+            {
+                "severity": "BLOCKER",
+                "code": "LATEST_JOB_RUN_FAILED",
+                "detail": f"{item['job_id']}: latest run at {item['run_at']} has status {item['status']}",
+            }
+        )
 
     return {
         "generated_at": now.replace(microsecond=0).isoformat(),
@@ -232,6 +271,7 @@ def build_report(
         "hermes_cron_status": cron_status,
         "duplicate_jobs": duplicates,
         "stale_or_missed_runs": stale,
+        "latest_failed_runs": latest_failed,
         "findings": findings,
         "status": "PASS" if not any(item["severity"] == "BLOCKER" for item in findings) else "BLOCKED",
         "tui_delivery_note": LOCAL_ONLY_NOTE,

@@ -43,6 +43,14 @@ EVIDENCE_LEVELS = {
 }
 DEMAND_CONFIDENCE = {"LOW", "MEDIUM", "HIGH"}
 HTTPS_RE = re.compile(r"^https://[^\s]+$", re.I)
+PROHIBITED_COMMITMENT_PATTERNS = {
+    "final price": ("our price is", "we quote", "price is"),
+    "delivery commitment": ("we will deliver", "delivery in ", "lead time is"),
+    "payment commitment": ("payment terms are", "we accept payment"),
+    "certification claim": ("we are certified", "certified for"),
+    "origin claim": ("country of origin is", "origin is guaranteed"),
+    "availability guarantee": ("we guarantee availability", "available immediately"),
+}
 
 
 def today() -> str:
@@ -110,6 +118,7 @@ def normalize_item(raw: dict[str, Any], *, category_name: str) -> dict[str, Any]
     base_note = str(item.get("assortment_evidence") or "").strip()
     item["personalization_angle"] = str(item.get("personalization_angle") or base_note).strip()
     item["assortment_evidence_note"] = f"{base_note} Catalogue fit is a demand hypothesis, not an RFQ or proof that the company wants a new supplier.".strip()
+    item["demand_claim_status"] = "CATALOGUE_HYPOTHESIS"
     return item
 
 
@@ -150,6 +159,7 @@ def build_outreach_draft(item: dict[str, Any], *, outreach_id: str) -> dict[str,
     product_names = [str(product.get("product_name") or "").strip() for product in item.get("matching_products", [])]
     product_phrase = ", ".join(name for name in product_names[:3] if name) or item["category_name"]
     subject = f"Indian artisan {item['outreach_category'].lower()} for {item['company_name']}"
+    opt_out_sentence = "If this is not relevant, please let me know and I will not follow up."
     body = f"""Hello {item['company_name']} team,
 
 I noticed {product_phrase} in your public catalogue. {item['personalization_angle']}
@@ -158,19 +168,58 @@ We may be able to assemble a tightly curated India-sourced selection in {item['o
 
 No price, delivery date, payment term, certification, origin, or product availability is being committed in this introduction. Those details would be verified before any quotation.
 
-If this is not relevant, please let me know and I will not follow up.
+{opt_out_sentence}
 
 Regards,
 Raghav
 """
+    prohibited_claim_check = check_prohibited_claims(body)
+    follow_up_sequence = [
+        {
+            "step": 1,
+            "timing": "Only after a fresh owner approval and no stop signal exists.",
+            "body": "Hello, I am following up on the factual introduction below. If this category is not relevant, please let me know and I will close the thread.",
+            "sendable": False,
+            "fresh_approval_required": True,
+        },
+        {
+            "step": 2,
+            "timing": "Only after a second fresh owner approval and only if the buyer has not opted out, bounced, or declined.",
+            "body": "Hello, I will close this thread after this note unless a relevant sourcing or buying contact would like a factual product overview.",
+            "sendable": False,
+            "fresh_approval_required": True,
+        },
+    ]
     return {
         "outreach_id": outreach_id,
         "subject": subject,
         "body": body,
         "personalization_evidence": product_names[:3],
+        "personalization_evidence_map": [
+            {
+                "product_name": str(product.get("product_name") or ""),
+                "product_url": str(product.get("product_url") or ""),
+                "evidence": str(product.get("evidence") or ""),
+            }
+            for product in item.get("matching_products", [])
+        ],
+        "follow_up_sequence": follow_up_sequence,
+        "opt_out_sentence": opt_out_sentence,
+        "prohibited_claim_check": prohibited_claim_check,
+        "content_sha256": hashlib.sha256(body.encode("utf-8")).hexdigest(),
         "approval_required": True,
         "external_action_executed": False,
     }
+
+
+def check_prohibited_claims(body: str) -> dict[str, Any]:
+    normalized = " ".join(body.lower().split())
+    findings = [
+        category
+        for category, patterns in PROHIBITED_COMMITMENT_PATTERNS.items()
+        if any(pattern in normalized for pattern in patterns)
+    ]
+    return {"passed": not findings, "findings": findings}
 
 
 def read_csv(path: Path) -> tuple[list[str], list[dict[str, str]]]:
@@ -290,13 +339,13 @@ def build_rows(item: dict[str, Any], meta: dict[str, Any], draft_path: str) -> d
             "source_name": "Foreign retailer catalogue research",
             "source_url": item["website_url"],
             "contact_path": item["public_contact"] or item["contact_page_url"],
-            "identity_status": "VERIFIED",
-            "verification_status": "CONTACT_VERIFIED" if item["contact_status"] != "MISSING" else "COMPANY_VERIFIED",
-            "buyer_stage": "CONTACT_VERIFIED" if item["contact_status"] != "MISSING" else "COMPANY_VERIFIED",
+            "identity_status": "VISIBLE",
+            "verification_status": "BUYER_VISIBLE",
+            "buyer_stage": "BUYER_VISIBLE",
             "buyer_score": item["market_fit_score"],
-            "source_reliability_score": 75,
+            "source_reliability_score": "",
             "evidence_links": citations,
-            "notes": item["assortment_evidence_note"],
+            "notes": item["assortment_evidence_note"] + " Legal-entity, sanctions, and buyer-specific demand verification remain open.",
             "created_at": created_at,
             "updated_at": created_at,
         }
@@ -374,9 +423,12 @@ def write_draft(item: dict[str, Any], output_dir: Path, outreach_id: str) -> tup
     path = output_dir / "drafts" / f"{outreach_id}.md"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
-        f"# {draft['subject']}\n\n{draft['body']}\n---\nInternal draft only. Owner approval required before external use.\n",
+        f"# {draft['subject']}\n\n{draft['body']}\n---\nInternal first-contact draft only. Owner approval required before external use. Follow-ups require fresh owner approval.\n",
         encoding="utf-8",
     )
+    metadata_path = path.with_suffix(".json")
+    metadata_path.write_text(json.dumps(draft, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    draft["metadata_path"] = relative(metadata_path)
     return draft, path
 
 

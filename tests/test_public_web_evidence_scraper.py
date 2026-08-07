@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from scripts.public_web_evidence_scraper import (
+    body_sha256,
     crawlable_links,
     extract_html,
     normalize_url,
@@ -69,3 +70,8 @@ def test_normalize_url_rejects_non_https_and_private_hosts() -> None:
 def test_same_public_host_accepts_www_equivalent_only() -> None:
     assert same_public_host("https://www.example.com/a", "example.com", resolve_dns=False)
     assert not same_public_host("https://other.example.com/a", "example.com", resolve_dns=False)
+
+
+def test_body_sha256_allows_duplicate_public_content_to_be_detected() -> None:
+    assert body_sha256(b"same public evidence") == body_sha256(b"same public evidence")
+    assert body_sha256(b"same public evidence") != body_sha256(b"different public evidence")

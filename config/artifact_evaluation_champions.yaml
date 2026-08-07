@@ -1,0 +1,20 @@
+version: artifact_evaluation_champions.v1
+output_root: outputs/artifact_evaluations
+dimensions:
+  boq_extraction:
+    minimum_current_score: 0.95
+    higher_is_better: [field_coverage, numeric_accuracy, line_item_recall]
+    lower_is_better: [parse_error_rate]
+  pricing_spreadsheet_formulas:
+    minimum_current_score: 0.98
+    higher_is_better: [formula_coverage, scenario_coverage, auditability]
+    lower_is_better: [formula_error_count]
+  compliance_matrix_completeness:
+    minimum_current_score: 0.95
+    higher_is_better: [clause_coverage, citation_coverage, blocker_visibility]
+    lower_is_better: [unsupported_claim_count]
+  approval_card_readability:
+    minimum_current_score: 0.9
+    higher_is_better: [risk_clarity, recovery_clarity, decision_options_clarity]
+    lower_is_better: [missing_required_field_count]
+boundary: "Internal evaluation only. Champion comparison cannot approve packs, final prices, final compliance, or external action."

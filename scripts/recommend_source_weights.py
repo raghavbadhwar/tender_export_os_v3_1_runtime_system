@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import csv
 import datetime as dt
+import hashlib
 import json
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -50,11 +51,28 @@ def recommendation_for(row: dict[str, str]) -> dict[str, object]:
         recommended_weight = "medium"
     else:
         recommended_weight = "low"
+    sample_size = int(to_float(row.get("total_checks"), 0) + to_float(row.get("successful_cases"), 0))
+    uncertainty = "LOW" if sample_size >= 50 and failures == 0 else "MEDIUM" if sample_size >= 10 else "HIGH"
+    source_name = row.get("source_name", "")
+    proposal_basis = f"{source_name}:{row.get('workflow', '')}:{recommended_weight}:{sample_size}:{row.get('last_checked_date', '')}"
     return {
+        "proposal_id": f"SRC-WEIGHT-{hashlib.sha1(proposal_basis.encode('utf-8')).hexdigest()[:12]}",
+        "proposal_type": "SOURCE_WEIGHT_RECOMMENDATION",
+        "proposal_status": "RECOMMENDATION_ONLY_NOT_APPLIED",
         "source_name": row.get("source_name", ""),
         "workflow": row.get("workflow", ""),
         "recommended_source_weight": recommended_weight,
         "score": round(score, 2),
+        "sample_size": sample_size,
+        "observation_window": {
+            "start": row.get("last_lead_found") or row.get("last_checked_date") or "",
+            "end": row.get("last_checked_date") or "",
+        },
+        "uncertainty": uncertainty,
+        "false_positive_impact": "Overweighting this source can waste scans, create duplicate/manual-source-check cases, or over-prioritize low-proof public listings.",
+        "false_negative_impact": "Underweighting this source can miss useful tenders/RFQs and reduce buyer/category learning speed.",
+        "rollback_plan": "Keep existing config weight until owner-approved; if applied later, restore prior source_weight and compare source-yield metrics over the next review window.",
+        "automatic_change_allowed": False,
         "manual_check_required": bool(login_required or paywalled or "manual" in health or "captcha" in health),
         "evidence_level_expected": "PUBLIC_LISTING_ONLY" if login_required or paywalled else "DETAIL_PAGE_READ",
         "reasons": reasons,
@@ -90,6 +108,18 @@ def main() -> int:
         "source": str(SOURCE_HEALTH.relative_to(PROJECT_ROOT)),
         "dry_run": bool(args.dry_run),
         "mutation_allowed": False,
+        "proposal_contract": {
+            "automatic_weight_changes_allowed": False,
+            "required_fields": [
+                "proposal_id",
+                "sample_size",
+                "observation_window",
+                "uncertainty",
+                "false_positive_impact",
+                "false_negative_impact",
+                "rollback_plan",
+            ],
+        },
         "recommendations": [recommendation_for(row) for row in rows],
     }
     output = Path(args.output) if args.output else OUTPUT_DIR / f"source_weight_recommendations_{today}.yaml"

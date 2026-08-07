@@ -1,0 +1,17 @@
+version: 1
+workflow: GOV
+minimum_candidates: 5
+minimum_source_types: 3
+minimum_strict_supplier_quotes: 2
+require_case_scoped_candidate_manifest: true
+require_source_provenance: true
+require_product_fit_status: MATCHED
+require_explicit_risk_state: true
+exclude_blacklisted: true
+exclude_watchlisted_without_owner_waiver: true
+require_capacity_delivery_evidence_for_pricing_quote_suppliers: true
+gem_registration_required_when:
+  - case_source_name_contains_gem
+  - case_source_url_domain_gem_gov_in
+  - case_flag_gem_registration_required_true
+safety_boundary: "Internal readiness gate only. It does not contact suppliers, request quotes, select a supplier, commit price or delivery, submit, pay, or use DSC."

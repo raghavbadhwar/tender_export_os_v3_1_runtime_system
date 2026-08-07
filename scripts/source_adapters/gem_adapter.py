@@ -8,6 +8,11 @@ from pathlib import Path
 from urllib.parse import quote_plus, urljoin
 
 try:
+    from bs4 import BeautifulSoup
+except ModuleNotFoundError:  # pragma: no cover - optional parser fallback
+    BeautifulSoup = None  # type: ignore
+
+try:
     from scripts.source_adapters.base import DeepSourceOpportunity, SourceBlocked, SourceDocument, SourceOpportunity
 except ModuleNotFoundError:
     from base import DeepSourceOpportunity, SourceBlocked, SourceDocument, SourceOpportunity  # type: ignore
@@ -80,7 +85,95 @@ class GeMAdapter:
             notes=details,
         )
 
+    @staticmethod
+    def _plausible_title(value: str) -> bool:
+        normalized = " ".join(value.split()).strip(" :.-").lower()
+        labels = {"ra no", "bid no", "bid number", "items", "quantity", "start date", "end date"}
+        return normalized not in labels and len(normalized) >= 8 and sum(character.isalpha() for character in normalized) >= 6
+
+    def _extract_live_gem_cards(self, html: str, current_url: str) -> list[SourceOpportunity] | None:
+        """Extract the live BidPlus card layout without confusing RA labels or static links for bids.
+
+        The generic selector fallback is retained for fixtures and future layout variants.  The
+        current public page has a stable ``#bidCard .card`` structure where the true item title
+        is carried in a ``data-content`` attribute and the actionable record link is specifically
+        ``showbidDocument``.  Parsing this structure directly prevents false tender leads.
+        """
+        if BeautifulSoup is None:
+            return None
+        soup = BeautifulSoup(html, "html.parser")
+        cards = soup.select("#bidCard .card")
+        if not cards:
+            return None
+
+        opportunities: list[SourceOpportunity] = []
+        saw_bid_card = False
+        for card in cards:
+            bid_link = next(
+                (
+                    anchor
+                    for anchor in card.select("a[href*='showbidDocument']")
+                    if re.search(r"GEM/\d{4}/B/\d+", anchor.get_text(" ", strip=True), flags=re.I)
+                ),
+                None,
+            )
+            if bid_link is None:
+                continue
+            saw_bid_card = True
+            tender_id_match = re.search(r"GEM/\d{4}/B/\d+", bid_link.get_text(" ", strip=True), flags=re.I)
+            if tender_id_match is None:  # defensive, kept close to the selector above
+                continue
+            title_node = card.select_one(".card-body .col-md-4 a[data-content]") or card.select_one(".card-body .col-md-4 a")
+            title = ""
+            if title_node is not None:
+                title = str(title_node.get("data-content") or title_node.get_text(" ", strip=True)).strip()
+            if self.keyword and self.keyword.lower() not in title.lower():
+                continue
+            if not self._plausible_title(title):
+                continue
+            buyer_column = card.select_one(".card-body .col-md-5")
+            buyer = " ".join(buyer_column.stripped_strings) if buyer_column is not None else ""
+            buyer = re.sub(r"^Department Name And Address:\s*", "", buyer, flags=re.I).strip()
+            deadline_node = card.select_one(".end_date")
+            deadline = deadline_node.get_text(" ", strip=True) if deadline_node is not None else ""
+            source_url = urljoin(current_url, str(bid_link.get("href") or ""))
+            opportunities.append(
+                SourceOpportunity(
+                    source_name=self.source_name,
+                    source_type=self.source_type,
+                    workflow_type=self.workflow_type,
+                    source_url=source_url,
+                    external_reference=tender_id_match.group(0).upper(),
+                    opportunity_title=title,
+                    buyer_name=buyer,
+                    product_or_service=self.keyword,
+                    deadline_date=deadline,
+                    citations=[source_url],
+                    notes="Public GeM BidPlus card extraction; detail document evidence is still required before case movement.",
+                )
+            )
+            if len(opportunities) >= self.limit:
+                break
+
+        if opportunities or saw_bid_card:
+            return opportunities
+        return [
+            SourceOpportunity(
+                source_name=self.source_name,
+                source_type=self.source_type,
+                workflow_type=self.workflow_type,
+                source_url=current_url,
+                external_reference="GEM-LISTING-UNSTRUCTURED",
+                opportunity_title="GeM listing page reached but no valid bid cards were extracted",
+                citations=[current_url],
+                notes="The live card layout was present but required bid fields were incomplete; do not create a case from this record.",
+            )
+        ]
+
     def _extract_listing_opportunities(self, html: str, current_url: str) -> list[SourceOpportunity]:
+        live_card_opportunities = self._extract_live_gem_cards(html, current_url) if self.name == "gem" else None
+        if live_card_opportunities is not None:
+            return live_card_opportunities[: self.limit]
         selector_cards = extract_cards(html, current_url, self.selector_config)
         selector_opportunities: list[SourceOpportunity] = []
         for card in selector_cards[: self.limit]:
@@ -106,10 +199,18 @@ class GeMAdapter:
         if selector_opportunities:
             # Check if all opportunities have required fields populated (not default/fallbacks)
             is_valid = all(
-                opt.external_reference and opt.buyer_name and opt.deadline_date
+                opt.external_reference
+                and opt.buyer_name
+                and opt.deadline_date
                 for opt in selector_opportunities
                 if "GEM-LISTING-" not in opt.external_reference
             )
+            if self.name == "gem":
+                is_valid = is_valid and all(
+                    self._plausible_title(opt.opportunity_title) and "showbiddocument" in opt.source_url.lower()
+                    for opt in selector_opportunities
+                    if "GEM-LISTING-" not in opt.external_reference
+                )
             if is_valid:
                 return selector_opportunities[: self.limit]
 

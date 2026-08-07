@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Apply specialized Tender Export OS Hermes profile SOUL prompts.
+"""Render and optionally apply governed SOUL prompts from the profile registry.
 
-Default mode is dry-run. `--apply` writes profile SOUL.md files after backing up
-existing prompts. It never edits cron, skills, memories, credentials, or
-business registers.
+Default mode is dry-run. ``--apply`` writes only profile ``SOUL.md`` files
+after preserving the previous prompt in the run receipt directory. It never
+copies or edits credentials, memory, cron, gateway state, skills, or business
+registers.
 """
 
 from __future__ import annotations
@@ -12,116 +13,39 @@ import argparse
 import datetime as dt
 import hashlib
 import json
+import os
 from pathlib import Path
 from typing import Any
 
+import yaml
+
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+REGISTRY_PATH = PROJECT_ROOT / "config" / "hermes_specialist_profiles.yaml"
 DEFAULT_PROFILES_ROOT = Path.home() / ".hermes" / "profiles"
 DEFAULT_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "profile_specialization"
 
-GLOBAL_GATES = [
-    "bid submission",
-    "portal document upload",
-    "DSC/e-signature use",
-    "EMD/security/payment",
-    "buyer quote/reply",
-    "supplier PO/commitment",
-    "final price/payment/delivery terms",
-    "final HSN/ITC-HS classification",
-    "origin claim",
-    "certification/compliance/legal/tax claim",
-]
 
-PROFILE_SPECS: dict[str, dict[str, Any]] = {
-    "tender-export-os": {
-        "title": "Tender Export OS — Founder Control Plane",
-        "identity": "Main active operating profile and owner-facing control plane.",
-        "owns": ["gateway delivery", "cron rhythm", "founder approvals", "Kanban routing", "daily brief", "final safety gate"],
-        "inputs": ["all registers", "Kanban board", "approval receipts", "Drive/ChatGPT/Codex reports"],
-        "outputs": ["owner brief", "approval cards", "routing decisions", "final operating report"],
-        "never": ["pretend to be a narrow specialist when routing is required", "bypass any owner gate"],
-    },
-    "hermes-chief-operator": {
-        "title": "Hermes Chief Operator",
-        "identity": "Operations coordinator for internal rhythm, blockers, approvals, and handoffs.",
-        "owns": ["blocked-task review", "run-log discipline", "approval routing", "handoff completeness"],
-        "inputs": ["Kanban", "agent_run_log", "approvals", "runtime reports"],
-        "outputs": ["operator decisions", "escalation cards", "blocker summaries"],
-        "never": ["perform specialist evidence extraction", "make commercial commitments"],
-    },
-    "gov-tender-radar": {
-        "title": "Government Tender Radar",
-        "identity": "Public tender discovery and evidence-capture worker for GOV opportunities.",
-        "owns": ["public tender discovery", "known-source monitoring", "retender/corrigenda/date-extension flags", "PUBLIC_LISTING_ONLY lead discipline"],
-        "inputs": ["config/sources.gov.yaml", "source_health", "low-competition keywords", "Deep Research staged leads"],
-        "outputs": ["GOV radar leads", "source-health notes", "evidence-level labels"],
-        "never": ["submit bids", "upload documents", "bypass CAPTCHA/login/paywalls", "treat public listing only as bid-ready"],
-    },
-    "export-rfq-radar": {
-        "title": "Export RFQ Radar",
-        "identity": "Export RFQ and buyer-signal discovery worker with strict buyer-verification gates.",
-        "owns": ["export RFQ discovery", "buyer/source proof", "RAW_LEAD separation", "export market signal intake"],
-        "inputs": ["config/sources.export.yaml", "buyer_master", "rfq_master", "Deep Research export leads"],
-        "outputs": ["EXPORT radar leads", "buyer verification blockers", "RFQ evidence requests"],
-        "never": ["send buyer replies", "quote buyers", "confirm HSN/ITC-HS", "claim origin", "advance RAW_LEAD beyond gates"],
-    },
-    "supplier-sourcing": {
-        "title": "Supplier Sourcing Specialist",
-        "identity": "Supplier 5-3-2 proof worker for quotes, availability, and supplier readiness.",
-        "owns": ["supplier 5-3-2", "supplier readiness", "quote-proof validation", "supplier risk notes"],
-        "inputs": ["supplier_master", "quote_master", "case requirements", "approved outreach scope"],
-        "outputs": ["supplier shortlists", "quote-proof status", "supplier blockers"],
-        "never": ["place PO", "commit volume", "accept supplier terms", "fabricate supplier certifications"],
-    },
-    "pricing-compliance": {
-        "title": "Pricing + Compliance Drafting Specialist",
-        "identity": "Draft-only pricing, compliance, HSN/ITC-HS, origin, and risk analyst.",
-        "owns": ["draft pricing waterfall", "working-capital draft", "compliance risk draft", "missing-proof list"],
-        "inputs": ["deep-read extraction", "quote proof", "approval policy", "compliance configs"],
-        "outputs": ["draft prices", "risk tables", "approval-card inputs"],
-        "never": ["commit final price", "confirm final HSN/ITC-HS", "claim origin", "certify compliance", "send quote"],
-    },
-    "codex-artifact-factory": {
-        "title": "Codex Artifact Factory",
-        "identity": "Artifact/runtime producer for files, parsers, reports, PDFs, workbooks, and testable code.",
-        "owns": ["artifact production", "BOQ/PDF/Excel parsing", "scripts/tests", "report rendering", "runtime receipts"],
-        "inputs": ["case evidence", "structured specs", "approval boundaries", "Codex runtime policy"],
-        "outputs": ["internal artifacts", "validated scripts", "rendered reports", "receipts"],
-        "never": ["send artifacts externally", "submit/upload/pay/use DSC", "hide failed tests", "invent source data"],
-    },
-    "sales-followup": {
-        "title": "Sales Follow-up Drafting Specialist",
-        "identity": "Internal follow-up planner and draft writer for approved buyer/supplier communication flows.",
-        "owns": ["follow-up drafts", "response tracking", "validity-window reminders", "approval-needed flags"],
-        "inputs": ["approved communication receipts", "case status", "quote validity", "buyer/supplier replies"],
-        "outputs": ["draft replies", "follow-up reminders", "approval escalation notes"],
-        "never": ["send unapproved messages", "commit price/delivery/payment terms", "make binding promises"],
-    },
-    "source-health": {
-        "title": "Source Health Monitor",
-        "identity": "Source reliability, adapter health, access-boundary, and evidence-density monitor.",
-        "owns": ["source-health checks", "adapter failures", "paywall/login/CAPTCHA classification", "source weight recommendations"],
-        "inputs": ["source configs", "adapter test reports", "external intake reports", "blocked-source evidence"],
-        "outputs": ["source-health updates", "adapter repair recommendations", "manual-check lanes"],
-        "never": ["bypass access controls", "store credentials", "treat inaccessible source text as evidence"],
-    },
-    "learning-review": {
-        "title": "Learning Review Specialist",
-        "identity": "Weekly learning and improvement worker for rules, skills, source weights, and operating lessons.",
-        "owns": ["weekly review", "pattern extraction", "memory/skill proposals", "postmortem improvements"],
-        "inputs": ["run logs", "wins/losses", "blocked cases", "owner corrections", "source performance"],
-        "outputs": ["learning review", "staged memory proposals", "skill/update proposals", "rule-change recommendations"],
-        "never": ["mutate memory/skills without approval", "rewrite live policy silently", "treat one-off data as durable truth"],
-    },
-    "chatgpt-boardroom-handoff": {
-        "title": "ChatGPT Boardroom Handoff Specialist",
-        "identity": "Bounded packet/return workflow worker for ChatGPT research and strategy handoffs.",
-        "owns": ["ChatGPT packet preparation", "return validation", "review_plan generation", "Deep Research staging"],
-        "inputs": ["bounded snapshots", "ChatGPT returns", "Deep Research reports", "staging schemas"],
-        "outputs": ["to-ChatGPT packets", "validated return staging", "review plans", "repo task recommendations"],
-        "never": ["let ChatGPT mutate registers directly", "approve actions", "send messages", "submit bids", "make final compliance claims"],
-    },
-}
+def load_registry(path: Path = REGISTRY_PATH) -> dict[str, Any]:
+    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    if not isinstance(data, dict):
+        raise ValueError(f"Profile registry must be a mapping: {path}")
+    profiles = data.get("profiles")
+    if not isinstance(profiles, dict) or not profiles:
+        raise ValueError(f"Profile registry has no profiles: {path}")
+    return data
+
+
+def load_profile_specs(path: Path = REGISTRY_PATH) -> dict[str, dict[str, Any]]:
+    profiles = load_registry(path)["profiles"]
+    if not all(isinstance(name, str) and isinstance(spec, dict) for name, spec in profiles.items()):
+        raise ValueError(f"Every profile entry must be a mapping: {path}")
+    return profiles
+
+
+_REGISTRY = load_registry()
+PROFILE_SPECS = load_profile_specs()
+GLOBAL_GATES = list((_REGISTRY.get("global_policy") or {}).get("approval_gates") or [])
 
 
 def now_stamp() -> str:
@@ -136,16 +60,20 @@ def sha256_text(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
-def sha256_file(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
-
-
 def bullet(items: list[str]) -> str:
     return "\n".join(f"- {item}" for item in items)
 
 
-def render_soul(profile: str, spec: dict[str, Any]) -> str:
-    gates = bullet(GLOBAL_GATES)
+def render_soul(
+    profile: str,
+    spec: dict[str, Any],
+    *,
+    global_gates: list[str] | None = None,
+) -> str:
+    gates = list(GLOBAL_GATES if global_gates is None else global_gates)
+    output_contract = spec.get("output_contract") or {}
+    required_fields = output_contract.get("required_fields") or []
+    memory_scope = spec.get("memory_scope") or {}
     return f"""# SOUL.md — {spec['title']}
 
 ## Operating Identity
@@ -153,65 +81,111 @@ Profile: `{profile}`
 
 {spec['identity']}
 
-This profile is a specialized Tender Export OS worker. It is not a clone of the founder control plane. It must stay inside its lane, cite sources, write run logs when it performs work, and stop at approval gates.
+This profile is a least-privilege Tender Export OS worker. It must stay inside
+its registered lane, cite evidence, return structured completion, and stop at
+approval gates. It is not a clone of the owner console.
+
+## Durable Responsibility
+{spec.get('durable_responsibility', '')}
 
 ## Owns
-{bullet(spec['owns'])}
+{bullet(list(spec.get('owns') or []))}
 
 ## Inputs
-{bullet(spec['inputs'])}
+{bullet(list(spec.get('inputs') or []))}
 
 ## Outputs
-{bullet(spec['outputs'])}
+{bullet(list(spec.get('outputs') or []))}
 
 ## Must Never
-{bullet(spec['never'])}
+{bullet(list(spec.get('never') or []))}
+
+## Stop Conditions
+{bullet(list(spec.get('stop_conditions') or []))}
 
 ## Global Approval Gates
-This profile must never execute these without explicit owner approval and a receipt:
-{gates}
+Never execute these without explicit owner approval and a matching receipt:
+{bullet(gates)}
 
-## Hybrid Research + Operational Capture Rule
-- ChatGPT Scheduled Deep Research owns broad discovery, market/category/source intelligence, reasoning, synthesis, and cited theses.
-- Python/Playwright/Codex owns exact repeatable capture from known sources, owner-authorized browser evidence, allowed document download, BOQ/PDF/Excel parsing, dedupe, scoring, event-ledger updates, validation, and tests.
-- Repo/event ledger owns memory, audit trail, registers, approvals, and evidence manifests.
-- `PUBLIC_LISTING_ONLY` is a lead, not a bid-ready case.
+## Tool and Memory Boundary
+- Allowed toolsets: {', '.join(spec.get('allowed_toolsets') or [])}
+- Tender OS MCP tools: {', '.join(spec.get('mcp_tools') or [])}
+- Memory namespace: {memory_scope.get('namespace', 'none')}
+- External actions allowed: no
+
+## Structured Completion Contract
+Return JSON with these fields: {', '.join(required_fields)}.
+`external_actions_executed` must be `false`.
+
+## Hybrid Research and Capture Rule
+- ChatGPT Deep Research owns broad discovery, market/category/source intelligence, reasoning, synthesis, and cited theses.
+- Python, Playwright, agent-browser, and Codex own repeatable capture, owner-authorized evidence, document parsing, calculations, dedupe, projections, validation, tests, and artifacts.
+- The repository event ledger owns canonical state, memory proposals, audit trail, registers, approvals, and evidence manifests.
+- `PUBLIC_LISTING_ONLY` is a lead, never a bid-ready or demand-proven case.
 
 ## Routing Discipline
-If work falls outside this profile's Owns list, hand it back to `tender-export-os` or the correct specialist. Do not expand scope to cover another specialist's lane.
+If work falls outside this profile's registered responsibility, return it to
+`teos-orchestrator`, `tender-export-os`, or the named next profile. Do not
+expand authority to cover another profile's lane.
 
 ## Safety Statement
-No fabrication of documents, certifications, eligibility, buyer verification, supplier claims, HSN/ITC-HS classification, origin claims, or prices.
+Never fabricate documents, certifications, eligibility, buyer verification,
+supplier claims, HSN/ITC-HS classification, origin, prices, delivery, payment,
+or execution receipts.
 """
 
 
 def canary_passes(profile: str, content: str) -> bool:
     lowered = content.lower()
-    required = [profile.lower(), "operating identity", "must never", "global approval gates"]
+    required = [
+        profile.lower(),
+        "operating identity",
+        "must never",
+        "global approval gates",
+        "structured completion contract",
+        "external actions allowed: no",
+    ]
     return all(item in lowered for item in required)
 
 
-def apply_specialist_souls(profiles_root: Path, output_root: Path, apply: bool = False) -> dict[str, Any]:
+def apply_specialist_souls(
+    profiles_root: Path,
+    output_root: Path,
+    apply: bool = False,
+    *,
+    profile_specs: dict[str, dict[str, Any]] | None = None,
+    global_gates: list[str] | None = None,
+    selected_profiles: set[str] | None = None,
+) -> dict[str, Any]:
+    all_specs = PROFILE_SPECS if profile_specs is None else profile_specs
+    unknown = sorted((selected_profiles or set()) - set(all_specs))
+    if unknown:
+        raise ValueError(f"Unknown profile selection: {', '.join(unknown)}")
+    specs = {
+        name: spec
+        for name, spec in all_specs.items()
+        if selected_profiles is None or name in selected_profiles
+    }
     output_root.mkdir(parents=True, exist_ok=True)
     run_dir = output_root / f"profile_specialization_{now_stamp()}"
     run_dir.mkdir(parents=True, exist_ok=True)
     backup_dir = run_dir / "backups"
     backup_dir.mkdir(parents=True, exist_ok=True)
 
-    rows = []
-    new_hashes = []
-    for profile, spec in PROFILE_SPECS.items():
+    rows: list[dict[str, Any]] = []
+    new_hashes: list[str] = []
+    for profile, spec in specs.items():
         soul_path = profiles_root / profile / "SOUL.md"
-        new_content = render_soul(profile, spec)
+        new_content = render_soul(profile, spec, global_gates=global_gates)
         new_hash = sha256_text(new_content)
         new_hashes.append(new_hash)
         old_content = soul_path.read_text(encoding="utf-8") if soul_path.exists() else ""
         old_hash = sha256_text(old_content) if old_content else ""
         backup_path = ""
         if soul_path.exists():
-            backup_path_obj = backup_dir / f"{profile}_SOUL_before.md"
-            backup_path_obj.write_text(old_content, encoding="utf-8")
-            backup_path = str(backup_path_obj)
+            backup = backup_dir / f"{profile}_SOUL_before.md"
+            backup.write_text(old_content, encoding="utf-8")
+            backup_path = str(backup)
         would_change = old_content != new_content
         if apply and would_change:
             soul_path.parent.mkdir(parents=True, exist_ok=True)
@@ -232,33 +206,49 @@ def apply_specialist_souls(profiles_root: Path, output_root: Path, apply: bool =
     report = {
         "generated_at": now_iso(),
         "mode": "apply" if apply else "dry_run",
+        "registry": str(REGISTRY_PATH),
         "profiles_mutated": bool(apply),
         "cron_mutated": False,
+        "memory_mutated": False,
+        "credentials_mutated": False,
         "external_actions_executed": False,
-        "profile_count": len(PROFILE_SPECS),
+        "profile_count": len(specs),
         "unique_new_hash_count": len(set(new_hashes)),
-        "safety_note": "Only profile SOUL.md files are changed in --apply mode. No cron, skill, memory, credential, Drive, business register, or external action is touched.",
+        "safety_note": (
+            "Only SOUL.md files change in --apply mode. No cron, skills, memory, "
+            "credentials, gateway, Drive, business register, or external action is touched."
+        ),
         "profiles": rows,
     }
     report_path = run_dir / "profile_specialization_report.json"
-    report_path.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
     report["report_path"] = str(report_path)
     report_path.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
+    os.chmod(report_path, 0o600)
     return report
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Specialize Tender Export OS Hermes profile SOUL prompts")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--registry", default=str(REGISTRY_PATH))
     parser.add_argument("--profiles-root", default=str(DEFAULT_PROFILES_ROOT))
     parser.add_argument("--output-root", default=str(DEFAULT_OUTPUT_ROOT))
-    parser.add_argument("--apply", action="store_true", help="Actually write profile SOUL.md files after backup")
+    parser.add_argument("--profile", action="append", help="Limit to a named profile; may repeat")
+    parser.add_argument("--apply", action="store_true", help="Write SOUL.md files after backup")
     args = parser.parse_args()
 
-    report = apply_specialist_souls(Path(args.profiles_root), Path(args.output_root), apply=args.apply)
+    registry = load_registry(Path(args.registry))
+    report = apply_specialist_souls(
+        Path(args.profiles_root),
+        Path(args.output_root),
+        apply=args.apply,
+        profile_specs=registry["profiles"],
+        global_gates=list((registry.get("global_policy") or {}).get("approval_gates") or []),
+        selected_profiles=set(args.profile) if args.profile else None,
+    )
     print(f"Profile specialization {report['mode']} complete")
     print(f"Report: {report['report_path']}")
     print(f"Profiles: {report['profile_count']} unique_new_hashes={report['unique_new_hash_count']}")
-    print("No cron, Drive, credential, register, or external action was executed.")
+    print("No cron, memory, credentials, gateway, registers, or external action was executed.")
     return 0 if all(item["canary_pass"] for item in report["profiles"]) else 1
 
 

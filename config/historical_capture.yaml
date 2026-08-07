@@ -1,0 +1,34 @@
+version: 1
+mode: official_public_evidence_only
+input_root: outputs/evidence/private
+packet_glob: "**/historical_gov_packet*.json"
+limits:
+  max_packets_per_run: 20
+  max_records_per_run: 200
+  max_packet_bytes: 5000000
+official_domains:
+  - gem.gov.in
+  - eprocure.gov.in
+  - eproc.punjab.gov.in
+  - mahatenders.gov.in
+  - ireps.gov.in
+  - ongcindia.com
+  - bhel.com
+  - defproc.gov.in
+  - nsic.co.in
+evidence_confidence:
+  PUBLIC_LISTING_ONLY: 60
+  DETAIL_PAGE_READ: 80
+  DOCUMENTS_DISCOVERED: 85
+  DOCUMENTS_DOWNLOADED: 90
+  STRUCTURED_EVIDENCE_BUNDLE: 95
+source_confidence_overrides:
+  GeM: 90
+  CPPP: 90
+  IREPS: 85
+  BHEL: 85
+safety:
+  network_capture_in_this_job: false
+  infer_award_from_notice: false
+  login_or_paywall_bypass: false
+  external_actions: false

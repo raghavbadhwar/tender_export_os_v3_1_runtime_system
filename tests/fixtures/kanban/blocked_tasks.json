@@ -4,7 +4,7 @@
       "id": "t-source-health",
       "title": "Portal source adapter timeout",
       "status": "blocked",
-      "assignee": "gov-tender-radar",
+      "assignee": "gov-tender-intelligence",
       "updated_at": "2026-06-29T10:00:00+00:00",
       "blocked_reason": "source adapter timeout"
     },
@@ -12,7 +12,7 @@
       "id": "t-owner-approval",
       "title": "Owner approval required",
       "status": "blocked",
-      "assignee": "pricing-compliance",
+      "assignee": "pricing-risk",
       "updated_at": "2026-06-29T10:00:00+00:00",
       "blocked_reason": "owner approval missing"
     }

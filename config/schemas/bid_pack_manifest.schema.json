@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Tender Export OS GOV Bid Pack Manifest",
+  "schema_version": "bid_pack_manifest.v1",
+  "required_top_level": [
+    "schema_version",
+    "case_id",
+    "workflow_type",
+    "generated_at",
+    "codex_task_packet_path",
+    "artifacts",
+    "missing_items_path",
+    "plugin_receipt_path",
+    "external_actions_executed"
+  ],
+  "required_artifact_kinds": [
+    "bid_cover",
+    "boq",
+    "compliance_matrix",
+    "eligibility_declaration",
+    "supplier_summary",
+    "emd_security_plan",
+    "delivery_plan",
+    "risk_register",
+    "missing_items_list"
+  ]
+}

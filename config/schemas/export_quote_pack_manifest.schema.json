@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Tender Export OS Export Quote Pack Manifest",
+  "schema_version": "export_quote_pack_manifest.v1",
+  "required_top_level": [
+    "schema_version",
+    "case_id",
+    "workflow_type",
+    "generated_at",
+    "codex_task_packet_path",
+    "commercial_readiness_path",
+    "artifacts",
+    "missing_items_path",
+    "plugin_receipt_path",
+    "unapproved_claims_disclaimer",
+    "final_claims_approved",
+    "external_actions_executed"
+  ],
+  "required_artifact_kinds": [
+    "proforma_invoice_draft",
+    "product_specification",
+    "supplier_summary",
+    "pricing_waterfall",
+    "compliance_caveats",
+    "incoterm_payment_proposal",
+    "validity_delivery_assumptions",
+    "missing_items_list"
+  ]
+}

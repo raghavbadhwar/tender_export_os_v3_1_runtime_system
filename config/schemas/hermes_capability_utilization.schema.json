@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Hermes Capability Utilization",
+  "type": "object",
+  "required": ["schema_version", "evidence_policy", "capabilities"],
+  "properties": {
+    "schema_version": {"const": "hermes_capability_utilization.v1"},
+    "evidence_policy": {"type": "string", "minLength": 1},
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["status"],
+        "properties": {
+          "status": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": false
+}

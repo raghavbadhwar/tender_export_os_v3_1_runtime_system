@@ -26,6 +26,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "data"
 FORECAST_PATH = DATA_DIR / "forecast_candidates.csv"
 OUTPUT_PATH = DATA_DIR / "forecast_backtests.csv"
+OUTCOMES_PATH = DATA_DIR / "case_outcomes.csv"
+EVENTS_PATH = DATA_DIR / "events.jsonl"
 
 COLUMNS = [
     "backtest_id",
@@ -53,6 +55,35 @@ COLUMNS = [
 
 ADVANCED_STATUSES = {"DEEP_READ", "SUPPLIER_SEARCH", "PRICING_READY", "ARTIFACT_PRODUCTION", "APPROVAL_REQUIRED", "APPROVED"}
 WEAK_EVIDENCE = {"", "MISSING", "RAW_LEAD", "PARTIAL", "MARKETPLACE_MASKED", "PUBLIC_LISTING_ONLY", "LOW_EVIDENCE", "RESEARCH_ONLY_NOT_RFQ"}
+POSITIVE_OUTCOME_TYPES = {
+    "SUBMITTED",
+    "TECHNICAL_QUALIFIED",
+    "L1_DECLARED",
+    "WON",
+    "WORK_ORDER_RECEIVED",
+    "OUTREACH_SENT",
+    "REPLY_RECEIVED",
+    "RFQ_RECEIVED",
+    "QUOTE_SENT",
+    "ORDER_RECEIVED",
+    "SAMPLE_SENT",
+    "PRODUCTION_STARTED",
+    "SHIPPED",
+    "DELIVERED",
+    "INVOICED",
+    "PAYMENT_DUE",
+    "PAYMENT_RECEIVED",
+    "REPEAT_INQUIRY",
+}
+NEGATIVE_OUTCOME_TYPES = {
+    "TECHNICAL_DISQUALIFIED",
+    "LOST",
+    "OPT_OUT",
+    "BOUNCE",
+    "PAYMENT_DELAYED",
+    "CLAIM_OR_RETURN",
+}
+JUSTIFIED_KILL_OUTCOME_TYPES = {"FAST_KILL_JUSTIFIED", "REJECTED"}
 
 
 def rel(path: Path) -> str:
@@ -78,6 +109,19 @@ def parse_date(value: Any) -> dt.date | None:
         return dt.date.fromisoformat(text[:10])
     except ValueError:
         return None
+
+
+def parse_datetime(value: Any) -> dt.datetime | None:
+    text = str(value or "").strip()
+    if not text:
+        return None
+    try:
+        parsed = dt.datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=dt.timezone.utc)
+    return parsed.astimezone(dt.timezone.utc)
 
 
 def safe_float(value: Any) -> float:
@@ -132,41 +176,90 @@ def stronger_evidence(row: dict[str, str], forecast_evidence: str) -> bool:
     return False
 
 
-def label_forecast(forecast: dict[str, str], case: dict[str, str] | None, review_date: dt.date) -> tuple[str, str, str, str]:
+def _verified_time_separated_outcome(
+    forecast: dict[str, str],
+    outcomes: list[dict[str, str]],
+    events: list[dict[str, Any]],
+    review_date: dt.date,
+) -> dict[str, str] | None:
+    case_id = str(forecast.get("case_or_research_id") or "")
+    forecast_date = parse_date(forecast.get("forecast_date")) or review_date
+    forecast_time = dt.datetime.combine(forecast_date, dt.time.min, tzinfo=dt.timezone.utc)
+    review_end = dt.datetime.combine(review_date, dt.time.max, tzinfo=dt.timezone.utc)
+    event_times: dict[str, dt.datetime] = {}
+    for event in events:
+        if event.get("event_type") != "case.outcome_recorded":
+            continue
+        event_time = parse_datetime(event.get("event_time"))
+        if event_time:
+            event_times[str(event.get("object_id") or "")] = event_time
+
+    eligible: list[tuple[dt.datetime, dict[str, str]]] = []
+    for outcome in outcomes:
+        if str(outcome.get("case_id") or "") != case_id:
+            continue
+        if str(outcome.get("verification_status") or "").upper() != "VERIFIED":
+            continue
+        if not str(outcome.get("evidence_path") or "").strip() or len(str(outcome.get("evidence_sha256") or "")) != 64:
+            continue
+        occurred = parse_datetime(outcome.get("occurred_at"))
+        if occurred is None or occurred <= forecast_time or occurred > review_end:
+            continue
+        outcome_id = str(outcome.get("outcome_id") or "")
+        event_time = event_times.get(outcome_id)
+        if events and (event_time is None or event_time <= forecast_time or event_time > review_end):
+            continue
+        recorded = event_time or parse_datetime(outcome.get("recorded_at"))
+        if recorded is None or recorded <= forecast_time or recorded > review_end:
+            continue
+        eligible.append((occurred, outcome))
+    return min(eligible, key=lambda item: item[0])[1] if eligible else None
+
+
+def label_forecast(
+    forecast: dict[str, str],
+    case: dict[str, str] | None,
+    review_date: dt.date,
+    outcomes: list[dict[str, str]] | None = None,
+    events: list[dict[str, Any]] | None = None,
+) -> tuple[str, str, str, str]:
     forecast_date = parse_date(forecast.get("forecast_date")) or review_date
     elapsed = (review_date - forecast_date).days
     proof_gap = forecast.get("proof_gap", "")
     evidence = str(forecast.get("evidence_level", "")).upper()
-    if case:
-        status = str(case.get("status", "")).upper()
-        kill_reason = case.get("kill_reason", "")
-        transition_date = parse_date(case.get("updated_at") or case.get("created_at"))
-        observed_after_forecast = elapsed > 0 and (transition_date is None or transition_date > forecast_date)
-        if status in ADVANCED_STATUSES and stronger_evidence(case, evidence) and observed_after_forecast:
-            return "HIT", f"Case advanced to {status} with stronger evidence.", "", ""
-        if status == "REJECTED" and kill_reason and observed_after_forecast:
-            return "KILLED_CORRECTLY", f"Case rejected with kill reason: {kill_reason}", "", ""
-        eligible_at = parse_date(forecast.get("eligible_for_backtest_at"))
-        if (eligible_at and review_date < eligible_at) or (
-            not eligible_at and elapsed < horizon_days(forecast.get("horizon", ""))
-        ):
-            return "NOT_ENOUGH_TIME", f"Only {elapsed} day(s) elapsed within forecast horizon.", "", ""
-        current_evidence = str(case.get("evidence_level") or "").upper()
-        if evidence in WEAK_EVIDENCE or current_evidence in WEAK_EVIDENCE or "proof" in proof_gap.lower():
-            return "BLOCKED_BY_PROOF", "Case remains constrained by missing RFQ/document/supplier proof.", "", ""
-        return "MISS", "No progress, proof gain, or justified kill after the forecast window.", "No observed progress after horizon.", ""
+    outcome = _verified_time_separated_outcome(forecast, outcomes or [], events or [], review_date)
+    if outcome:
+        outcome_type = str(outcome.get("outcome_type") or "").upper()
+        outcome_id = str(outcome.get("outcome_id") or "")
+        observed = f"Verified time-separated outcome {outcome_type} ({outcome_id})."
+        if outcome_type in POSITIVE_OUTCOME_TYPES:
+            return "HIT", observed, "", ""
+        if outcome_type in JUSTIFIED_KILL_OUTCOME_TYPES:
+            return "KILLED_CORRECTLY", observed, "", ""
+        if outcome_type in NEGATIVE_OUTCOME_TYPES:
+            return "MISS", observed, f"Verified negative outcome: {outcome_type}", ""
 
     eligible_at = parse_date(forecast.get("eligible_for_backtest_at"))
     if (eligible_at and review_date < eligible_at) or (
         not eligible_at and elapsed < horizon_days(forecast.get("horizon", ""))
     ):
         return "NOT_ENOUGH_TIME", f"Only {elapsed} day(s) elapsed; no source-register mutation expected.", "", ""
-    if evidence in WEAK_EVIDENCE or "proof" in proof_gap.lower():
-        return "BLOCKED_BY_PROOF", "Research or low-competition lead still lacks buyer-specific proof.", "", "No verified case emerged from the forecast lane."
-    return "MISS", "No matching case or source-register progress found.", "No matching operational case found.", ""
+    return (
+        "BLOCKED_BY_PROOF",
+        "No verified, evidence-backed, time-separated outcome exists for this forecast.",
+        "",
+        "Collect a verified case outcome after the prediction timestamp.",
+    )
 
 
-def build_rows(forecasts: list[dict[str, str]], cases: list[dict[str, str]], review_date: dt.date) -> list[dict[str, str]]:
+def build_rows(
+    forecasts: list[dict[str, str]],
+    cases: list[dict[str, str]],
+    review_date: dt.date,
+    *,
+    outcomes: list[dict[str, str]] | None = None,
+    events: list[dict[str, Any]] | None = None,
+) -> list[dict[str, str]]:
     case_by_id = {row.get("case_id", ""): row for row in cases}
     rows: list[dict[str, str]] = []
     for forecast in forecasts:
@@ -174,7 +267,13 @@ def build_rows(forecasts: list[dict[str, str]], cases: list[dict[str, str]], rev
         forecast_digest = hashlib.sha1(forecast_id.encode("utf-8")).hexdigest()[:8]
         case_id = forecast.get("case_or_research_id", "")
         case = case_by_id.get(case_id)
-        outcome, observed, false_positive, false_negative = label_forecast(forecast, case, review_date)
+        outcome, observed, false_positive, false_negative = label_forecast(
+            forecast,
+            case,
+            review_date,
+            outcomes=outcomes,
+            events=events,
+        )
         forecast_date = parse_date(forecast.get("forecast_date")) or review_date
         predicted_probability = safe_float(forecast.get("predicted_probability"))
         outcome_map = {"HIT": 1, "PARTIAL_HIT": 1, "KILLED_CORRECTLY": 1, "MISS": 0}
@@ -225,7 +324,17 @@ def main(argv: list[str] | None = None) -> int:
     if not output.is_absolute():
         output = PROJECT_ROOT / output
     review_date = parse_date(args.review_date) or dt.date.today()
-    rows = build_rows(load_csv(forecast_path), load_csv(DATA_DIR / "master_cases.csv"), review_date)
+    try:
+        from scripts.event_ledger import load_events
+    except ModuleNotFoundError:  # pragma: no cover - direct execution path
+        from event_ledger import load_events
+    rows = build_rows(
+        load_csv(forecast_path),
+        load_csv(DATA_DIR / "master_cases.csv"),
+        review_date,
+        outcomes=load_csv(OUTCOMES_PATH),
+        events=load_events(EVENTS_PATH),
+    )
     if args.write:
         write_backtest_rows(output, rows)
         mature_count = sum(1 for row in rows if row.get("is_mature") == "TRUE")
@@ -254,7 +363,8 @@ def main(argv: list[str] | None = None) -> int:
         "output": rel(output),
         "rows": len(rows),
         "label_counts": {label: sum(1 for row in rows if row["outcome_label"] == label) for label in sorted({row["outcome_label"] for row in rows})},
-        "safety_boundary": "Internal-only backtest. Source registers were not mutated.",
+        "outcome_source": "data/case_outcomes.csv plus time-separated case.outcome_recorded events",
+        "safety_boundary": "Internal-only backtest. Case status alone never matures a forecast and source registers were not mutated.",
     }
     if args.json:
         print(json.dumps(summary | {"preview": rows[:10]}, indent=2, ensure_ascii=False))

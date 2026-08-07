@@ -1,5 +1,29 @@
 version: 1
 
+shared_contract:
+  version: 2
+  evidence:
+    private_root: outputs/evidence/private
+    redacted_root: outputs/evidence/redacted
+    raw_evidence_commit_allowed: false
+  hard_limits:
+    max_pages: 50
+    max_depth: 3
+    timeout_seconds: 120
+    max_file_size_mb: 100
+  access_boundaries:
+    public_https_read_only: true
+    captcha_bypass: false
+    login_bypass: false
+    paywall_bypass: false
+    external_actions: false
+  escalation_labels:
+    login: MANUAL_LOGIN_REQUIRED
+    captcha: CAPTCHA_BLOCKED
+    paywall: PAYWALL_BLOCKED
+    owner_approval: OWNER_APPROVAL_REQUIRED
+    source_conflict: SOURCE_TEXT_CONFLICT
+
 deep_research_owns:
   - broad_market_discovery
   - low_competition_category_discovery
@@ -93,3 +117,10 @@ low_competition_orders:
     - SOURCE_DETAIL_CAPTURED
     - STRUCTURED_EVIDENCE_BUNDLE
     - OWNER_APPROVED_MANUAL_SOURCE_CHECK
+
+source_degradation:
+  consecutive_failure_threshold: 3
+  dedupe_key: "source_name + failure_streak"
+  event_type: source.adapter_degraded
+  repair_card_profile_by_workflow: {GOV: gov-tender-intelligence, EXPORT: export-buyer-intelligence}
+  external_actions: false

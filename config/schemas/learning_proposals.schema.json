@@ -1,0 +1,42 @@
+{
+  "file": "data/learning_proposals.csv",
+  "primary_key": "proposal_id",
+  "required_columns": [
+    "proposal_id",
+    "proposal_type",
+    "proposal_target",
+    "evidence_event_ids",
+    "affected_workflows",
+    "evidence_summary",
+    "current_version",
+    "proposed_version",
+    "fixtures",
+    "evaluation_report_path",
+    "rollback_artifact_path",
+    "status",
+    "approval_id",
+    "staged_by",
+    "staged_at",
+    "evaluated_at",
+    "applied_at",
+    "notes"
+  ],
+  "required_fields": [
+    "proposal_id",
+    "proposal_type",
+    "proposal_target",
+    "evidence_event_ids",
+    "affected_workflows",
+    "current_version",
+    "proposed_version",
+    "status",
+    "staged_by",
+    "staged_at"
+  ],
+  "enums": {
+    "proposal_type": ["MEMORY", "SKILL", "SOURCE", "RULE", "ROUTING", "MODEL", "PROMPT", "EVALUATION"],
+    "status": ["STAGED", "EVALUATING", "PASS", "FAIL", "APPROVAL_REQUIRED", "APPROVED", "REJECTED", "APPLIED", "ROLLED_BACK", "SUPERSEDED"]
+  },
+  "datetime_fields": ["staged_at", "evaluated_at", "applied_at"],
+  "url_fields": []
+}

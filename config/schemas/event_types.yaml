@@ -22,6 +22,8 @@ events:
   case.snapshot_imported: {object_type: case, citation_required: true}
   case.created: {object_type: case, citation_required: true, required_payload_fields: [status]}
   case.updated: {object_type: case, citation_required: true}
+  case.deep_read_recorded: {object_type: case, citation_required: true, required_payload_fields: [report_path, schema_version]}
+  case.historical_intelligence_recorded: {object_type: case, citation_required: true, required_payload_fields: [report_path, schema_version, input_fingerprint]}
   case.status_changed: {object_type: case, required_payload_fields: [new_status]}
   case.workspace_created: {object_type: case_workspace, citation_required: true}
   case.updated_from_corrigendum: {object_type: case, citation_required: true, required_payload_fields: [corrigendum_hash]}
@@ -41,6 +43,7 @@ events:
   supplier.updated: {object_type: supplier, citation_required: true}
   supplier.verification_drafted: {object_type: supplier, citation_required: true}
   supplier.match_candidates_created: {object_type: supplier_match, citation_required: true}
+  supplier.readiness_evaluated: {object_type: supplier_match, citation_required: true, required_payload_fields: [case_id, report_path, status, input_fingerprint]}
   supplier.quote_proof_validated: {object_type: supplier, citation_required: true, required_payload_fields: [quote_proof_path]}
   supplier.quote_proof_rejected: {object_type: supplier, citation_required: true, required_payload_fields: [reason]}
   quote.snapshot_imported: {object_type: quote, citation_required: true}
@@ -51,6 +54,9 @@ events:
   plugin_health.snapshot_imported: {object_type: plugin_health, citation_required: true}
   plugin_health.updated: {object_type: plugin_health}
   artifact.manifest_generated: {object_type: artifact, citation_required: true}
+  artifact.bid_pack_verified: {object_type: artifact, citation_required: true, required_payload_fields: [report_path, status, verification_sha256]}
+  artifact.export_quote_pack_verified: {object_type: artifact, citation_required: true, required_payload_fields: [report_path, status, verification_sha256]}
+  artifact.pack_readiness_validated: {object_type: artifact, citation_required: true, required_payload_fields: [report_path, schema_version, status, readiness_sha256]}
   chatgpt.packet_prepared: {object_type: chatgpt_packet, citation_required: true}
   chatgpt.return_staged: {object_type: chatgpt_return, citation_required: true}
   chatgpt.return_rejected_schema_invalid: {object_type: chatgpt_return, citation_required: true, required_payload_fields: [reason]}
@@ -62,6 +68,9 @@ events:
   drive.lock_timeout: {object_type: drive_lock, required_payload_fields: [lock_name]}
   kanban.reconciliation_planned: {object_type: kanban_reconciliation, citation_required: true}
   kanban.reconciliation_applied: {object_type: kanban_reconciliation, citation_required: true}
+  kanban.event_routed: {object_type: kanban_route, citation_required: true, required_payload_fields: [event_id, rule_id, rule_version, status]}
+  kanban.event_ignored: {object_type: kanban_route, citation_required: true, required_payload_fields: [event_id, rule_id, rule_version, reason]}
+  kanban.event_route_failed: {object_type: kanban_route, citation_required: true, required_payload_fields: [event_id, rule_id, rule_version, reason]}
   kanban.task_graph_created: {object_type: kanban_task_graph, citation_required: true}
   source_adapter.mock_ran: {object_type: source_adapter, citation_required: true}
   source_adapter.external_probe_ran: {object_type: source_adapter, citation_required: true}
@@ -84,11 +93,13 @@ events:
   evidence.extraction_completed: {object_type: evidence, citation_required: true}
   browser.capture_completed: {object_type: browser_capture, citation_required: true, required_payload_fields: [capture_id, status, receipt_path]}
   browser.capture_failed: {object_type: browser_capture, citation_required: true, required_payload_fields: [capture_id, status, receipt_path]}
+  computer_use.read_only_canary_recorded: {object_type: computer_use_canary, citation_required: true, required_payload_fields: [receipt_path, evidence_sha256, approval_reference, canary_action]}
   buyer.snapshot_imported: {object_type: buyer, citation_required: true}
   buyer.created: {object_type: buyer, citation_required: true}
   buyer.updated: {object_type: buyer, citation_required: true}
   buyer.shipment_export_imported: {object_type: buyer, citation_required: true}
   buyer.verification_drafted: {object_type: buyer, citation_required: true}
+  buyer.account_verified: {object_type: buyer, citation_required: true, required_payload_fields: [report_path, account_status, confidence_score]}
   buyer.verification_stage_changed: {object_type: buyer, citation_required: true, required_payload_fields: [new_stage]}
   rfq.snapshot_imported: {object_type: rfq, citation_required: true}
   rfq.created: {object_type: rfq, citation_required: true}
@@ -107,11 +118,16 @@ events:
   communication.created: {object_type: communication, citation_required: true}
   buyer_reply.monitor_completed: {object_type: reply_monitor, citation_required: true, required_payload_fields: [run_id, report_path, new_reply_count, connector_status]}
   pricing.draft_created: {object_type: pricing_draft, citation_required: true}
+  pricing.gov_draft_recorded: {object_type: pricing_draft, citation_required: true, required_payload_fields: [report_path, schema_version, pricing_status]}
+  pricing.export_draft_recorded: {object_type: pricing_draft, citation_required: true, required_payload_fields: [report_path, schema_version, pricing_status]}
+  pricing.scenarios_drafted: {object_type: pricing_draft, citation_required: true, required_payload_fields: [report_path, schema_version, report_sha256, scenario_count]}
   pricing.waterfall_drafted: {object_type: pricing, citation_required: true}
   pricing.working_capital_drafted: {object_type: pricing, citation_required: true}
   pricing.l1_sensitivity_drafted: {object_type: pricing, citation_required: true}
   pricing.emd_cost_drafted: {object_type: pricing, citation_required: true}
   compliance.risk_drafted: {object_type: compliance, citation_required: true}
+  compliance.matrix_drafted: {object_type: compliance, citation_required: true, required_payload_fields: [report_path, schema_version, matrix_status]}
+  compliance.critic_reviewed: {object_type: compliance, citation_required: true, required_payload_fields: [report_path, schema_version, status, critic_required, report_sha256]}
   corrigendum.detected: {object_type: corrigendum, citation_required: true, required_payload_fields: [corrigendum_hash]}
   corrigendum.reviewed: {object_type: corrigendum, citation_required: true}
   source_weight.recommendation_generated: {object_type: source_weight, citation_required: true}
@@ -120,10 +136,12 @@ events:
   retender_corrigenda.watch_generated: {object_type: retender_corrigenda_watch, citation_required: true, required_payload_fields: [run_id, report_path, records_analyzed, top_candidates_count, created_at]}
   buyer.repeat_purchase_analyzed: {object_type: buyer_repeat_purchase, citation_required: true, required_payload_fields: [run_id, report_path, records_analyzed, top_candidates_count, created_at]}
   supplier_ready.categories_matched: {object_type: supplier_ready_category, citation_required: true, required_payload_fields: [run_id, report_path, records_analyzed, top_candidates_count, created_at]}
+  supplier.performance_projected: {object_type: supplier_performance, citation_required: true, required_payload_fields: [report_path, schema_version, supplier_count, report_sha256]}
   deep_research.leads_staged: {object_type: deep_research_lead, citation_required: true, required_payload_fields: [staging_id, lead_count, output_path]}
   system.intraday_monitor_completed: {object_type: system, citation_required: true, required_payload_fields: [run_id, schedule_id]}
   intraday_monitor.completed: {object_type: monitor_run, citation_required: true, required_payload_fields: [schedule_id, report_path, status]}
   memory.proposal_staged: {object_type: memory_proposal, citation_required: true}
+  relationship_memory.recorded: {object_type: relationship_memory, citation_required: true, required_payload_fields: [memory_id, memory_type, verification_status, status]}
   skill.proposal_staged: {object_type: skill_proposal, citation_required: true}
   job.started: {object_type: job_run, citation_required: true, required_payload_fields: [run_id, job_id, command, started_at]}
   job.completed: {object_type: job_run, citation_required: true, required_payload_fields: [run_id, job_id, receipt_path, exit_code, status]}
@@ -134,6 +152,38 @@ events:
   hermes.agent_step: {object_type: hermes_run, citation_required: true, required_payload_fields: [profile, session_id, iteration, status]}
   hermes.agent_completed: {object_type: hermes_run, citation_required: true, required_payload_fields: [profile, session_id, status]}
   policy.decision_recorded: {object_type: policy_decision, citation_required: true, required_payload_fields: [decision_id, action, tier, allowed, status, reason_code, approval_required, receipt_path, policy_sha256]}
+  business_effect.attempt_recorded: {object_type: business_effect_attempt, citation_required: true, required_payload_fields: [attempt_id, status, action, approval_id, policy_decision_id, receipt_path, external_action_executed]}
   forecast.generated: {object_type: forecast_run, citation_required: true, required_payload_fields: [run_id, forecast_count, model_version, report_path]}
   forecast.backtest_evaluated: {object_type: forecast_backtest, citation_required: true, required_payload_fields: [review_date, evaluated_count, mature_count, output_path]}
   forecast.calibration_evaluated: {object_type: forecast_calibration, citation_required: true, required_payload_fields: [review_date, status, mature_sample_size, report_path]}
+  source.adapter_degraded: {object_type: source_adapter, citation_required: true, required_payload_fields: [source_name, consecutive_failures, threshold, receipt_path]}
+  tender.deadline_changed: {object_type: case, citation_required: true, required_payload_fields: [previous_deadline, new_deadline]}
+  case.fast_kill_completed: {object_type: case, citation_required: true, required_payload_fields: [decision]}
+  supplier.candidate_verified: {object_type: supplier, citation_required: true, required_payload_fields: [supplier_id, verification_status]}
+  supplier.quote_received: {object_type: quote, citation_required: true, required_payload_fields: [quote_id]}
+  supplier.quote_rejected: {object_type: quote, citation_required: true, required_payload_fields: [quote_id, reason]}
+  buyer.reply_received: {object_type: buyer_reply, citation_required: true, required_payload_fields: [communication_id, classification]}
+  buyer.opted_out: {object_type: buyer, citation_required: true, required_payload_fields: [evidence_path]}
+  buyer.rfq_verified: {object_type: rfq, citation_required: true, required_payload_fields: [rfq_id]}
+  approval.expired: {object_type: approval, citation_required: true, required_payload_fields: [approval_id]}
+  execution.receipt_ingested: {object_type: execution, citation_required: true, required_payload_fields: [receipt_id, verification_status]}
+  execution.milestone_recorded: {object_type: execution, citation_required: true, required_payload_fields: [milestone_id, milestone_type, execution_sub_status, receipt_path, evidence_sha256, verification_status]}
+  case_outcome.snapshot_imported: {object_type: case_outcome, citation_required: true}
+  case.outcome_recorded: {object_type: case_outcome, citation_required: true, required_payload_fields: [row]}
+  payment.received: {object_type: payment, citation_required: true, required_payload_fields: [outcome_id, evidence_sha256]}
+  payment.overdue: {object_type: payment, citation_required: true, required_payload_fields: [outcome_id, due_date, evidence_sha256]}
+  forecast.matured: {object_type: forecast_observation, citation_required: true, required_payload_fields: [forecast_id, outcome_id]}
+  learning_proposal.snapshot_imported: {object_type: learning_proposal, citation_required: true}
+  learning.proposal_staged: {object_type: learning_proposal, citation_required: true, required_payload_fields: [row]}
+  learning.proposal_evaluated: {object_type: learning_proposal, citation_required: true, required_payload_fields: [proposal_id, evaluation_status]}
+  learning.promoted: {object_type: learning_proposal, citation_required: true, required_payload_fields: [proposal_id, approval_id, rollback_artifact_path]}
+  model_registry.snapshot_imported: {object_type: model_registry, citation_required: true}
+  model_registry.created: {object_type: model_registry, citation_required: true}
+  model_registry.updated: {object_type: model_registry, citation_required: true}
+  agent_evaluation.snapshot_imported: {object_type: agent_evaluation, citation_required: true}
+  agent_evaluation.created: {object_type: agent_evaluation, citation_required: true}
+  agent_evaluation.updated: {object_type: agent_evaluation, citation_required: true}
+  historical_notice.snapshot_imported: {object_type: historical_notice, citation_required: true}
+  historical_notice.captured: {object_type: historical_notice, citation_required: true, required_payload_fields: [row]}
+  historical_award.snapshot_imported: {object_type: historical_award, citation_required: true}
+  historical_award.captured: {object_type: historical_award, citation_required: true, required_payload_fields: [row]}

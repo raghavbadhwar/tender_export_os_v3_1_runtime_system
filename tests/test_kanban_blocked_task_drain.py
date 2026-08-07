@@ -12,7 +12,7 @@ def test_blocked_task_drain_escalates_stale_blocked_task() -> None:
             "id": "task-1",
             "title": "Need owner approval",
             "status": "blocked",
-            "assignee": "pricing-compliance",
+            "assignee": "pricing-risk",
             "updated_at": "2026-06-29T10:00:00+00:00",
             "blocked_reason": "owner approval missing",
         }
@@ -31,15 +31,15 @@ def test_blocked_task_drain_escalates_stale_blocked_task() -> None:
 def test_blocked_task_drain_reassigns_source_and_archives_done_like_blockers() -> None:
     now = dt.datetime(2026, 7, 1, 12, 0, tzinfo=dt.timezone.utc)
     tasks = [
-        {"id": "source", "title": "Portal broken", "status": "blocked", "assignee": "gov-tender-radar", "updated_at": "2026-06-29T10:00:00+00:00", "blocked_reason": "source adapter timeout"},
-        {"id": "obsolete", "title": "Old rejected thing", "status": "blocked", "assignee": "hermes-chief-operator", "updated_at": "2026-06-29T10:00:00+00:00", "blocked_reason": "case rejected"},
+        {"id": "source", "title": "Portal broken", "status": "blocked", "assignee": "gov-tender-intelligence", "updated_at": "2026-06-29T10:00:00+00:00", "blocked_reason": "source adapter timeout"},
+        {"id": "obsolete", "title": "Old rejected thing", "status": "blocked", "assignee": "tender-export-os", "updated_at": "2026-06-29T10:00:00+00:00", "blocked_reason": "case rejected"},
     ]
 
     plan = build_blocked_task_drain_plan(tasks, now=now, stale_hours=24)
     actions = {item["task_id"]: item for item in plan["actions"]}
 
     assert actions["source"]["recommended_action"] == "REASSIGN_SOURCE_HEALTH"
-    assert actions["source"]["suggested_assignee"] == "source-health"
+    assert actions["source"]["suggested_assignee"] == "gov-tender-intelligence"
     assert actions["obsolete"]["recommended_action"] == "ARCHIVE_OR_CLOSE_REVIEW"
 
 

@@ -1,0 +1,503 @@
+version: 1
+board: tender-export-os
+workspace: /Users/raghav/Downloads/tender_export_os_v3_1_runtime_system
+idempotency_key_template: "teos:{case_id}:{stage}:v1"
+external_effects_allowed: false
+
+typed_handoff:
+  required_fields:
+    - case_id
+    - workflow_type
+    - stage
+    - source_event_ids
+    - input_artifacts
+    - required_output_schema
+    - approval_required
+    - deadline
+    - stop_conditions
+    - next_profile
+
+blocking:
+  default_kind: needs_input
+  needs_input_reasons:
+    owner_approval: "Owner must approve, reject, or ask changes from an evidenced approval card."
+    missing_documents: "Required tender, BOQ, RFQ, quote, or execution evidence is missing."
+    unavailable_credentials: "A named connector or portal credential is unavailable; do not substitute another channel."
+    ambiguous_compliance: "A legal, eligibility, classification, origin, or compliance fact is ambiguous."
+    portal_human_challenge: "CAPTCHA, DSC, login challenge, or other human portal step is required."
+  auto_promote_kinds: [dependency]
+  never_auto_promote_kinds: [needs_input, capability]
+
+recovery:
+  stale_timeout_seconds: 14400
+  failure_limit: 2
+  reclaim_only_when_worker_pid_gone_or_stale_timeout: true
+  duplicate_policy: keep_oldest_non_archived
+  orphan_policy: block_for_review
+  unknown_assignee_policy: block_for_review
+  external_effect_retry_requires_new_owner_command: true
+
+workflows:
+  GOV:
+    stages:
+      - key: intake
+        title: "Intake source evidence"
+        assignee: gov-tender-intelligence
+        parents: []
+        required_inputs: [data/master_cases.csv]
+        expected_outputs: ["outputs/case_reports/{case_id}/source_evidence.json"]
+        approval_boundary: none
+        approval_required: false
+        retry_limit: 2
+        max_runtime_seconds: 600
+        completion_validator: evidence_bundle
+        required_output_schema: config/schemas/mcp_tool_result.schema.json
+        stop_conditions: [missing_documents, unavailable_credentials, portal_human_challenge]
+        next_profile: gov-tender-intelligence
+      - key: fast_kill
+        title: "Deterministic fast-kill rules and score"
+        assignee: gov-tender-intelligence
+        parents: [intake]
+        required_inputs: ["outputs/case_reports/{case_id}/source_evidence.json", config/kill_rules.yaml]
+        expected_outputs: ["outputs/case_reports/{case_id}/fast_kill_{case_id}.json"]
+        approval_boundary: none
+        approval_required: false
+        retry_limit: 1
+        max_runtime_seconds: 480
+        completion_validator: deterministic_fast_kill
+        required_output_schema: config/schemas/mcp_tool_result.schema.json
+        stop_conditions: [missing_documents, ambiguous_compliance]
+        next_profile: gov-tender-intelligence
+      - key: fast_kill_critic
+        title: "GOV fast-kill survivor and ambiguity critic"
+        assignee: gov-tender-intelligence
+        parents: [fast_kill]
+        required_inputs: ["outputs/case_reports/{case_id}/fast_kill_{case_id}.json", "outputs/case_reports/{case_id}/source_evidence.json"]
+        expected_outputs: ["outputs/case_reports/{case_id}/fast_kill_critic_{case_id}.md"]
+        approval_boundary: none
+        approval_required: false
+        retry_limit: 1
+        max_runtime_seconds: 480
+        completion_validator: fast_kill_critic
+        required_output_schema: config/schemas/mcp_tool_result.schema.json
+        stop_conditions: [missing_documents, ambiguous_compliance]
+        next_profile: gov-tender-intelligence
+      - key: deep_read
+        title: "Deep-read tender, BOQ, eligibility, EMD, and clauses"
+        assignee: gov-tender-intelligence
+        parents: [fast_kill_critic]
+        required_inputs: ["outputs/case_reports/{case_id}/source_evidence.json", "outputs/case_reports/{case_id}/fast_kill_critic_{case_id}.md"]
+        expected_outputs: ["outputs/case_reports/{case_id}/deep_read_{case_id}.json", "outputs/case_reports/{case_id}/deep_read_{case_id}.md"]
+        approval_boundary: none
+        approval_required: false
+        retry_limit: 2
+        max_runtime_seconds: 900
+        completion_validator: deep_read_report
+        required_output_schema: config/schemas/mcp_tool_result.schema.json
+        stop_conditions: [missing_documents, ambiguous_compliance, portal_human_challenge]
+        next_profile: supplier-commercial
+      - key: supplier
+        title: "Supplier 5-3-2 and quote-proof readiness"
+        assignee: supplier-commercial
+        parents: [deep_read]
+        required_inputs: [data/supplier_master.csv, data/quote_master.csv, "outputs/case_reports/{case_id}/deep_read_{case_id}.json"]
+        expected_outputs: ["outputs/case_reports/{case_id}/supplier_candidates_{case_id}.json", "outputs/case_reports/{case_id}/supplier_shortlist_{case_id}.md", "outputs/case_reports/{case_id}/supplier_532_{case_id}.json", "outputs/case_reports/{case_id}/supplier_532_{case_id}.md"]
+        approval_boundary: owner_before_supplier_contact
+        approval_required: false
+        retry_limit: 2
+        max_runtime_seconds: 720
+        completion_validator: supplier_532
+        required_output_schema: config/schemas/mcp_tool_result.schema.json
+        stop_conditions: [missing_documents, owner_approval, unavailable_credentials]
+        next_profile: pricing-risk
+      - key: historical_intelligence
+        title: "Official historical award, competition, and L1-risk evidence"
+        assignee: gov-tender-intelligence
+        parents: [deep_read]
+        required_inputs: [data/historical_tender_notices.csv, data/historical_awards.csv, data/historical_competition_signals.csv]
+        expected_outputs: ["outputs/case_reports/{case_id}/historical_intelligence_{case_id}.json", "outputs/case_reports/{case_id}/historical_intelligence_{case_id}.md"]
+        approval_boundary: none
+        approval_required: false
+        retry_limit: 1
+        max_runtime_seconds: 480
+        completion_validator: historical_commercial_intelligence
+        required_output_schema: config/schemas/mcp_tool_result.schema.json
+        stop_conditions: [missing_documents, portal_human_challenge]
+        next_profile: pricing-risk
+      - key: pricing
+        title: "GOV pricing waterfall and risk scenarios"
+        assignee: pricing-risk
+        parents: [supplier, historical_intelligence]
+        required_inputs: [data/quote_master.csv, "outputs/case_reports/{case_id}/historical_intelligence_{case_id}.md", "outputs/case_reports/{case_id}/supplier_532_{case_id}.json"]
+        expected_outputs: ["outputs/case_reports/{case_id}/pricing_{case_id}.json", "outputs/case_reports/{case_id}/pricing_{case_id}.md"]
+        approval_boundary: owner_before_final_price
+        approval_required: false
+        retry_limit: 1
+        max_runtime_seconds: 600
+        completion_validator: pricing_readiness
+        required_output_schema: config/schemas/mcp_tool_result.schema.json
+        stop_conditions: [missing_documents, owner_approval]
+        next_profile: tender-export-os
+      - key: compliance
+        title: "GOV clause compliance and document checklist"
+        assignee: compliance-due-diligence
+        parents: [deep_read]
+        required_inputs: ["outputs/case_reports/{case_id}/deep_read_{case_id}.json", "outputs/case_reports/{case_id}/deep_read_{case_id}.md"]
+        expected_outputs: ["outputs/case_reports/{case_id}/compliance_draft_{case_id}.json", "outputs/case_reports/{case_id}/compliance_draft_{case_id}.md"]
+        approval_boundary: owner_or_expert_for_final_claims
+        approval_required: false
+        retry_limit: 1
+        max_runtime_seconds: 720
+        completion_validator: compliance_matrix
+        required_output_schema: config/schemas/mcp_tool_result.schema.json
+        stop_conditions: [missing_documents, ambiguous_compliance, owner_approval]
+        next_profile: tender-export-os
+      - key: artifacts
+        title: "Codex bid pack and case dossier draft"
+        assignee: tender-export-os
+        parents: [pricing, compliance]
+        required_inputs: ["outputs/case_reports/{case_id}/supplier_532_{case_id}.json", "outputs/case_reports/{case_id}/pricing_{case_id}.json", "outputs/case_reports/{case_id}/pricing_{case_id}.md", "outputs/case_reports/{case_id}/compliance_draft_{case_id}.json", "outputs/case_reports/{case_id}/compliance_draft_{case_id}.md"]
+        expected_outputs: ["outputs/bid_packs/{case_id}/artifact_manifest.json", "outputs/bid_packs/{case_id}/missing_items.md", "outputs/bid_packs/{case_id}/verification_receipt.json", "receipts/plugin_runs/{case_id}_bid_pack.json"]
+        approval_boundary: owner_before_external_use
+        approval_required: false
+        retry_limit: 1
+        max_runtime_seconds: 900
+        completion_validator: bid_pack_verification
+        required_output_schema: config/schemas/mcp_tool_result.schema.json
+        stop_conditions: [missing_documents, owner_approval]
+        next_profile: tender-export-os
+      - key: approval
+        title: "Owner approval card"
+        assignee: tender-export-os
+        parents: [artifacts]
+        required_inputs: ["outputs/bid_packs/{case_id}/artifact_manifest.json", "outputs/bid_packs/{case_id}/missing_items.md", "outputs/bid_packs/{case_id}/verification_receipt.json", "receipts/plugin_runs/{case_id}_bid_pack.json"]
+        expected_outputs: ["receipts/approvals/{case_id}_approval_card.html"]
+        approval_boundary: owner_decision
+        approval_required: true
+        initial_status: blocked
+        block_kind: needs_input
+        block_reason: owner_approval
+        retry_limit: 0
+        max_runtime_seconds: 300
+        completion_validator: owner_approval_receipt
+        required_output_schema: config/schemas/approval_card.schema.json
+        stop_conditions: [owner_approval]
+        next_profile: relationship-ops
+      - key: execution
+        title: "Owner-operated submission and milestone tracking"
+        assignee: tender-export-os
+        parents: [approval]
+        required_inputs: [data/approvals_receipts.csv]
+        expected_outputs: ["receipts/submissions/{case_id}_submission_receipt.json"]
+        approval_boundary: prior_owner_submission_receipt_required
+        approval_required: false
+        external_effect: false
+        retry_limit: 0
+        max_runtime_seconds: 600
+        completion_validator: execution_receipt
+        required_output_schema: config/schemas/mcp_tool_result.schema.json
+        stop_conditions: [missing_documents, unavailable_credentials, portal_human_challenge]
+        next_profile: gov-tender-intelligence
+      - key: evaluation_award
+        title: "Technical evaluation, L1, award, and work-order evidence tracking"
+        assignee: gov-tender-intelligence
+        parents: [execution]
+        required_inputs: ["receipts/submissions/{case_id}_submission_receipt.json"]
+        expected_outputs: ["outputs/case_reports/{case_id}/evaluation_award_{case_id}.md"]
+        approval_boundary: owner_records_external_portal_evidence
+        approval_required: false
+        retry_limit: 1
+        max_runtime_seconds: 600
+        completion_validator: evaluation_award_evidence
+        required_output_schema: config/schemas/mcp_tool_result.schema.json
+        stop_conditions: [missing_documents, portal_human_challenge]
+        next_profile: tender-export-os
+      - key: delivery_payment
+        title: "Delivery, invoice, payment, and claim evidence tracking"
+        assignee: tender-export-os
+        parents: [evaluation_award]
+        required_inputs: ["outputs/case_reports/{case_id}/evaluation_award_{case_id}.md"]
+        expected_outputs: ["receipts/executions/{case_id}_delivery_payment_receipt.json"]
+        approval_boundary: owner_records_execution_evidence
+        approval_required: false
+        retry_limit: 1
+        max_runtime_seconds: 600
+        completion_validator: delivery_payment_evidence
+        required_output_schema: config/schemas/mcp_tool_result.schema.json
+        stop_conditions: [missing_documents, owner_approval]
+        next_profile: learning-evaluation
+      - key: learning
+        title: "Outcome and source-supplier learning review"
+        assignee: learning-evaluation
+        parents: [delivery_payment]
+        required_inputs: [data/events.jsonl, data/agent_run_log.csv, data/case_outcomes.csv]
+        expected_outputs: ["outputs/weekly_learning/{case_id}_outcome_review.json"]
+        approval_boundary: owner_before_any_promotion
+        approval_required: false
+        retry_limit: 1
+        max_runtime_seconds: 600
+        completion_validator: learning_proposal
+        required_output_schema: config/schemas/mcp_tool_result.schema.json
+        stop_conditions: [missing_documents, owner_approval]
+        next_profile: tender-export-os
+
+  EXPORT:
+    stages:
+      - key: research_thesis
+        title: "Evidence-backed export category-country demand thesis"
+        assignee: export-buyer-intelligence
+        parents: []
+        required_inputs: [data/demand_research.csv, data/master_cases.csv]
+        expected_outputs: ["outputs/case_reports/{case_id}/export_research_thesis.json"]
+        approval_boundary: none
+        approval_required: false
+        retry_limit: 2
+        max_runtime_seconds: 600
+        completion_validator: export_demand_thesis
+        required_output_schema: config/schemas/mcp_tool_result.schema.json
+        stop_conditions: [missing_documents, unavailable_credentials, portal_human_challenge]
+        next_profile: export-buyer-intelligence
+      - key: target_staging
+        title: "Stage catalogue and importer signals as hypotheses"
+        assignee: export-buyer-intelligence
+        parents: [research_thesis]
+        required_inputs: ["outputs/case_reports/{case_id}/export_research_thesis.json"]
+        expected_outputs: ["outputs/case_reports/{case_id}/buyer_target_staging.json"]
+        approval_boundary: none
+        approval_required: false
+        retry_limit: 2
+        max_runtime_seconds: 600
+        completion_validator: buyer_target_hypothesis
+        required_output_schema: config/schemas/mcp_tool_result.schema.json
+        stop_conditions: [missing_documents, unavailable_credentials]
+        next_profile: export-buyer-intelligence
+      - key: buyer_verification
+        title: "Verify buyer identity and public commercial footprint"
+        assignee: export-buyer-intelligence
+        parents: [target_staging]
+        required_inputs: [data/buyer_master.csv, "outputs/case_reports/{case_id}/buyer_target_staging.json"]
+        expected_outputs: ["outputs/case_reports/{case_id}/buyer_verification.json"]
+        approval_boundary: owner_before_contact
+        approval_required: false
+        retry_limit: 2
+        max_runtime_seconds: 600
+        completion_validator: buyer_verification
+        required_output_schema: config/schemas/mcp_tool_result.schema.json
+        stop_conditions: [missing_documents, unavailable_credentials]
+        next_profile: export-buyer-intelligence
+      - key: contact_path_proof
+        title: "Prove an official public contact or procurement path"
+        assignee: export-buyer-intelligence
+        parents: [buyer_verification]
+        required_inputs: ["outputs/case_reports/{case_id}/buyer_verification.json"]
+        expected_outputs: ["outputs/case_reports/{case_id}/contact_path_proof.json"]
+        approval_boundary: owner_before_contact
+        approval_required: false
+        retry_limit: 1
+        max_runtime_seconds: 480
+        completion_validator: contact_path_proof
+        required_output_schema: config/schemas/mcp_tool_result.schema.json
+        stop_conditions: [missing_documents, unavailable_credentials]
+        next_profile: relationship-ops
+      - key: outreach_approval
+        title: "Owner approval for one factual first-contact draft"
+        assignee: relationship-ops
+        parents: [contact_path_proof]
+        required_inputs: ["outputs/case_reports/{case_id}/contact_path_proof.json"]
+        expected_outputs: ["receipts/approvals/{case_id}_outreach_approval_card.html"]
+        approval_boundary: owner_decision
+        approval_required: true
+        initial_status: blocked
+        block_kind: needs_input
+        block_reason: owner_approval
+        retry_limit: 0
+        max_runtime_seconds: 300
+        completion_validator: owner_approval_receipt
+        required_output_schema: config/schemas/approval_card.schema.json
+        stop_conditions: [owner_approval]
+        next_profile: relationship-ops
+      - key: first_contact
+        title: "Approved Gmail-plugin first-contact handoff and receipt tracking"
+        assignee: relationship-ops
+        parents: [outreach_approval]
+        required_inputs: [data/approvals_receipts.csv, data/outreach_queue.csv]
+        expected_outputs: ["runtime/gmail_plugin_outbox/{case_id}_first_contact.json"]
+        approval_boundary: owner_operated_connector_execution
+        approval_required: true
+        retry_limit: 0
+        max_runtime_seconds: 600
+        completion_validator: gmail_plugin_handoff
+        required_output_schema: config/schemas/mcp_tool_result.schema.json
+        stop_conditions: [owner_approval, unavailable_credentials]
+        next_profile: relationship-ops
+      - key: reply_triage
+        title: "Classify buyer reply or absence without sending a follow-up"
+        assignee: relationship-ops
+        parents: [first_contact]
+        required_inputs: [data/communication_log.csv, data/outreach_queue.csv]
+        expected_outputs: ["outputs/case_reports/{case_id}/reply_triage.json"]
+        approval_boundary: owner_before_follow_up
+        approval_required: false
+        retry_limit: 1
+        max_runtime_seconds: 480
+        completion_validator: reply_classification
+        required_output_schema: config/schemas/mcp_tool_result.schema.json
+        stop_conditions: [opt_out, bounce, not_interested, missing_receipt]
+        next_profile: export-buyer-intelligence
+      - key: rfq_verification
+        title: "Verify buyer-specific RFQ, requirements, and commercial evidence"
+        assignee: export-buyer-intelligence
+        parents: [reply_triage]
+        required_inputs: [data/rfq_master.csv, "outputs/case_reports/{case_id}/reply_triage.json"]
+        expected_outputs: ["outputs/case_reports/{case_id}/rfq_verification.json", "outputs/case_reports/{case_id}/deep_read_{case_id}.md"]
+        approval_boundary: none
+        approval_required: false
+        retry_limit: 2
+        max_runtime_seconds: 720
+        completion_validator: rfq_verification
+        required_output_schema: config/schemas/mcp_tool_result.schema.json
+        stop_conditions: [missing_documents, ambiguous_compliance]
+        next_profile: supplier-commercial
+      - key: supplier
+        title: "Supplier 5-3-2 and quote-proof readiness"
+        assignee: supplier-commercial
+        parents: [rfq_verification]
+        required_inputs: [data/supplier_master.csv, data/quote_master.csv, "outputs/case_reports/{case_id}/rfq_verification.json"]
+        expected_outputs: ["outputs/case_reports/{case_id}/supplier_shortlist_{case_id}.md", "outputs/case_reports/{case_id}/supplier_quote_proof_{case_id}.json"]
+        approval_boundary: owner_before_supplier_contact
+        approval_required: false
+        retry_limit: 2
+        max_runtime_seconds: 720
+        completion_validator: supplier_532
+        required_output_schema: config/schemas/mcp_tool_result.schema.json
+        stop_conditions: [missing_documents, owner_approval, unavailable_credentials]
+        next_profile: compliance-due-diligence
+      - key: compliance
+        title: "Export compliance, SCOMET, classification, origin, and Incoterm draft"
+        assignee: compliance-due-diligence
+        parents: [rfq_verification]
+        required_inputs: ["outputs/case_reports/{case_id}/rfq_verification.json", "outputs/case_reports/{case_id}/deep_read_{case_id}.md"]
+        expected_outputs: ["outputs/case_reports/{case_id}/compliance_draft_{case_id}.json", "outputs/case_reports/{case_id}/compliance_draft_{case_id}.md"]
+        approval_boundary: owner_or_expert_for_final_claims
+        approval_required: false
+        retry_limit: 1
+        max_runtime_seconds: 720
+        completion_validator: compliance_matrix
+        required_output_schema: config/schemas/mcp_tool_result.schema.json
+        stop_conditions: [missing_documents, ambiguous_compliance, owner_approval]
+        next_profile: pricing-risk
+      - key: pricing
+        title: "EXW, FOB, and CIF pricing waterfall and risk scenarios"
+        assignee: pricing-risk
+        parents: [supplier, compliance]
+        required_inputs: [data/quote_master.csv, "outputs/case_reports/{case_id}/supplier_quote_proof_{case_id}.json", "outputs/case_reports/{case_id}/compliance_draft_{case_id}.json", "outputs/case_reports/{case_id}/compliance_draft_{case_id}.md"]
+        expected_outputs: ["outputs/case_reports/{case_id}/pricing_{case_id}.json", "outputs/case_reports/{case_id}/pricing_{case_id}.md"]
+        approval_boundary: owner_before_final_price
+        approval_required: false
+        retry_limit: 1
+        max_runtime_seconds: 600
+        completion_validator: pricing_readiness
+        required_output_schema: config/schemas/mcp_tool_result.schema.json
+        stop_conditions: [missing_documents, owner_approval]
+        next_profile: tender-export-os
+      - key: quote_pack
+        title: "Export quote pack and case dossier draft"
+        assignee: tender-export-os
+        parents: [pricing]
+        required_inputs: ["outputs/case_reports/{case_id}/pricing_{case_id}.json", "outputs/case_reports/{case_id}/pricing_{case_id}.md", "outputs/case_reports/{case_id}/compliance_draft_{case_id}.json"]
+        expected_outputs: ["outputs/export_quote_packs/{case_id}/artifact_manifest.json", "outputs/export_quote_packs/{case_id}/missing_items.md", "outputs/export_quote_packs/{case_id}/verification_receipt.json", "receipts/plugin_runs/{case_id}_export_quote_pack.json"]
+        approval_boundary: owner_before_external_use
+        approval_required: false
+        retry_limit: 1
+        max_runtime_seconds: 900
+        completion_validator: export_quote_pack_verification
+        required_output_schema: config/schemas/mcp_tool_result.schema.json
+        stop_conditions: [missing_documents, owner_approval]
+        next_profile: tender-export-os
+      - key: quote_approval
+        title: "Owner approval for one export quotation draft"
+        assignee: tender-export-os
+        parents: [quote_pack]
+        required_inputs: ["outputs/export_quote_packs/{case_id}/artifact_manifest.json", "outputs/export_quote_packs/{case_id}/missing_items.md", "outputs/export_quote_packs/{case_id}/verification_receipt.json", "receipts/plugin_runs/{case_id}_export_quote_pack.json"]
+        expected_outputs: ["receipts/approvals/{case_id}_quote_approval_card.html"]
+        approval_boundary: owner_decision
+        approval_required: true
+        initial_status: blocked
+        block_kind: needs_input
+        block_reason: owner_approval
+        retry_limit: 0
+        max_runtime_seconds: 300
+        completion_validator: owner_approval_receipt
+        required_output_schema: config/schemas/approval_card.schema.json
+        stop_conditions: [owner_approval]
+        next_profile: relationship-ops
+      - key: quote_delivery
+        title: "Approved Gmail-plugin quotation handoff and receipt tracking"
+        assignee: relationship-ops
+        parents: [quote_approval]
+        required_inputs: [data/approvals_receipts.csv, data/communication_log.csv]
+        expected_outputs: ["runtime/gmail_plugin_outbox/{case_id}_quote.json"]
+        approval_boundary: owner_operated_connector_execution
+        approval_required: true
+        retry_limit: 0
+        max_runtime_seconds: 600
+        completion_validator: gmail_plugin_handoff
+        required_output_schema: config/schemas/mcp_tool_result.schema.json
+        stop_conditions: [owner_approval, unavailable_credentials]
+        next_profile: relationship-ops
+      - key: negotiation_drafts
+        title: "Prepare negotiation and clarification drafts only"
+        assignee: relationship-ops
+        parents: [quote_delivery]
+        required_inputs: [data/communication_log.csv, "outputs/export_quote_packs/{case_id}/artifact_manifest.json"]
+        expected_outputs: ["outputs/case_reports/{case_id}/negotiation_drafts.json"]
+        approval_boundary: owner_before_each_external_reply
+        approval_required: false
+        retry_limit: 1
+        max_runtime_seconds: 480
+        completion_validator: negotiation_draft
+        required_output_schema: config/schemas/mcp_tool_result.schema.json
+        stop_conditions: [missing_documents, owner_approval]
+        next_profile: relationship-ops
+      - key: order_capture
+        title: "Record verified PO, order, sample, and production evidence"
+        assignee: tender-export-os
+        parents: [negotiation_drafts]
+        required_inputs: [data/communication_log.csv, data/case_outcomes.csv]
+        expected_outputs: ["receipts/executions/{case_id}_order_receipt.json"]
+        approval_boundary: owner_records_external_order_evidence
+        approval_required: false
+        retry_limit: 1
+        max_runtime_seconds: 480
+        completion_validator: order_evidence
+        required_output_schema: config/schemas/mcp_tool_result.schema.json
+        stop_conditions: [missing_documents, owner_approval]
+        next_profile: tender-export-os
+      - key: shipment_invoice_payment
+        title: "Track shipment, delivery, invoice, payment, and claims evidence"
+        assignee: tender-export-os
+        parents: [order_capture]
+        required_inputs: ["receipts/executions/{case_id}_order_receipt.json", data/case_outcomes.csv]
+        expected_outputs: ["receipts/executions/{case_id}_shipment_payment_receipt.json"]
+        approval_boundary: owner_records_execution_evidence
+        approval_required: false
+        retry_limit: 1
+        max_runtime_seconds: 600
+        completion_validator: shipment_payment_evidence
+        required_output_schema: config/schemas/mcp_tool_result.schema.json
+        stop_conditions: [missing_documents, owner_approval]
+        next_profile: learning-evaluation
+      - key: repeat_buyer_learning
+        title: "Repeat-buyer outcome and relationship-memory review"
+        assignee: learning-evaluation
+        parents: [shipment_invoice_payment]
+        required_inputs: [data/events.jsonl, data/agent_run_log.csv, data/case_outcomes.csv, data/communication_log.csv]
+        expected_outputs: ["outputs/weekly_learning/{case_id}_repeat_buyer_outcome.json"]
+        approval_boundary: owner_before_any_promotion
+        approval_required: false
+        retry_limit: 1
+        max_runtime_seconds: 600
+        completion_validator: repeat_buyer_learning
+        required_output_schema: config/schemas/mcp_tool_result.schema.json
+        stop_conditions: [missing_documents, owner_approval]
+        next_profile: tender-export-os

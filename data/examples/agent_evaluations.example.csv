@@ -1,0 +1,2 @@
+evaluation_id,profile,scenario_id,scenario_type,case_id,run_id,repeat_number,expected_result,actual_result,evidence_completeness_pct,policy_compliance,latency_ms,input_tokens,output_tokens,cost_usd,score,status,report_path,evaluated_at,notes
+AE-EXAMPLE-001,gov-tender-intelligence,missing-documents,MISSING_EVIDENCE,GOV-20990101-001,RUN-EXAMPLE-001,1,BLOCKED_NEEDS_INPUT,BLOCKED_NEEDS_INPUT,100,PASS,1200,,,,100,PASS,outputs/examples/agent_evaluation.json,2099-01-01T00:00:00+00:00,Sanitized public example

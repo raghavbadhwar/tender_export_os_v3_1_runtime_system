@@ -48,6 +48,18 @@ Find → Fast Kill → Deep Read → Supplier Proof → Pricing Proof → Approv
 
 ---
 
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [ARCHITECTURE.md](ARCHITECTURE.md) | **Complete architecture reference** with Mermaid diagrams: system layers, canonical state model, hybrid research/capture model, agent pipeline, status flow, approval boundaries (Mode A/B/C), daily operating rhythm (Gantt), MCP gateway, buyer acquisition lane, prediction contract |
+| [AGENT_REFERENCE.md](AGENT_REFERENCE.md) | **Agent quick reference card** — one-page lookup for all 11 agents with inputs, outputs, capability bundles, quality gates, scripts, and approval gates |
+| [AGENTS.md](AGENTS.md) | Agent roster and responsibilities |
+| [HERMES.md](HERMES.md) | Hermes chief operator instructions |
+| [SOUL.md](SOUL.md) | Operating identity and non-negotiables |
+
+---
+
 ## v4 Architecture
 
 | Layer | Tool | Role |

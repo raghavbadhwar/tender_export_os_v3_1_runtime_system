@@ -20,6 +20,7 @@ Do not fast-kill or promote ChatGPT Scheduled Deep Research leads without operat
 - `config/categories.yaml` — active/inactive category flags
 - Raw opportunity data from source (title, buyer, deadline, EMD, eligibility snippets)
 - Evidence-backed staged Deep Research leads only after source proof justifies case triage
+- `scripts/gov_fast_kill.py` and a field-to-page/source evidence map for GOV cases
 
 ---
 
@@ -100,6 +101,12 @@ If no kill rules triggered, compute a quick preliminary score:
 - Score ≥ 60 → status = `DEEP_READ` (promote to Deep Read Agent)
 - Score 45–59 → status = `WATCHLIST`
 - Score < 45 or any kill rule triggered → status = `REJECTED`
+
+For GOV cases, the deterministic first pass is `scripts/gov_fast_kill.py`.
+It does **not** write the case register. A hard rejection needs cited proof for
+the exact failed field; missing or uncited evidence stays `WATCHLIST`.
+Survivors, ambiguities, and high-value exceptions go to the
+`gov-tender-intelligence` critic before Deep Read.
 
 ### Step 6: Write No-Go Note (for REJECTED cases)
 For every rejected case, write a `no_go_reason_note.txt`:

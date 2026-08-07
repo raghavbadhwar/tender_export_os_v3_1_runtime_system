@@ -5,9 +5,10 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import hashlib
 import json
+import subprocess
 import sys
-import uuid
 from pathlib import Path
 from typing import Any
 
@@ -99,15 +100,144 @@ def reason_for_change(change_type: str, text: str) -> str:
     return "Amended procurement needs recheck and may be less crowded than fresh headline tenders."
 
 
-def build_report(matches: list[dict[str, Any]], records_analyzed: int) -> dict[str, Any]:
+def build_report(
+    matches: list[dict[str, Any]],
+    records_analyzed: int,
+    *,
+    as_of: dt.date | None = None,
+) -> dict[str, Any]:
+    run_date = as_of or dt.date.today()
     return {
-        "run_id": f"RUN-{dt.datetime.now().strftime('%Y%m%d%H%M%S')}-RETENDER-{uuid.uuid4().hex[:6]}",
+        "run_id": f"RUN-{run_date.strftime('%Y%m%d')}-RETENDER-CORRIGENDA",
+        "run_date": run_date.isoformat(),
         "created_at": now_utc(),
         "records_analyzed": records_analyzed,
         "top_candidates_count": len(matches),
         "safety_boundary": "Internal-only watch. No portal bypass, bid, upload, payment, DSC, external message, or final commitment executed.",
         "matches": matches,
     }
+
+
+def build_change_actions(
+    matches: list[dict[str, Any]],
+    *,
+    report_path: str,
+) -> list[dict[str, Any]]:
+    actions: list[dict[str, Any]] = []
+    for match in matches:
+        case_id = str(match.get("old_case_id") or "").strip()
+        if not case_id:
+            continue
+        stable = {
+            "case_id": case_id,
+            "source_url": str(match.get("new_possible_case_or_source_url") or ""),
+            "change_type": str(match.get("change_type") or "CORRIGENDUM"),
+            "old_deadline": str(match.get("old_deadline") or ""),
+            "new_deadline": str(match.get("new_deadline") or ""),
+            "matched_keywords": sorted(str(value) for value in match.get("matched_keywords") or []),
+        }
+        change_hash = hashlib.sha256(
+            json.dumps(stable, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+        invalidated = ["deep_read", "supplier", "pricing", "compliance", "artifacts"]
+        handoff = {
+            "case_id": case_id,
+            "workflow_type": "GOV",
+            "stage": "document_diff",
+            "source_event_ids": [],
+            "input_artifacts": [report_path],
+            "required_output_schema": "config/schemas/mcp_tool_result.schema.json",
+            "approval_required": False,
+            "deadline": stable["new_deadline"],
+            "stop_conditions": ["missing_documents", "ambiguous_compliance", "portal_human_challenge"],
+            "next_profile": "gov-tender-intelligence",
+        }
+        body = "\n".join(
+            [
+                "TEOS_TYPED_HANDOFF_V1",
+                json.dumps(handoff, sort_keys=True),
+                "",
+                f"Evidenced change: {json.dumps(stable, sort_keys=True)}",
+                f"Change hash: {change_hash}",
+                f"Invalidate readiness for: {', '.join(invalidated)}",
+                f"Source report: {report_path}",
+                "Produce a cited document/corrigendum diff. Do not submit, upload, contact, pay, use DSC, or make final commitments.",
+                "external_effect: false",
+            ]
+        )
+        previous = stable["old_deadline"]
+        new = stable["new_deadline"]
+        event = None
+        if previous and new and previous != new:
+            event = {
+                "event_type": "tender.deadline_changed",
+                "case_id": case_id,
+                "object_type": "case",
+                "object_id": case_id,
+                "payload": {
+                    "previous_deadline": previous,
+                    "new_deadline": new,
+                    "change_hash": change_hash,
+                    "source_url": stable["source_url"],
+                    "invalidate_stages": invalidated,
+                },
+                "citations": [report_path, stable["source_url"]] if stable["source_url"] else [report_path],
+                "idempotency_key": f"teos:deadline-change:{case_id}:{change_hash}",
+            }
+        actions.append(
+            {
+                "case_id": case_id,
+                "change_hash": change_hash,
+                "change_type": stable["change_type"],
+                "invalidate_stages": invalidated,
+                "event": event,
+                "task": {
+                    "title": f"{case_id} — Review evidenced {stable['change_type'].lower()} and document diff",
+                    "body": body,
+                    "assignee": "gov-tender-intelligence",
+                    "idempotency_key": f"teos:{case_id}:document-diff:{change_hash}",
+                    "external_effect": False,
+                },
+            }
+        )
+    return sorted(actions, key=lambda row: (row["case_id"], row["change_hash"]))
+
+
+def apply_change_actions(actions: list[dict[str, Any]], *, report_path: str) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    for action in actions:
+        event_id = ""
+        event = action.get("event")
+        if event:
+            recorded = append_event(
+                event["event_type"],
+                "retender_corrigenda_watch",
+                case_id=event["case_id"],
+                object_type=event["object_type"],
+                object_id=event["object_id"],
+                source="official_public_corrigenda_watch",
+                payload=event["payload"],
+                citations=event["citations"],
+                idempotency_key=event["idempotency_key"],
+            )
+            event_id = recorded["event_id"]
+        task = action["task"]
+        command = [
+            "hermes", "kanban", "--board", "tender-export-os", "create", task["title"],
+            "--body", task["body"], "--assignee", task["assignee"],
+            "--workspace", f"dir:{PROJECT_ROOT}", "--tenant", action["case_id"],
+            "--idempotency-key", task["idempotency_key"], "--max-runtime", "900",
+            "--max-retries", "1", "--created-by", "retender_corrigenda_watch", "--json",
+        ]
+        completed = subprocess.run(command, cwd=PROJECT_ROOT, capture_output=True, text=True, timeout=120, check=False)
+        if completed.returncode != 0:
+            raise RuntimeError(completed.stderr.strip() or completed.stdout.strip() or "Kanban task creation failed")
+        data = json.loads(completed.stdout)
+        task_id = str(data.get("id") or data.get("task_id") or (data.get("task") or {}).get("id") or "")
+        if not task_id:
+            raise RuntimeError("Kanban task creation returned no task id")
+        results.append({"case_id": action["case_id"], "event_id": event_id, "task_id": task_id})
+    return results
 
 
 def write_report(report: dict[str, Any], output_dir: Path) -> Path:
@@ -134,6 +264,7 @@ def maybe_append_event(report: dict[str, Any], path: Path, *, dry_run: bool, rec
             "created_at": report["created_at"],
         },
         citations=[relative(path)],
+        idempotency_key=f"teos:retender-corrigenda-watch:{report['run_date']}",
     )
 
 
@@ -142,6 +273,7 @@ def main() -> int:
     parser.add_argument("--dry-run", action="store_true", help="Write local report only; do not append events")
     parser.add_argument("--json", action="store_true", help="Print JSON to stdout")
     parser.add_argument("--record-event", action="store_true")
+    parser.add_argument("--apply-actions", action="store_true", help="Append evidenced deadline events and create idempotent internal diff cards")
     parser.add_argument("--output-dir", default=str(OUTPUT_DIR))
     args = parser.parse_args()
 
@@ -150,6 +282,17 @@ def main() -> int:
     matches = detect_retender_corrigenda_records(cases, source_records, load_yaml_config(DEFAULT_KEYWORDS))
     report = build_report(matches, len(cases) + len(source_records))
     path = write_report(report, Path(args.output_dir))
+    report_path = relative(path)
+    actions = build_change_actions(matches, report_path=report_path)
+    report["change_actions"] = actions
+    report["change_action_count"] = len(actions)
+    report["actions_applied"] = []
+    report["kanban_mutated"] = False
+    report["external_actions_executed"] = False
+    if args.apply_actions and not args.dry_run:
+        report["actions_applied"] = apply_change_actions(actions, report_path=report_path)
+        report["kanban_mutated"] = bool(report["actions_applied"])
+    write_report(report, Path(args.output_dir))
     maybe_append_event(report, path, dry_run=args.dry_run, record_event=args.record_event)
     if args.json:
         print(json.dumps(report, indent=2, ensure_ascii=False))

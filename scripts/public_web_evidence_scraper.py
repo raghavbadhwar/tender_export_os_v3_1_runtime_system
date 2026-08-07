@@ -26,19 +26,29 @@ import requests
 from bs4 import BeautifulSoup
 
 try:
-    from agent_browser_capture import blocker_status, public_hostname, relative, safe_slug, sha256
-except ModuleNotFoundError:  # pragma: no cover
-    from scripts.agent_browser_capture import (
+    from agent_browser_capture import (
+        PRIVATE_EVIDENCE_ROOT,
         blocker_status,
         public_hostname,
         relative,
+        require_private_evidence_root,
+        safe_slug,
+        sha256,
+    )
+except ModuleNotFoundError:  # pragma: no cover
+    from scripts.agent_browser_capture import (
+        PRIVATE_EVIDENCE_ROOT,
+        blocker_status,
+        public_hostname,
+        relative,
+        require_private_evidence_root,
         safe_slug,
         sha256,
     )
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "web_scraping"
+DEFAULT_OUTPUT_ROOT = PRIVATE_EVIDENCE_ROOT / "web_scraping"
 DEFAULT_USER_AGENT = "TenderExportOS-EvidenceBot/1.0 (read-only public research)"
 NON_HTML_SUFFIXES = {
     ".7z",
@@ -75,6 +85,11 @@ def normalize_url(url: str, *, resolve_dns: bool = True) -> str:
     parsed = urlparse(clean)
     path = parsed.path or "/"
     return urlunparse((parsed.scheme, parsed.netloc, path, "", parsed.query, ""))
+
+
+def body_sha256(body: bytes) -> str:
+    """Stable content fingerprint used to avoid storing duplicate raw pages."""
+    return hashlib.sha256(body).hexdigest()
 
 
 def same_public_host(url: str, expected_host: str, *, resolve_dns: bool = True) -> bool:
@@ -267,6 +282,7 @@ def scrape(
     delay_seconds = max(1.0, delay_seconds)
     timeout = max(5, min(timeout, 120))
     max_bytes = max(100_000, min(max_bytes, 10_000_000))
+    output_root = require_private_evidence_root(output_root)
 
     timestamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     run_id = f"WEB-{timestamp}-{uuid.uuid4().hex[:8]}"
@@ -279,6 +295,7 @@ def scrape(
     visited: set[str] = set()
     robots_cache: dict[tuple[str, str], tuple[bool, str]] = {}
     pages: list[dict[str, Any]] = []
+    content_hashes: dict[str, str] = {}
     last_request_at = 0.0
 
     while queue and len(pages) < max_pages:
@@ -325,6 +342,20 @@ def scrape(
                 max_bytes=max_bytes,
                 resolve_dns=resolve_dns,
             )
+            content_hash = body_sha256(body)
+            if content_hash in content_hashes:
+                page.update(
+                    {
+                        "status": "DUPLICATE_CONTENT",
+                        "final_url": response.url,
+                        "http_status": response.status_code,
+                        "duplicate_of": content_hashes[content_hash],
+                        "sha256": {"html": content_hash},
+                    }
+                )
+                pages.append(page)
+                continue
+            content_hashes[content_hash] = url
             encoding = response.encoding or response.apparent_encoding or "utf-8"
             html = body.decode(encoding, errors="replace")
             extracted = extract_html(html, response.url)
@@ -341,9 +372,10 @@ def scrape(
                 "extracted": relative(extracted_path),
                 "text": relative(text_path),
             }
+            blockers = blocker_status(extracted["text"])
             page.update(
                 {
-                    "status": "CAPTURED",
+                    "status": "CAPTURED_WITH_BLOCKERS" if blockers else "CAPTURED",
                     "final_url": response.url,
                     "http_status": response.status_code,
                     "content_type": response.headers.get("content-type", ""),
@@ -353,7 +385,7 @@ def scrape(
                     "heading_count": len(extracted["headings"]),
                     "link_count": len(extracted["links"]),
                     "public_mailto_contacts": extracted["public_mailto_contacts"],
-                    "blockers": blocker_status(extracted["text"]),
+                    "blockers": blockers,
                     "artifacts": artifacts,
                     "sha256": {
                         name: sha256(PROJECT_ROOT / path) for name, path in artifacts.items()
@@ -368,13 +400,15 @@ def scrape(
             page.update({"status": "FAILED", "error": f"{type(exc).__name__}: {exc}"})
         pages.append(page)
 
-    captured = sum(page["status"] == "CAPTURED" for page in pages)
+    captured = sum(str(page["status"]).startswith("CAPTURED") for page in pages)
     blocked = sum(page["status"] == "ROBOTS_BLOCKED" for page in pages)
     failed = sum(page["status"] == "FAILED" for page in pages)
+    duplicates = sum(page["status"] == "DUPLICATE_CONTENT" for page in pages)
+    content_blocked = sum(page["status"] == "CAPTURED_WITH_BLOCKERS" for page in pages)
     status = "COMPLETED"
     if captured == 0:
         status = "FAILED"
-    elif blocked or failed:
+    elif blocked or failed or duplicates or content_blocked:
         status = "PARTIAL"
     receipt = {
         "schema_version": 1,
@@ -397,7 +431,13 @@ def scrape(
             "min_delay_seconds": delay_seconds,
             "max_response_bytes": max_bytes,
         },
-        "summary": {"captured": captured, "robots_blocked": blocked, "failed": failed},
+        "summary": {
+            "captured": captured,
+            "robots_blocked": blocked,
+            "failed": failed,
+            "duplicate_content": duplicates,
+            "content_blocked": content_blocked,
+        },
         "pages": pages,
         "safety": "No login, CAPTCHA/paywall bypass, form fill, click, upload, download, message, payment, DSC, or commercial commitment is available in this lane.",
     }

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -57,6 +58,21 @@ def read_yaml(path: Path) -> dict[str, Any]:
     return data
 
 
+def configured_profiles_root(policy: dict[str, Any]) -> Path | None:
+    """Resolve the optional private Hermes profiles root safely.
+
+    The public template intentionally leaves this as an unresolved environment
+    placeholder.  Validation then skips rather than treating the placeholder
+    as a relative filesystem path or reporting private imports as missing.
+    """
+    raw = str(policy.get("profiles_root") or "").strip()
+    expanded = os.path.expandvars(raw)
+    if not raw or "$" in expanded:
+        return None
+    candidate = Path(expanded).expanduser()
+    return candidate if candidate.is_absolute() else None
+
+
 def first_frontmatter_block(text: str) -> str:
     if not text.startswith("---\n"):
         return ""
@@ -74,8 +90,12 @@ def frontmatter_value(block: str, key: str) -> str | None:
     return match.group(1).strip().strip('"\'')
 
 
-def expected_items(policy: dict[str, Any], profiles: set[str] | None) -> list[dict[str, str]]:
-    profiles_root = Path(policy.get("profiles_root", ""))
+def expected_items(
+    policy: dict[str, Any], profiles: set[str] | None, profiles_root: Path | None = None
+) -> list[dict[str, str]]:
+    profiles_root = profiles_root or configured_profiles_root(policy)
+    if profiles_root is None:
+        raise ValueError("Worker plugin validation is unconfigured: set TEOS_HERMES_PROFILES_ROOT.")
     category = policy.get("import_category_path", "tender-export-os/plugin-imports")
     imports = policy.get("profile_imports") or {}
     items: list[dict[str, str]] = []
@@ -139,7 +159,25 @@ def main(argv: list[str] | None = None) -> int:
 
     policy = read_yaml(Path(args.policy).expanduser().resolve())
     selected = set(args.profile or []) or None
-    results = [validate_item(i) for i in expected_items(policy, selected)]
+    profiles_root = configured_profiles_root(policy)
+    if profiles_root is None:
+        summary = {
+            "policy": str(Path(args.policy).expanduser().resolve()),
+            "items": 0,
+            "ok": 0,
+            "failed": 0,
+            "profiles": [],
+            "failures": [],
+            "status": "SKIPPED_UNCONFIGURED",
+            "reason": "Set TEOS_HERMES_PROFILES_ROOT to validate private imported skills.",
+        }
+        if args.json:
+            print(json.dumps(summary, indent=2, sort_keys=True))
+        else:
+            print("TEOS worker plugin import validation skipped: private profiles root is unconfigured")
+        return 0
+
+    results = [validate_item(i) for i in expected_items(policy, selected, profiles_root)]
     failures = [r for r in results if not r["ok"]]
     summary = {
         "policy": str(Path(args.policy).expanduser().resolve()),

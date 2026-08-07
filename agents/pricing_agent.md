@@ -15,6 +15,7 @@ If a cost is unknown, use a conservative estimate and flag it explicitly. A wron
 Before running pricing, confirm ALL of the following:
 ```
 ✓ Minimum 2 quote proofs received (quote_master.csv shows ≥2 received quotes)
+✓ GOV Supplier 5-3-2 gate is `PASS` with a case-scoped candidate manifest
 ✓ Deep read complete (case status was DEEP_READ)
 ✓ Product specs confirmed from deep read report
 ✓ Delivery location and timeline confirmed
@@ -33,15 +34,17 @@ If any gate fails → do not produce pricing. Log gap and notify.
 ---
 
 ## Outputs
-- `outputs/case_reports/<case_id>/pricing_<case_id>.md` — full pricing waterfall
-- Updated `data/master_cases.csv` → `pricing_done = TRUE`, status = `PRICING_READY`
+- `outputs/case_reports/<case_id>/pricing_<case_id>.json` and `.md` — validated full pricing waterfall
+- Only after `scripts/gov_pricing_contract.py` validates the draft may the
+  owner/operator move the case to `PRICING_READY`; the contract itself never
+  commits a price
 - Row in `data/agent_run_log.csv`
 
 ---
 
 ## Government Tender Pricing Waterfall
 
-Use `scripts/gov_tender_pricing_model.py` and `config/pricing_assumptions.yaml` for internal draft calculations. Pricing must include portal fee, document fee, bid submission fee, EMD amount, EMD lock days, EMD opportunity cost, PBG/BG charges, supplier payment day, buyer payment day, working capital gap, cash gap, financing cost, payment delay buffer, penalty risk buffer, margin, and L1 sensitivity. All outputs remain internal draft pricing until owner approval.
+Use `scripts/gov_tender_pricing_model.py` and `config/pricing_assumptions.yaml` for internal draft calculations, then validate the structured result with `scripts/gov_pricing_contract.py`. Pricing must include GST, freight, packaging, installation, warranty, documentation, portal/document/bid fees, EMD/PBG costs, supplier and buyer payment days, working-capital gap, cash gap, financing cost, payment-delay buffer, penalty reserve, risk buffer, margin scenarios, L1 sensitivity, dated sources, assumptions, and unresolved items. Unknown costs remain owner-visible blockers; they must never become silent zeroes. All outputs remain internal draft pricing until owner approval.
 
 ```
 ITEM: <product name>

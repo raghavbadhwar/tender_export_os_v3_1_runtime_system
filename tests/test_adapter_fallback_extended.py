@@ -67,6 +67,33 @@ def test_gem_adapter_first_chunk_keyword_bypass() -> None:
     assert "GEM/2026/B/000002" in extracted_refs
     assert "GEM/2026/B/000003" not in extracted_refs
 
+
+def test_gem_adapter_extracts_live_bidplus_cards_without_ra_or_static_links() -> None:
+    html = """
+    <div id="bidCard">
+      <div class="card">
+        <div class="block_header">
+          <p class="bid_no"><span>Bid No.:</span><a class="bid_no_hover" href="showbidDocument/9197112">GEM/2026/B/7421049</a></p>
+          <p class="bid_no"><span>RA NO:</span><a class="bid_no_hover" href="/showradocumentPdf/9588175">GEM/2026/R/695819</a></p>
+        </div>
+        <div class="card-body"><div class="row">
+          <div class="col-md-4"><div class="row"><strong>Items:</strong><a data-content="Public Wi-Fi Solution implementation at Goa International Airport">Public Wi-Fi Solution...</a></div></div>
+          <div class="col-md-5"><div class="row"><strong>Department Name And Address:</strong></div><div class="row">Ministry of Civil Aviation<br/>Airports Authority of India</div></div>
+          <div class="col-md-3"><div class="row"><strong>End Date:</strong><span class="end_date">13-07-2026 1:21 PM</span></div></div>
+        </div></div>
+      </div>
+    </div>
+    """
+    adapter = GeMAdapter(keyword="", limit=5)
+    items = adapter._extract_listing_opportunities(html, "https://bidplus.gem.gov.in/all-bids")
+
+    assert len(items) == 1
+    assert items[0].external_reference == "GEM/2026/B/7421049"
+    assert items[0].opportunity_title == "Public Wi-Fi Solution implementation at Goa International Airport"
+    assert items[0].source_url == "https://bidplus.gem.gov.in/showbidDocument/9197112"
+    assert "Airports Authority of India" in items[0].buyer_name
+    assert items[0].deadline_date == "13-07-2026 1:21 PM"
+
 def test_cppp_adapter_empty_text() -> None:
     html = "<html><body></body></html>"
     adapter = CPPPAdapter(keyword="stationery", limit=5)

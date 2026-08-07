@@ -1,0 +1,91 @@
+version: 1
+purpose: "Numerical activation gates for heavier Tender Export OS infrastructure."
+default_decision: KEEP_OFF_UNTIL_MEASURED_TRIGGER_AND_OWNER_APPROVAL
+owner_approval_required: true
+
+gates:
+  postgres:
+    current_state: "OFF"
+    adopt_only_after:
+      - metric: csv_query_p95_ms
+        operator: ">"
+        threshold: 1000
+        window: "3 consecutive operating days"
+      - metric: concurrent_write_conflict_count
+        operator: ">="
+        threshold: 3
+        window: "7 days"
+      - metric: projection_rebuild_seconds
+        operator: ">"
+        threshold: 60
+        window: "3 consecutive rebuilds"
+    must_preserve:
+      - data/events.jsonl remains canonical or has a migration receipt
+      - rollback export exists
+
+  temporal:
+    current_state: "OFF"
+    adopt_only_after:
+      - metric: scheduler_recovery_failure_count
+        operator: ">="
+        threshold: 3
+        window: "14 days"
+      - metric: workflow_volume_per_day
+        operator: ">"
+        threshold: 100
+        window: "7 days"
+      - metric: manual_recovery_minutes_per_week
+        operator: ">"
+        threshold: 120
+        window: "2 weeks"
+
+  external_vector_memory:
+    current_state: "OFF"
+    adopt_only_after:
+      - metric: retrieval_eval_failure_rate_pct
+        operator: ">"
+        threshold: 10
+        window: "50 representative queries"
+      - metric: local_context_pack_too_large_count
+        operator: ">="
+        threshold: 5
+        window: "7 days"
+    privacy_review_required: true
+
+  langfuse:
+    current_state: "OFF"
+    adopt_only_after:
+      - metric: local_trace_debug_failure_count
+        operator: ">="
+        threshold: 5
+        window: "14 days"
+      - metric: cross_run_root_cause_unknown_pct
+        operator: ">"
+        threshold: 20
+        window: "10 incidents"
+    privacy_review_required: true
+
+  paid_extraction_or_cloud_browser:
+    current_state: "OFF"
+    adopt_only_after:
+      - metric: local_capture_failure_rate_pct
+        operator: ">"
+        threshold: 15
+        window: "50 attempted captures"
+      - metric: operator_minutes_per_successful_capture
+        operator: ">"
+        threshold: 20
+        window: "20 captures"
+      - metric: source_revenue_opportunity_blocked_inr
+        operator: ">"
+        threshold: 100000
+        window: "single evidenced opportunity"
+    cost_review_required: true
+
+activation_requirements:
+  - measured trigger evidence path
+  - owner approval receipt
+  - rollback plan
+  - privacy and credential boundary review
+  - test plan
+  - first-week operating cost cap

@@ -7,8 +7,10 @@ import argparse
 import datetime as dt
 import hashlib
 import json
+import os
 from pathlib import Path
 from typing import Any
+import yaml
 
 try:
     from event_ledger import append_event
@@ -23,6 +25,7 @@ DATA_DIR = PROJECT_ROOT / "data"
 OUTBOX = PROJECT_ROOT / "runtime" / "gmail_plugin_outbox"
 PREVIEW_DIR = PROJECT_ROOT / "outputs" / "gmail_plugin_outbox"
 EXPECTED_ACTION = "send_buyer_introductory_outreach"
+PREFLIGHT_CONFIG = PROJECT_ROOT / "config" / "gmail_send_preflight.yaml"
 
 
 def relative(path: Path) -> str:
@@ -57,25 +60,205 @@ def eligibility(outreach: dict[str, str], approval: dict[str, str] | None) -> li
     return blockers
 
 
-def build_packet(outreach: dict[str, str], approval: dict[str, str], *, body: str) -> dict[str, Any]:
+def load_preflight_policy(path: Path = PREFLIGHT_CONFIG) -> dict[str, Any]:
+    payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    if not isinstance(payload, dict):
+        raise ValueError(f"{path} must contain a mapping")
+    sender_override = os.environ.get("HERMES_GMAIL_SENDER_ACCOUNT", "").strip()
+    if sender_override:
+        payload["required_sender_account"] = sender_override
+    return payload
+
+
+def build_packet(
+    outreach: dict[str, str],
+    approval: dict[str, str],
+    *,
+    body: str,
+    sender_account: str = "owner@example.com",
+) -> dict[str, Any]:
+    content_sha256 = hashlib.sha256(body.encode("utf-8")).hexdigest()
     idempotency = hashlib.sha256(
         f"{outreach['outreach_id']}|{approval['scope_hash']}|{outreach['subject']}|{body}".encode("utf-8")
     ).hexdigest()
     return {
         "connector": "GMAIL_PLUGIN",
         "operation": "SEND_APPROVED_BUYER_OUTREACH",
+        "sender_account": sender_account,
         "outreach_id": outreach["outreach_id"],
         "case_id": outreach["case_id"],
         "buyer_id": outreach["buyer_id"],
         "recipient": outreach["verified_contact"],
         "subject": outreach["subject"],
         "body_text": body,
+        "content_sha256": content_sha256,
+        "attachments": [],
         "approval_id": approval["approval_id"],
         "approval_receipt": approval["receipt_path"],
         "approval_scope_hash": approval["scope_hash"],
         "idempotency_key": idempotency,
         "send_authorized_by_owner": True,
         "fresh_approval_required_for_followup": True,
+        "external_action_executed": False,
+    }
+
+
+def _hash_file(path_value: str) -> str:
+    path = Path(path_value)
+    if not path.is_absolute():
+        path = PROJECT_ROOT / path
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _parse_datetime(value: Any) -> dt.datetime | None:
+    try:
+        parsed = dt.datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=dt.timezone.utc)
+
+
+def _verified_approval_blockers(approval: dict[str, str], *, now: dt.datetime | None = None) -> list[str]:
+    blockers: list[str] = []
+    approvals_path = DATA_DIR / "approvals_receipts.csv"
+    if not approvals_path.is_file():
+        return ["exact local approval register record is missing"]
+    _, approval_rows = read_csv(approvals_path)
+    registered = [
+        row
+        for row in approval_rows
+        if row.get("approval_id") == approval.get("approval_id")
+        and row.get("case_id") == approval.get("case_id")
+        and row.get("action_approved") == EXPECTED_ACTION
+    ]
+    if len(registered) != 1:
+        return ["exact local approval register record is missing"]
+    registered_approval = registered[0]
+    for field in ("approval_status", "receipt_path", "scope_hash", "external_effect", "approval_timeout_at"):
+        if approval.get(field) != registered_approval.get(field):
+            blockers.append(f"approval {field} does not match local approval register")
+    if registered_approval.get("approval_status") != "APPROVED":
+        blockers.append("registered approval is not APPROVED")
+    if registered_approval.get("external_effect") != "PENDING_APPROVED_EXECUTION":
+        blockers.append("registered approval is consumed or not execution-ready")
+
+    expires_at = _parse_datetime(registered_approval.get("approval_timeout_at"))
+    current = now or dt.datetime.now(dt.timezone.utc)
+    if current.tzinfo is None:
+        current = current.replace(tzinfo=dt.timezone.utc)
+    if expires_at is None:
+        blockers.append("registered approval expiry cannot be established")
+    elif current.astimezone(dt.timezone.utc) >= expires_at.astimezone(dt.timezone.utc):
+        blockers.append("registered approval is expired")
+
+    receipt_path = Path(str(registered_approval.get("receipt_path") or ""))
+    if not receipt_path.is_absolute():
+        receipt_path = PROJECT_ROOT / receipt_path
+    try:
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        blockers.append("owner decision receipt is missing or unreadable")
+        return blockers
+    if not isinstance(receipt, dict):
+        blockers.append("owner decision receipt is not an object")
+        return blockers
+    if receipt.get("approval_id") != registered_approval.get("approval_id"):
+        blockers.append("owner decision receipt approval_id mismatch")
+    if receipt.get("case_id") != registered_approval.get("case_id"):
+        blockers.append("owner decision receipt case_id mismatch")
+    if receipt.get("action_approved") != EXPECTED_ACTION:
+        blockers.append("owner decision receipt action mismatch")
+    if receipt.get("decision_status") != "APPROVED":
+        blockers.append("owner decision receipt is not approved")
+    if receipt.get("external_effect") != "PENDING_APPROVED_EXECUTION":
+        blockers.append("owner decision receipt is consumed or not execution-ready")
+    return blockers
+
+
+def _prior_receipt_exists(
+    *,
+    outreach: dict[str, str],
+    approval: dict[str, str],
+    communication_rows: list[dict[str, str]],
+) -> bool:
+    if approval.get("external_effect") == "EXECUTED_AFTER_APPROVAL":
+        return True
+    if outreach.get("send_status") == "SENT" or outreach.get("external_message_id"):
+        return True
+    outreach_id = outreach.get("outreach_id", "")
+    approval_id = approval.get("approval_id", "")
+    return any(
+        row.get("outreach_id") == outreach_id
+        or (approval_id and approval_id in (row.get("source_receipt", "") + row.get("recommended_next_action", "")))
+        for row in communication_rows
+    )
+
+
+def preflight_packet(
+    packet: dict[str, Any],
+    *,
+    outreach: dict[str, str],
+    approval: dict[str, str],
+    communication_rows: list[dict[str, str]] | None = None,
+    policy: dict[str, Any] | None = None,
+    connector_status: str = "CONNECTED_GMAIL_PLUGIN",
+    now: dt.datetime | None = None,
+) -> dict[str, Any]:
+    policy = policy or load_preflight_policy()
+    communication_rows = communication_rows or []
+    blockers: list[str] = []
+    required_fields = [str(value) for value in policy.get("required_packet_fields") or []]
+    missing = [field for field in required_fields if field not in packet or packet.get(field) in ("", None)]
+    if missing:
+        blockers.append(f"missing packet fields: {', '.join(missing)}")
+    if packet.get("connector") != policy.get("required_connector", "GMAIL_PLUGIN"):
+        blockers.append("unsupported connector")
+    if packet.get("sender_account") != policy.get("required_sender_account"):
+        blockers.append("sender account mismatch")
+    if connector_status != "CONNECTED_GMAIL_PLUGIN":
+        blockers.append("ambiguous or disconnected Gmail plugin state")
+    if packet.get("recipient") != outreach.get("verified_contact") or "@" not in str(packet.get("recipient", "")):
+        blockers.append("recipient does not match verified outreach contact")
+    if packet.get("approval_id") != approval.get("approval_id"):
+        blockers.append("approval_id mismatch")
+    if packet.get("approval_receipt") != approval.get("receipt_path"):
+        blockers.append("approval receipt mismatch")
+    if packet.get("approval_scope_hash") != approval.get("scope_hash") or not approval.get("scope_hash"):
+        blockers.append("approval scope hash mismatch or missing")
+    blockers.extend(_verified_approval_blockers(approval, now=now))
+    body = str(packet.get("body_text") or "")
+    if hashlib.sha256(body.encode("utf-8")).hexdigest() != packet.get("content_sha256"):
+        blockers.append("content hash mismatch")
+    attachments = packet.get("attachments")
+    if not isinstance(attachments, list):
+        blockers.append("attachments must be a list")
+    else:
+        for index, item in enumerate(attachments):
+            if not isinstance(item, dict):
+                blockers.append(f"attachment[{index}] is not an object")
+                continue
+            path = str(item.get("path") or "")
+            expected = str(item.get("sha256") or "")
+            if not path or not expected:
+                blockers.append(f"attachment[{index}] path or sha256 missing")
+                continue
+            try:
+                if _hash_file(path) != expected:
+                    blockers.append(f"attachment[{index}] hash mismatch")
+            except OSError:
+                blockers.append(f"attachment[{index}] cannot be read")
+    if not packet.get("idempotency_key"):
+        blockers.append("idempotency key missing")
+    if _prior_receipt_exists(outreach=outreach, approval=approval, communication_rows=communication_rows):
+        blockers.append("prior sent receipt or executed approval exists")
+    return {
+        "ok": not blockers,
+        "blockers": blockers,
+        "connector": packet.get("connector"),
+        "sender_account": packet.get("sender_account"),
+        "recipient": packet.get("recipient"),
+        "content_sha256": packet.get("content_sha256"),
+        "idempotency_key": packet.get("idempotency_key"),
         "external_action_executed": False,
     }
 
@@ -94,7 +277,9 @@ def draft_body(path_value: str) -> str:
 def generate_outbox(*, write_outbox: bool) -> dict[str, Any]:
     _, outreach_rows = read_csv(DATA_DIR / "outreach_queue.csv")
     _, approval_rows = read_csv(DATA_DIR / "approvals_receipts.csv")
+    _, communication_rows = read_csv(DATA_DIR / "communication_log.csv")
     approvals = {row.get("approval_id", ""): row for row in approval_rows}
+    policy = load_preflight_policy()
     packets = []
     blocked = []
     target_dir = OUTBOX if write_outbox else PREVIEW_DIR
@@ -109,7 +294,29 @@ def generate_outbox(*, write_outbox: bool) -> dict[str, Any]:
             continue
         assert approval is not None
         body = draft_body(outreach["draft_path"])
-        packet = build_packet(outreach, approval, body=body)
+        packet = build_packet(
+            outreach,
+            approval,
+            body=body,
+            sender_account=str(policy.get("required_sender_account") or ""),
+        )
+        preflight = preflight_packet(
+            packet,
+            outreach=outreach,
+            approval=approval,
+            communication_rows=communication_rows,
+            policy=policy,
+        )
+        if not preflight["ok"]:
+            blocked.append(
+                {
+                    "outreach_id": outreach.get("outreach_id", ""),
+                    "blockers": preflight["blockers"],
+                    "preflight": preflight,
+                }
+            )
+            continue
+        packet["preflight"] = preflight
         path = target_dir / f"gmail_send_{outreach['outreach_id']}.json"
         path.write_text(json.dumps(packet, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         packets.append({"outreach_id": outreach["outreach_id"], "path": relative(path), "idempotency_key": packet["idempotency_key"]})

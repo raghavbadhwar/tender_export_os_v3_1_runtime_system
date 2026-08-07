@@ -1,0 +1,2 @@
+proposal_id,proposal_type,proposal_target,evidence_event_ids,affected_workflows,evidence_summary,current_version,proposed_version,fixtures,evaluation_report_path,rollback_artifact_path,status,approval_id,staged_by,staged_at,evaluated_at,applied_at,notes
+LP-EXAMPLE-001,RULE,example_scoring_rule,EVT-EXAMPLE-001,GOV,Sanitized repeated outcome pattern,v1,v2,tests/fixtures/example.json,outputs/examples/evaluation.json,outputs/examples/rollback.json,STAGED,,learning-evaluation,2099-02-01T11:00:00+00:00,,,Sanitized public example only

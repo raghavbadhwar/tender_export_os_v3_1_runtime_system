@@ -5,6 +5,11 @@
     "forecast_id",
     "run_id",
     "forecast_date",
+    "target_id",
+    "horizon_days",
+    "prediction_timestamp",
+    "maturity_timestamp",
+    "feature_schema_hash",
     "horizon",
     "forecast_type",
     "case_or_research_id",
@@ -32,7 +37,7 @@
     "kill_or_watch_reason",
     "created_at"
   ],
-  "required_fields": ["forecast_id", "run_id", "forecast_date", "forecast_type", "case_or_research_id", "forecast_score", "created_at"],
+  "required_fields": ["forecast_id", "run_id", "forecast_date", "target_id", "horizon_days", "prediction_timestamp", "maturity_timestamp", "feature_schema_hash", "forecast_type", "case_or_research_id", "forecast_score", "created_at"],
   "enums": {
     "forecast_type": ["ACTIVE_CASE", "RESEARCH_LANE", "LOW_COMPETITION", "BUYER_REPEAT", "CATEGORY_DEMAND"],
     "workflow_type": ["", "GOV", "EXPORT", "MIXED", "EXPORT_RESEARCH", "LOW_COMP_RADAR"],
@@ -41,7 +46,9 @@
     "probability_status": ["", "PRIOR_UNCALIBRATED", "CALIBRATED"]
   },
   "date_fields": ["forecast_date", "eligible_for_backtest_at", "created_at"],
+  "datetime_fields": ["prediction_timestamp", "maturity_timestamp"],
   "numeric_fields": [
+    "horizon_days",
     "forecast_score",
     "repeat_probability",
     "low_competition_score",

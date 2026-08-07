@@ -34,8 +34,10 @@ def test_run_core_sources_uses_capture_backend(tmp_path: Path) -> None:
         },
         capture_func=fake_capture,
         output_root=tmp_path,
+        capture_timeout_seconds=75,
     )
 
     assert report["status"] == "PASS"
     assert report["results"][0]["records_reported"] == 25
+    assert report["results"][0]["timeout_seconds"] == 75
     assert report["external_business_actions"] is False

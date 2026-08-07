@@ -19,16 +19,19 @@ Purpose: Durable operating board for government tender, export RFQ, supplier sou
 ## Worker Profiles
 | Profile | Role |
 |---|---|
-| `hermes-chief-operator` | Overall orchestration, owner briefing, approvals, routing, memory, learning |
-| `gov-tender-radar` | Find and fast-kill Indian government/public procurement tenders |
-| `export-rfq-radar` | Find export buyer RFQs and foreign/multilateral procurement opportunities |
-| `supplier-sourcing` | Apply 5-3-2 supplier sourcing and supplier verification |
-| `pricing-compliance` | Pricing waterfall, draft HSN/ITC-HS notes, tariff/routing, payment risk, compliance checklist |
-| `codex-artifact-factory` | Use Codex App-Server Runtime and plugins to create workbooks, PDFs, DOCX, PPTX, dashboards, reports, invoices, and packs |
-| `sales-followup` | Draft buyer/supplier outreach and follow-up sequences with no send without approval |
-| `source-health` | Track broken, paywalled, login-required, low-relevance, high-quality, or restricted sources |
-| `learning-review` | Weekly review, memory and skill update proposals, rule improvement |
-| `chatgpt-boardroom-handoff` | Prepare snapshots and prompts for ChatGPT deep research and strategy |
+| `tender-export-os` | Owner-facing chief console, approvals, Codex artifact routing, and final readiness review |
+| `teos-orchestrator` | Routing-only decomposition into typed specialist tasks |
+| `gov-tender-intelligence` | GOV discovery, fast-kill critique, deep read, source health, corrigenda, and repeat-buyer intelligence |
+| `export-buyer-intelligence` | Market research, buyer verification, RFQ proof, and demand hypotheses |
+| `supplier-commercial` | Supplier 5-3-2, candidate verification, and strict quote-proof readiness |
+| `pricing-risk` | Cost waterfall, working capital, L1 sensitivity, margin, and scenarios |
+| `compliance-due-diligence` | Draft-only eligibility, DGFT/SCOMET, candidate classification, origin, and compliance gaps |
+| `relationship-ops` | Approved communication packets, reply classification, opt-outs, and follow-up timing; no send authority |
+| `learning-evaluation` | Outcomes, source/supplier performance, forecast evaluation, and governed learning proposals |
+
+Only `teos-orchestrator` may decompose top-level tasks. Only `tender-export-os`
+owns owner-facing approval cards. Legacy specialist command names are 30-day
+compatibility wrappers and are invalid Kanban assignees.
 
 ## Task Templates
 - GOV Tender Intake

@@ -1,0 +1,2 @@
+outcome_id,case_id,workflow_type,outcome_type,outcome_value,occurred_at,evidence_path,evidence_sha256,verification_status,recorded_by,recorded_at,supersedes_outcome_id,notes
+OUT-EXAMPLE-001,GOV-20990101-001,GOV,LOST,Sanitized fixture outcome,2099-02-01T10:00:00+00:00,receipts/examples/outcome_evidence.json,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,VERIFIED,example_owner,2099-02-01T11:00:00+00:00,,Sanitized public example only

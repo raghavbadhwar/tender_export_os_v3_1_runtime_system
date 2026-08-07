@@ -1,0 +1,49 @@
+version: 1
+purpose: "Runtime SLO checks for Tender Export OS Hermes control plane."
+profile: tender-export-os
+
+thresholds:
+  disk_free_gb_min: 5
+  scheduler_heartbeat_max_age_hours: 24
+  source_canary_max_age_hours: 24
+  behavioral_eval_max_age_hours: 168
+  disaster_recovery_drill_max_age_hours: 168
+  mcp_discovery_max_age_hours: 168
+  projection_rebuild_max_age_hours: 168
+  production_readiness_gate_max_age_hours: 24
+  kanban_dispatch_p95_ms: 300000
+  worker_success_rate_min_pct: 100
+  mcp_cold_start_p95_ms: 30000
+  event_to_task_p95_ms: 300000
+  owner_channel_delivery_max_age_hours: 24
+  receipt_completeness_min_pct: 100
+
+checks:
+  gateway_health: true
+  mcp_discovery: true
+  kanban_dispatch: true
+  stale_tasks: true
+  scheduler_heartbeat: true
+  source_canary: true
+  projection_drift: true
+  behavioral_eval_freshness: true
+  disk_headroom: true
+  backup_age: true
+  production_readiness_gate_freshness: true
+  operational_metrics: true
+
+observability:
+  metrics_path: outputs/observability/runtime_metrics.json
+  privacy_contract: "Aggregates only; no raw prompts, messages, private content, credentials, or tool arguments."
+  required_metrics:
+    - kanban_dispatch_p95_ms
+    - worker_success_rate_pct
+    - mcp_cold_start_p95_ms
+    - event_to_task_p95_ms
+    - owner_channel_delivery_age_hours
+    - receipt_completeness_pct
+
+exception_routing:
+  output_dir: outputs/runtime_slo/exception_cards
+  kanban_mutation_enabled: false
+  assignee: tender-export-os

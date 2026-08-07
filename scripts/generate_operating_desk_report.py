@@ -17,8 +17,10 @@ from pathlib import Path
 from typing import Any
 
 try:
+    from execution_receipt_status import dispositions_by_approval, is_pending_execution
     from quote_proof import strict_quote_proofs
 except ModuleNotFoundError:  # pragma: no cover - package import path used by pytest
+    from scripts.execution_receipt_status import dispositions_by_approval, is_pending_execution
     from scripts.quote_proof import strict_quote_proofs
 
 
@@ -52,6 +54,7 @@ RUN_LOG_HEADERS = [
 TERMINAL_CASE_STATUSES = {"REJECTED", "WON", "LOST", "ARCHIVED"}
 HEALTHY_STATUSES = {"WORKING", "ACTIVE", "OK", "HEALTHY"}
 PROOF_REQUIRED_STATUSES = {"SUPPLIER_SEARCH", "PRICING_READY", "ARTIFACT_PRODUCTION", "APPROVAL_REQUIRED"}
+SUBSTANTIVE_REPLY_CLASSES = {"POSITIVE_INTEREST", "RFQ", "QUOTE_REQUEST", "MEETING_REQUEST", "CLARIFICATION_REQUEST"}
 
 
 def read_csv(path: Path) -> list[dict[str, str]]:
@@ -89,6 +92,40 @@ def hermes_runtime_health(project_root: Path) -> dict[str, Any]:
     }
 
 
+def hermes_capability_utilization(project_root: Path) -> dict[str, Any]:
+    report = read_latest_json(
+        project_root / "outputs" / "hermes_profile_audit",
+        "hermes_profile_capability_audit_*.json",
+    )
+    utilization = report.get("capability_utilization", {}) if isinstance(report.get("capability_utilization"), dict) else {}
+    capabilities = utilization.get("capabilities", {}) if isinstance(utilization.get("capabilities"), dict) else {}
+    scheduler = capabilities.get("scheduler", {}) if isinstance(capabilities.get("scheduler"), dict) else {}
+    profiles = capabilities.get("profiles", {}) if isinstance(capabilities.get("profiles"), dict) else {}
+    mcp = capabilities.get("mcp", {}) if isinstance(capabilities.get("mcp"), dict) else {}
+    sessions = capabilities.get("session_runtime", {}) if isinstance(capabilities.get("session_runtime"), dict) else {}
+    material_underuse = [
+        name
+        for name, value in capabilities.items()
+        if isinstance(value, dict) and value.get("status") in {"CONFIGURED_NOT_EVIDENCED", "CONFIGURED_PARTIAL_EVIDENCE"}
+    ]
+    return {
+        "status": report.get("status", "NOT_CHECKED"),
+        "schema_version": utilization.get("schema_version", ""),
+        "observed_jobs": scheduler.get("observed_jobs", 0),
+        "configured_jobs": scheduler.get("configured_jobs", 0),
+        "configured_profiles": profiles.get("configured_profiles", 0),
+        "observed_mcp_calls": mcp.get("observed_calls_in_insights_window", 0),
+        "observed_sessions": sessions.get("sessions_in_insights_window", 0),
+        "material_underuse": material_underuse,
+        "report_path": report.get("report_path", ""),
+        "next_action": (
+            "Review material capability underuse before enabling more authority."
+            if material_underuse
+            else "Continue measuring configured versus operationally used Hermes capability."
+        ),
+    }
+
+
 def prediction_health(project_root: Path) -> dict[str, Any]:
     report = read_latest_json(project_root / "outputs" / "demand_forecasting", "forecast_calibration_*.json")
     return {
@@ -97,6 +134,7 @@ def prediction_health(project_root: Path) -> dict[str, Any]:
         "mature_sample_size": int(report.get("mature_sample_size") or 0),
         "minimum_mature_sample": int(report.get("minimum_mature_sample") or 30),
         "brier_score": report.get("brier_score"),
+        "target_evaluations": report.get("target_evaluations", []),
         "report_path": report.get("report_path", ""),
         "next_action": (
             "Keep collecting time-separated outcomes; do not claim calibrated probability yet."
@@ -104,6 +142,13 @@ def prediction_health(project_root: Path) -> dict[str, Any]:
             else "Review Brier score and calibration bins before changing the model."
         ),
     }
+
+
+def score_value(case: dict[str, str]) -> float:
+    try:
+        return float(case.get("score_gov") or case.get("score_export") or case.get("score") or 0)
+    except (TypeError, ValueError):
+        return 0.0
 
 
 def buyer_acquisition_health(
@@ -230,18 +275,22 @@ def compact_case(row: dict[str, str]) -> dict[str, str]:
     }
 
 
-def compact_approval(row: dict[str, str]) -> dict[str, str]:
-    return {
+def compact_approval(row: dict[str, str], disposition: dict[str, Any] | None = None) -> dict[str, Any]:
+    projected = disposition or {}
+    compact = {
         "approval_id": row.get("approval_id", ""),
         "case_id": row.get("case_id", ""),
         "workflow_type": row.get("workflow_type", ""),
         "action": row.get("action_approved") or row.get("proposed_action") or "approval_required",
         "status": row.get("approval_status", ""),
         "card_path": row.get("approval_card_path", ""),
-        "external_effect": row.get("external_effect", ""),
+        "approval_external_effect": row.get("external_effect", ""),
+        "external_effect": projected.get("external_effect", row.get("external_effect", "")),
+        "execution_receipt_paths": projected.get("execution_receipt_paths", []),
         "next_owner": "owner",
-        "next_action": approval_next_action(row),
+        "next_action": projected.get("next_action", approval_next_action(row)),
     }
+    return compact
 
 
 def approval_next_action(row: dict[str, str]) -> str:
@@ -336,6 +385,87 @@ def get_deadline_risks(cases: list[dict[str, str]], today: dt.date, window_days:
             item["next_action"] = "Escalate deadline risk, then route to the owning specialist."
             risks.append(item)
     return sorted(risks, key=lambda row: int(row["days_left"]))
+
+
+def get_top_evidenced_opportunities(cases: list[dict[str, str]], limit: int = 3) -> list[dict[str, Any]]:
+    evidenced = []
+    weak = {"", "RAW_LEAD", "MISSING", "PUBLIC_LISTING_ONLY", "MARKETPLACE_MASKED", "PARTIAL"}
+    for case in cases:
+        if case_status(case) in TERMINAL_CASE_STATUSES or case_status(case) not in PROOF_REQUIRED_STATUSES | {"DEEP_READ", "WATCHLIST"}:
+            continue
+        evidence = (case.get("evidence_level") or case.get("evidence_status") or case.get("rfq_stage") or "").upper()
+        has_source = bool(case.get("source_url") or case.get("source_name") or case.get("document_path") or case.get("evidence_path"))
+        if has_source and evidence not in weak:
+            item = compact_case(case)
+            item["score"] = score_value(case)
+            item["evidence_level"] = evidence or "SOURCE_PRESENT"
+            evidenced.append(item)
+    return sorted(evidenced, key=lambda row: row["score"], reverse=True)[:limit]
+
+
+def get_expiring_approvals(approvals: list[dict[str, str]], today: dt.date, window_days: int = 3) -> list[dict[str, Any]]:
+    rows = []
+    for approval in approvals:
+        if approval_status(approval) != "PENDING":
+            continue
+        expires = parse_date(approval.get("approval_timeout_at") or approval.get("deadline_date") or "")
+        if not expires:
+            continue
+        days_left = (expires - today).days
+        if days_left <= window_days:
+            item = compact_approval(approval)
+            item["expires_at"] = approval.get("approval_timeout_at") or approval.get("deadline_date")
+            item["days_left"] = days_left
+            item["next_action"] = "Owner must approve, reject, or ask changes before this approval expires."
+            rows.append(item)
+    return sorted(rows, key=lambda row: int(row["days_left"]))
+
+
+def get_substantive_replies(communications: list[dict[str, str]]) -> list[dict[str, Any]]:
+    replies = []
+    for row in communications:
+        if row.get("direction") != "INBOUND":
+            continue
+        classification = (row.get("classification") or "").upper()
+        requires_owner = row.get("requires_owner_action") == "TRUE"
+        if requires_owner or classification in SUBSTANTIVE_REPLY_CLASSES:
+            replies.append(
+                {
+                    "communication_id": row.get("communication_id", ""),
+                    "case_id": row.get("case_id", ""),
+                    "subject": row.get("subject", ""),
+                    "classification": row.get("classification", ""),
+                    "occurred_at": row.get("occurred_at", ""),
+                    "next_action": row.get("recommended_next_action", "") or "Route reply into owner-approved response drafting.",
+                    "content_path": row.get("content_path", ""),
+                }
+            )
+    return sorted(replies, key=lambda row: row["occurred_at"], reverse=True)
+
+
+def get_overdue_payments(outcomes: list[dict[str, str]], today: dt.date, grace_days: int = 0) -> list[dict[str, Any]]:
+    received_cases = {row.get("case_id", "") for row in outcomes if (row.get("outcome_type") or "").upper() == "PAYMENT_RECEIVED"}
+    overdue = []
+    for row in outcomes:
+        if (row.get("outcome_type") or "").upper() != "PAYMENT_DUE":
+            continue
+        case_id = row.get("case_id", "")
+        due_date = parse_date(row.get("occurred_at", ""))
+        if not case_id or case_id in received_cases or not due_date:
+            continue
+        days_overdue = (today - due_date).days - grace_days
+        if days_overdue > 0:
+            overdue.append(
+                {
+                    "outcome_id": row.get("outcome_id", ""),
+                    "case_id": case_id,
+                    "workflow_type": row.get("workflow_type", ""),
+                    "days_overdue": days_overdue,
+                    "evidence_path": row.get("evidence_path", ""),
+                    "next_action": "Route to Execution Tracker; owner decides any payment escalation.",
+                }
+            )
+    return sorted(overdue, key=lambda row: int(row["days_overdue"]), reverse=True)
 
 
 def health_row_is_stale(row: dict[str, str], today: dt.date, stale_days: int) -> bool:
@@ -510,6 +640,31 @@ def build_employee_queues(report: dict[str, Any]) -> list[dict[str, Any]]:
     ]
 
 
+def build_exception_first(report: dict[str, Any]) -> dict[str, Any]:
+    exceptions = (
+        report["deadline_risks"]
+        + report["expiring_approvals"]
+        + report["substantive_replies"]
+        + report["quote_proof_gaps"]
+        + report["overdue_payments"]
+        + report["source_blockers"]
+        + report["plugin_blockers"]
+        + report["stale_or_failed_agent_runs"]
+    )
+    return {
+        "exceptions": exceptions[:25],
+        "top_three_evidenced_opportunities": report["top_three_evidenced_opportunities"],
+        "pending_owner_decisions": report["pending_approvals"] + report["expiring_approvals"],
+        "expiring_deadlines_or_approvals": report["deadline_risks"] + report["expiring_approvals"],
+        "substantive_replies": report["substantive_replies"],
+        "missing_strict_proofs": report["quote_proof_gaps"],
+        "overdue_payments": report["overdue_payments"],
+        "specialist_task_health": report["employee_queues"],
+        "forecast_maturity": report["prediction_health"],
+        "one_primary_action": report["one_smallest_owner_action"],
+    }
+
+
 def build_report(
     *,
     project_root: Path = PROJECT_ROOT,
@@ -521,19 +676,22 @@ def build_report(
     data_dir = project_root / "data"
     cases = read_csv(data_dir / "master_cases.csv")
     approvals = read_csv(data_dir / "approvals_receipts.csv")
+    execution_dispositions = dispositions_by_approval(approvals, events_path=data_dir / "events.jsonl")
     source_health = read_csv(data_dir / "source_health.csv")
     plugin_health = read_csv(data_dir / "plugin_health.csv")
     quotes = read_csv(data_dir / "quote_master.csv")
     runs = read_csv(data_dir / "agent_run_log.csv")
+    outcomes = read_csv(data_dir / "case_outcomes.csv")
     buyer_signals = read_csv(data_dir / "buyer_demand_signals.csv")
     outreach = read_csv(data_dir / "outreach_queue.csv")
     communications = read_csv(data_dir / "communication_log.csv")
 
     pending_approvals = [compact_approval(row) for row in approvals if approval_status(row) == "PENDING"]
     approved_waiting = [
-        compact_approval(row) for row in approvals
+        compact_approval(row, execution_dispositions.get(row.get("approval_id", "")))
+        for row in approvals
         if approval_status(row) == "APPROVED"
-        and (row.get("external_effect") == "PENDING_APPROVED_EXECUTION" or not row.get("receipt_path"))
+        and is_pending_execution(execution_dispositions.get(row.get("approval_id", ""), {}))
     ]
 
     report: dict[str, Any] = {
@@ -551,13 +709,19 @@ def build_report(
             "data/outreach_queue.csv",
             "data/communication_log.csv",
             "outputs/cron_gateway/cron_gateway_reliability_*.json",
+            "outputs/hermes_profile_audit/hermes_profile_capability_audit_*.json",
             "outputs/demand_forecasting/forecast_calibration_*.json",
         ],
         "hermes_runtime_health": hermes_runtime_health(project_root),
+        "hermes_capability_utilization": hermes_capability_utilization(project_root),
         "prediction_health": prediction_health(project_root),
         "buyer_acquisition": buyer_acquisition_health(project_root, buyer_signals, outreach, communications),
+        "top_three_evidenced_opportunities": get_top_evidenced_opportunities(cases),
         "pending_approvals": pending_approvals,
         "approved_actions_awaiting_execution": approved_waiting,
+        "expiring_approvals": get_expiring_approvals(approvals, today),
+        "substantive_replies": get_substantive_replies(communications),
+        "overdue_payments": get_overdue_payments(outcomes, today),
         "supplier_search_cases": [compact_case(row) for row in cases if case_status(row) == "SUPPLIER_SEARCH"],
         "quote_proof_gaps": get_quote_proof_gaps(cases, quotes),
         "watchlist_triage": [
@@ -577,8 +741,12 @@ def build_report(
     }
     report["employee_queues"] = build_employee_queues(report)
     report["one_smallest_owner_action"] = choose_owner_action(report)
+    report["exception_first"] = build_exception_first(report)
     report["summary"] = {
+        "exceptions": len(report["exception_first"]["exceptions"]),
+        "top_evidenced_opportunities": len(report["top_three_evidenced_opportunities"]),
         "pending_approvals": len(report["pending_approvals"]),
+        "expiring_approvals": len(report["expiring_approvals"]),
         "approved_actions_awaiting_execution": len(report["approved_actions_awaiting_execution"]),
         "supplier_search_cases": len(report["supplier_search_cases"]),
         "quote_proof_gaps": len(report["quote_proof_gaps"]),
@@ -587,11 +755,15 @@ def build_report(
         "source_blockers": len(report["source_blockers"]),
         "plugin_blockers": len(report["plugin_blockers"]),
         "active_cron_jobs": report["hermes_runtime_health"]["active_jobs"],
+        "hermes_capability_audit_status": report["hermes_capability_utilization"]["status"],
+        "hermes_capability_material_underuse": len(report["hermes_capability_utilization"]["material_underuse"]),
         "mature_forecast_outcomes": report["prediction_health"]["mature_sample_size"],
         "buyer_targets": report["buyer_acquisition"]["target_count"],
         "outreach_drafts": report["buyer_acquisition"]["outreach_draft_count"],
         "buyer_replies": report["buyer_acquisition"]["reply_count"],
         "buyer_replies_needing_owner": report["buyer_acquisition"]["owner_action_reply_count"],
+        "substantive_replies": len(report["substantive_replies"]),
+        "overdue_payments": len(report["overdue_payments"]),
     }
     return report
 
@@ -620,23 +792,19 @@ td,th{border:1px solid #d8dee9;padding:7px;text-align:left;vertical-align:top}th
         f"<div class='metric'><span>{html.escape(key.replace('_', ' ').title())}</span><strong>{value}</strong></div>"
         for key, value in report["summary"].items()
     )
+    ef = report["exception_first"]
     sections = [
         ("Hermes Runtime Health", [report["hermes_runtime_health"]], ["status", "profile", "gateway_running", "active_jobs", "generated_at", "next_action"]),
+        ("Hermes Capability Utilization", [report["hermes_capability_utilization"]], ["status", "schema_version", "configured_jobs", "observed_jobs", "configured_profiles", "observed_mcp_calls", "observed_sessions", "material_underuse", "next_action"]),
         ("Prediction Calibration Health", [report["prediction_health"]], ["status", "review_date", "mature_sample_size", "minimum_mature_sample", "brier_score", "next_action"]),
-        ("Employee Queues", report["employee_queues"], ["agent", "desk", "open_items", "next_action"]),
-        ("Buyer Acquisition Health", [report["buyer_acquisition"]], ["connector_status", "target_count", "outreach_draft_count", "reply_count", "owner_action_reply_count", "next_action"]),
-        ("Foreign Buyer Targets", report["buyer_acquisition"]["targets"], ["signal_id", "case_id", "company_name", "country", "category_name", "market_fit_score", "demand_confidence", "contact_status", "next_action"]),
-        ("Buyer Outreach Drafts", report["buyer_acquisition"]["outreach_drafts"], ["outreach_id", "case_id", "subject", "approval_id", "approval_status", "send_status", "reply_status", "next_action"]),
-        ("Buyer Replies", report["buyer_acquisition"]["replies"], ["communication_id", "case_id", "subject", "classification", "occurred_at", "requires_owner_action", "next_action", "content_path"]),
-        ("Pending Approvals", report["pending_approvals"], ["approval_id", "case_id", "workflow_type", "action", "card_path", "next_action"]),
-        ("Approved Actions Awaiting Execution", report["approved_actions_awaiting_execution"], ["approval_id", "case_id", "action", "external_effect", "next_action"]),
-        ("Supplier Search Cases", report["supplier_search_cases"], ["case_id", "workflow_type", "title", "buyer", "deadline_date", "next_action"]),
-        ("Strict Quote-proof Gaps", report["quote_proof_gaps"], ["case_id", "workflow_type", "title", "strict_quote_proof_count", "required_quote_proof_count", "proof_gap", "next_action"]),
-        ("Watchlist Triage", report["watchlist_triage"], ["case_id", "workflow_type", "title", "buyer", "deadline_date", "next_action"]),
-        ("Deadline Risks", report["deadline_risks"], ["case_id", "workflow_type", "title", "deadline_date", "days_left", "next_action"]),
-        ("Stale Or Failed Agent Runs", report["stale_or_failed_agent_runs"], ["run_id", "agent_name", "run_date", "status", "next_action"]),
-        ("Source Blockers", report["source_blockers"], ["name", "health_status", "blocker", "last_checked", "next_action"]),
-        ("Plugin Blockers", report["plugin_blockers"], ["name", "health_status", "blocker", "last_checked", "next_action"]),
+        ("Exceptions", ef["exceptions"], ["case_id", "approval_id", "communication_id", "name", "run_id", "days_left", "days_overdue", "next_action"]),
+        ("Top Three Evidenced Opportunities", ef["top_three_evidenced_opportunities"], ["case_id", "workflow_type", "title", "buyer", "score", "evidence_level", "deadline_date", "next_action"]),
+        ("Pending Owner Decisions", ef["pending_owner_decisions"], ["approval_id", "case_id", "workflow_type", "action", "expires_at", "days_left", "next_action"]),
+        ("Expiring Deadlines Or Approvals", ef["expiring_deadlines_or_approvals"], ["case_id", "approval_id", "deadline_date", "expires_at", "days_left", "next_action"]),
+        ("Substantive Replies", ef["substantive_replies"], ["communication_id", "case_id", "subject", "classification", "occurred_at", "next_action", "content_path"]),
+        ("Missing Strict Proofs", ef["missing_strict_proofs"], ["case_id", "workflow_type", "title", "strict_quote_proof_count", "required_quote_proof_count", "proof_gap", "next_action"]),
+        ("Overdue Payments", ef["overdue_payments"], ["outcome_id", "case_id", "workflow_type", "days_overdue", "evidence_path", "next_action"]),
+        ("Specialist Task Health", ef["specialist_task_health"], ["agent", "desk", "open_items", "next_action"]),
     ]
     body = f"""
 <h1>Tender Export OS Operating Desk</h1>

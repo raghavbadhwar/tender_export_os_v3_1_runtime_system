@@ -54,6 +54,10 @@ def test_outreach_draft_is_personalized_and_non_committal() -> None:
     assert "Handmade terracotta mug" in draft["body"]
     assert "person responsible for sourcing or buying" in draft["body"]
     assert "No price, delivery date, payment term, certification, origin, or product availability is being committed" in draft["body"]
+    assert draft["prohibited_claim_check"]["passed"] is True
+    assert draft["opt_out_sentence"] in draft["body"]
+    assert len(draft["personalization_evidence_map"]) == 1
+    assert all(step["fresh_approval_required"] for step in draft["follow_up_sequence"])
     assert draft["external_action_executed"] is False
 
 

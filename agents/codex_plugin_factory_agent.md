@@ -30,8 +30,11 @@ Use Codex App-Server Runtime and Codex plugins as the artifact production depart
 4. If app-server is unavailable, use fallback bridge only when documented in `config/codex_runtime_policy.yaml`.
 5. Produce artifacts under `outputs/`.
 6. Validate artifacts: open/render, `case_id` present, missing fields explicit, no final unapproved claim.
-7. Create or request approval card if artifact is intended for external use.
-8. Log run and sources.
+7. For a GOV bid pack, create the manifest, missing-items list, and internal plugin receipt; then require `codex_task_runner.py --verify-bid-pack --write-receipt` before the Approval Desk can create a card.
+8. Request an approval card only after that internal verification passes.
+9. Log run and sources.
+
+For an EXPORT buyer quotation, use the separate governed quote-pack contract: create a draft-only manifest and plugin receipt under `outputs/export_quote_packs/<case_id>/`, then require `codex_task_runner.py --verify-export-quote-pack --write-receipt`. The pack must remain anchored to a `DRAFT_READY` commercial-readiness report; it cannot make final price, HSN/ITC-HS, origin, payment, or delivery claims.
 
 ## Stop Conditions
 - Codex runtime unavailable and fallback not approved
@@ -58,3 +61,5 @@ Cite all local files, source URLs, plugin outputs, and commands used.
 - Prefer Codex App-Server Runtime for plugin-heavy production; use Claude Code plugins and Accio skills as reference/capability accelerators where available.
 - Validate artifacts by opening, rendering, recalculating, compiling, or testing as appropriate; record the validation result.
 - Quality gate: every plugin-heavy run produces a receipt under `receipts/plugin_runs/` or an explicit blocker explaining why no artifact was produced.
+- GOV bid-pack gate: the plugin receipt, manifest, missing-items list, and current open/render/parse verification receipt must agree before the pack can support owner approval.
+- EXPORT quote-pack gate: the draft-only manifest, commercial-readiness contract, plugin receipt, missing-items list, and current verification receipt must agree before a buyer-facing quotation approval card can be created.

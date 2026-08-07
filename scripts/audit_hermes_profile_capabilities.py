@@ -7,6 +7,7 @@ import argparse
 import datetime as dt
 import glob
 import json
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -51,6 +52,123 @@ def event_evidence_exists(path: Path, event_type: str, source: str) -> bool:
     return False
 
 
+def _first_int(pattern: str, text: str) -> int | None:
+    match = re.search(pattern, text, flags=re.IGNORECASE)
+    return int(match.group(1).replace(",", "")) if match else None
+
+
+def _read_event_counts(events_file: Path) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    if not events_file.is_file():
+        return counts
+    for line in events_file.read_text(encoding="utf-8").splitlines():
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        event_type = str(event.get("event_type") or "")
+        if event_type:
+            counts[event_type] = counts.get(event_type, 0) + 1
+    return counts
+
+
+def _parse_kanban_stats(output: str) -> dict[str, Any]:
+    try:
+        value = json.loads(output)
+    except json.JSONDecodeError:
+        return {}
+    return value if isinstance(value, dict) else {}
+
+
+def capability_utilization_snapshot(
+    manifest: dict[str, Any],
+    config: dict[str, Any],
+    *,
+    cron_output: str = "",
+    insights_output: str = "",
+    kanban_output: str = "",
+    events_file: Path = Path("data/events.jsonl"),
+    profile_registry: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Summarize configured versus evidenced Hermes capability use without raw content."""
+    event_counts = _read_event_counts(events_file)
+    kanban = _parse_kanban_stats(kanban_output)
+    by_status = kanban.get("by_status", {}) if isinstance(kanban.get("by_status"), dict) else {}
+    configured_jobs = len(manifest.get("scheduled_jobs", []) or [])
+    observed_jobs = len(re.findall(r"^\s+Name:\s+", cron_output, flags=re.MULTILINE))
+    registry_profiles = profile_registry.get("profiles", {}) if isinstance(profile_registry, dict) else {}
+    configured_profiles = (
+        len(registry_profiles)
+        if isinstance(registry_profiles, dict)
+        else 1 + len(manifest.get("specialist_profiles", []) or [])
+    )
+    mcp_tools = nested(manifest, "local_capabilities", "governed_mcp", "tools") or []
+    tool_calls = _first_int(r"Tool calls:\s*([0-9,]+)", insights_output)
+    session_count = _first_int(r"Sessions:\s*([0-9,]+)", insights_output)
+    skill_loads = _first_int(r"Loads:\s*([0-9,]+)", insights_output)
+    mcp_call_lines = re.findall(r"mcp__tender_os__[^\s]+\s+([0-9,]+)", insights_output)
+    mcp_calls = sum(int(value.replace(",", "")) for value in mcp_call_lines) if mcp_call_lines else 0
+    kanban_calls = sum(
+        int(value.replace(",", ""))
+        for value in re.findall(r"kanban_[^\s]+\s+([0-9,]+)", insights_output)
+    )
+    agent_lifecycle_events = sum(
+        count for name, count in event_counts.items() if name.startswith("hermes.agent_")
+    )
+    gateway_lifecycle_events = sum(
+        count for name, count in event_counts.items() if name.startswith("hermes.gateway_")
+    )
+    gateway_hooks = manifest.get("gateway_hooks", []) or []
+    return {
+        "schema_version": "hermes_capability_utilization.v1",
+        "evidence_policy": "Counts and statuses only; no raw prompts, responses, documents, emails, credentials, or tool arguments.",
+        "capabilities": {
+            "scheduler": {
+                "status": "CONFIGURED_AND_OBSERVED" if observed_jobs >= configured_jobs else "CONFIGURED_PARTIAL_EVIDENCE",
+                "configured_jobs": configured_jobs,
+                "observed_jobs": observed_jobs,
+            },
+            "profiles": {
+                "status": "CONFIGURED",
+                "configured_profiles": configured_profiles,
+                "gateway_agent_lifecycle_events": agent_lifecycle_events,
+            },
+            "mcp": {
+                "status": "CONFIGURED_AND_USED" if mcp_calls > 0 else "CONFIGURED_NOT_EVIDENCED",
+                "configured_tools": len(mcp_tools),
+                "observed_calls_in_insights_window": mcp_calls,
+            },
+            "kanban": {
+                "status": "USED" if kanban else "CONFIGURED_NOT_EVIDENCED",
+                "board_status_counts": by_status,
+                "observed_tool_calls_in_insights_window": kanban_calls,
+            },
+            "skills_and_memory": {
+                "status": "USED" if skill_loads else "CONFIGURED_NOT_EVIDENCED",
+                "skill_loads_in_insights_window": skill_loads,
+                "memory_events": sum(count for name, count in event_counts.items() if name.startswith("memory.")),
+                "skill_events": sum(count for name, count in event_counts.items() if name.startswith("skill.")),
+            },
+            "gateway_hooks": {
+                "status": "USED" if gateway_lifecycle_events else ("CONFIGURED" if gateway_hooks else "NOT_CONFIGURED"),
+                "configured_hooks": len(gateway_hooks),
+                "lifecycle_events": gateway_lifecycle_events,
+            },
+            "session_runtime": {
+                "status": "USED" if session_count else "NOT_EVIDENCED",
+                "sessions_in_insights_window": session_count,
+                "total_tool_calls_in_insights_window": tool_calls,
+            },
+            "optional_authority": {
+                "status": "INTENTIONALLY_GATED",
+                "computer_use": "read_only_canary_required",
+                "messaging": "owner_credentials_required",
+                "external_execution": "disabled",
+            },
+        },
+    }
+
+
 def evaluate_profile(
     manifest: dict[str, Any],
     config: dict[str, Any],
@@ -58,6 +176,10 @@ def evaluate_profile(
     *,
     cron_output: str,
     gateway_output: str,
+    insights_output: str = "",
+    kanban_output: str = "",
+    events_file: Path | None = None,
+    profile_registry: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     findings: list[dict[str, str]] = []
     expected = {
@@ -401,6 +523,15 @@ def evaluate_profile(
         "profile": manifest.get("profile", ""),
         "profile_home": str(profile_home),
         "findings": findings,
+        "capability_utilization": capability_utilization_snapshot(
+            manifest,
+            config,
+            cron_output=cron_output,
+            insights_output=insights_output,
+            kanban_output=kanban_output,
+            events_file=events_file or resolve_path("data/events.jsonl"),
+            profile_registry=profile_registry,
+        ),
         "safety_boundary": "Read-only drift audit; no profile, cron, gateway, credential, or external state was changed.",
     }
 
@@ -429,12 +560,20 @@ def main(argv: list[str] | None = None) -> int:
     profile_home = Path.home() / ".hermes" / "profiles" / profile
     config_path = profile_home / "config.yaml"
     config = yaml.safe_load(config_path.read_text(encoding="utf-8")) if config_path.is_file() else {}
+    registry_path = resolve_path("config/hermes_specialist_profiles.yaml")
+    profile_registry = yaml.safe_load(registry_path.read_text(encoding="utf-8")) if registry_path.is_file() else {}
     report = evaluate_profile(
         manifest,
         config or {},
         profile_home,
-        cron_output=run_hermes(profile, "cron", "list"),
+        # Paused jobs remain installed capabilities and must still appear in a
+        # capability-preservation audit. The default list hides them.
+        cron_output=run_hermes(profile, "cron", "list", "--all"),
         gateway_output=run_hermes(profile, "gateway", "status"),
+        insights_output=run_hermes(profile, "insights", "--days", "7"),
+        kanban_output=run_hermes(profile, "kanban", "stats", "--json"),
+        events_file=resolve_path("data/events.jsonl"),
+        profile_registry=profile_registry,
     )
     report["generated_at"] = dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat()
     report["manifest"] = str(manifest_path)

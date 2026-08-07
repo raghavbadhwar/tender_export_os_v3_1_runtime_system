@@ -24,7 +24,7 @@
   "enums": {
     "direction": ["OUTBOUND", "INBOUND"],
     "channel": ["EMAIL", "CONTACT_FORM", "PORTAL"],
-    "classification": ["OUTREACH_SENT", "POSITIVE_INTEREST", "QUESTION", "NEGOTIATION", "NOT_INTERESTED", "OPT_OUT", "BOUNCE", "AUTO_REPLY", "NEEDS_REVIEW"],
+    "classification": ["OUTREACH_SENT", "SUBSTANTIVE", "RFQ", "QUESTION", "NOT_INTERESTED", "OPT_OUT", "BOUNCE", "AUTO_REPLY", "UNKNOWN", "POSITIVE_INTEREST", "NEGOTIATION", "NEEDS_REVIEW"],
     "requires_owner_action": ["TRUE", "FALSE"],
     "source_connector": ["GMAIL_PLUGIN", "MANUAL_IMPORT", "PORTAL_RECEIPT"]
   },

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from scripts.audit_hermes_profile_capabilities import evaluate_profile
+from scripts.audit_hermes_profile_capabilities import capability_utilization_snapshot, evaluate_profile
 
 
 def _manifest(tmp_path: Path) -> dict:
@@ -123,3 +123,51 @@ def test_capability_audit_blocks_on_config_and_schedule_drift(tmp_path: Path) ->
     assert "BEHAVIORAL_EVAL_SPEC_MISSING" in codes
     assert "BEHAVIORAL_EVAL_REPORT_MISSING" in codes
     assert "HOOK_EVIDENCE_MISSING" in codes
+
+
+def test_capability_utilization_distinguishes_configured_and_used(tmp_path: Path) -> None:
+    events = tmp_path / "events.jsonl"
+    events.write_text(
+        "{\"event_type\":\"hermes.agent_started\"}\n"
+        "{\"event_type\":\"hermes.gateway_started\"}\n"
+        "{\"event_type\":\"memory.proposal_staged\"}\n",
+        encoding="utf-8",
+    )
+    manifest = _manifest(tmp_path)
+    manifest["scheduled_jobs"] = [{"name": "Morning Brief"}, {"name": "Evening Close"}]
+    manifest["specialist_profiles"] = ["worker-one", "worker-two"]
+    manifest["local_capabilities"] = {
+        "governed_mcp": {"tools": ["get_case", "search_cases"]},
+        "filesystem_checkpoints": {"enabled": True},
+    }
+    snapshot = capability_utilization_snapshot(
+        manifest,
+        {},
+        cron_output="Name: Morning Brief\n",
+        insights_output="Sessions:          4            Messages:        12\nTool calls:        9\nLoads:              2\n mcp__tender_os__get_case       3\n kanban_show                         1\n",
+        kanban_output='{"by_status":{"done":2}}',
+        events_file=events,
+    )
+
+    capabilities = snapshot["capabilities"]
+    assert capabilities["scheduler"]["status"] == "CONFIGURED_PARTIAL_EVIDENCE"
+    assert capabilities["mcp"]["status"] == "CONFIGURED_AND_USED"
+    assert capabilities["kanban"]["status"] == "USED"
+    assert capabilities["skills_and_memory"]["memory_events"] == 1
+    assert capabilities["optional_authority"]["status"] == "INTENTIONALLY_GATED"
+
+
+def test_evaluate_profile_embeds_utilization_snapshot(tmp_path: Path) -> None:
+    report = evaluate_profile(
+        _manifest(tmp_path),
+        {},
+        tmp_path / "profile",
+        cron_output="",
+        gateway_output="",
+        insights_output="Sessions: 1\nTool calls: 2\n",
+        kanban_output='{"by_status":{"blocked":1}}',
+        events_file=tmp_path / "missing-events.jsonl",
+    )
+
+    assert report["capability_utilization"]["schema_version"] == "hermes_capability_utilization.v1"
+    assert report["capability_utilization"]["capabilities"]["session_runtime"]["sessions_in_insights_window"] == 1
