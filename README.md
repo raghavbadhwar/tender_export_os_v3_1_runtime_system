@@ -38,22 +38,16 @@ The design separates responsibilities as follows:
 
 ## Architecture at a Glance
 
-```text
-Public sources / research leads / local fixtures
-                      │
-             adapters + extraction
-                      │
-           typed, citation-aware events
-                      ▼
-       data/events.jsonl (canonical local state)
-                      │
-        projections + policy/readiness gates
-                      │
-           internal briefs and draft packs
-                      ▼
-             owner approval boundary
-                      │
-        external execution (not a demo action)
+```mermaid
+flowchart TD
+  S["Public sources, research leads, local fixtures"] --> A["Adapters and extraction"]
+  A --> E["Typed, citation-aware events"]
+  E --> L["Canonical local event ledger"]
+  L --> G["Projections, policy, and readiness gates"]
+  G --> D["Internal briefs and draft packs"]
+  D --> H{"Owner approval boundary"}
+  H -->|"approved and separately configured"| X["External execution"]
+  H -->|"rejected or incomplete"| R["Revise or stop"]
 ```
 
 | Layer | Repository contract | Evidence boundary |

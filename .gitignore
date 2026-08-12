@@ -38,6 +38,8 @@ outputs/**
 !outputs/examples/
 !outputs/examples/**
 
+runtime/gmail_plugin_outbox/**
+
 receipts/**
 !receipts/examples/
 !receipts/examples/**
