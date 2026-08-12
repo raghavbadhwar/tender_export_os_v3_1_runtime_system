@@ -40,14 +40,24 @@ The design separates responsibilities as follows:
 
 ```mermaid
 flowchart TD
-  S["Public sources, research leads, local fixtures"] --> A["Adapters and extraction"]
-  A --> E["Typed, citation-aware events"]
-  E --> L["Canonical local event ledger"]
-  L --> G["Projections, policy, and readiness gates"]
-  G --> D["Internal briefs and draft packs"]
-  D --> H{"Owner approval boundary"}
-  H -->|"approved and separately configured"| X["External execution"]
-  H -->|"rejected or incomplete"| R["Revise or stop"]
+  H0["Agent 0 — Hermes Chief Operator"] --> R1["Agent 1 — Radar Agent<br/>discovery"]
+  R1 --> F2["Agent 2 — Fast Kill Agent<br/>triage"]
+  F2 -->|"DEEP_READ"| D3["Agent 3 — Deep Read Agent<br/>extraction"]
+  F2 -->|"reject or watch"| STOP["Reject / watchlist"]
+  D3 --> S4["Agent 4 — Supplier Engine<br/>sourcing proof"]
+  D3 --> C6["Agent 6 — Compliance Agent<br/>draft-only checks"]
+  S4 --> P5["Agent 5 — Pricing Agent<br/>cost waterfall"]
+  P5 --> B7["Agent 7 — Pack Builder<br/>artifact assembly"]
+  C6 --> B7
+  C11["Agent 11 — Codex Plugin Factory<br/>bounded artifact production"] -.-> B7
+  H0 -.-> C11
+  B7 --> A8["Agent 8 — Approval Desk<br/>decision interface"]
+  A8 --> O{"Owner approval boundary"}
+  O -->|"approved + configured"| E9["Agent 9 — Execution Tracker<br/>post-approval monitoring"]
+  O -->|"changes requested"| D3
+  E9 --> O10["Agent 10 — Owner Briefing Agent<br/>daily intelligence"]
+  O10 --> H0
+  E9 --> L["Canonical append-only event ledger"]
 ```
 
 | Layer | Repository contract | Evidence boundary |
