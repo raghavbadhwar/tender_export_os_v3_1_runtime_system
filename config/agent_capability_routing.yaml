@@ -1,0 +1,153 @@
+version: 1
+purpose: "Best-in-class agent capability routing for Tender Export OS v4.1"
+source_directories:
+  claude_plugins: "/Volumes/RAGHAV2/aios the final/claude-plugin-files"
+  accio_skills: "/Volumes/RAGHAV2/aios the final/accio_skills"
+policy:
+  original_external_directories_modified: false
+  credential_heavy_plugins_require_owner_approval: true
+  external_message_plugins_require_owner_approval: true
+  legal_compliance_outputs_are_draft_only: true
+  final_hsn_itchs_origin_price_delivery_payment_actions_require_approval: true
+  every_agent_output_cites_sources: true
+  every_agent_run_logs_agent_run_log_row: true
+
+shared_quality_gates:
+  - "case_id present in every artifact, log, approval card, and receipt"
+  - "sources_used list includes local files and external URLs"
+  - "unknowns, assumptions, and missing evidence are explicit"
+  - "approval-gated actions stop at approval card"
+  - "run result appended to data/agent_run_log.csv"
+  - "case mutation is reflected in data/events.jsonl when supported"
+
+agents:
+  hermes_chief_operator:
+    professional_standard: "COO + program manager + risk controller"
+    accio_skills: [skill-vetter, skill-creator, self-improvement, xlsx, pptx]
+    claude_plugins: [operations, productivity, enterprise-search, data]
+    hermes_skills: [tender-export-operator]
+    quality_gates:
+      - "one smallest useful owner action is recommended"
+      - "Kanban blockers and approval cards are current"
+      - "memory/skill changes are proposed, not silently persisted when approval policy requires review"
+  radar_agent:
+    professional_standard: "opportunity intelligence analyst"
+    accio_skills: [company-research, org-structure-research, market-insight-product-selection, competitor-deep-analysis, pdf, docx, xlsx]
+    claude_plugins: [browser, chrome, playwright, apify-mcp-server, data, enterprise-search]
+    quality_gates:
+      - "dedupe by source URL and title+buyer+deadline"
+      - "source health updated after every source scan"
+      - "no CAPTCHA bypass or login circumvention"
+  fast_kill_agent:
+    professional_standard: "bid/no-bid triage committee"
+    accio_skills: [market-viability-logic-auditor]
+    claude_plugins: [operations, data]
+    quality_gates:
+      - "hard reject only when evidence satisfies a configured kill rule"
+      - "missing or ambiguous data becomes WATCHLIST"
+      - "no-go note includes rule, evidence, reconsider condition"
+  deep_read_agent:
+    professional_standard: "tender/RFQ document analyst"
+    accio_skills: [pdf, docx, xlsx]
+    claude_plugins: [pdf-viewer, pdf-server-mcp, pdf-filler-simple, ms_office_word, data]
+    quality_gates:
+      - "all tender/RFQ files and corrigenda are listed"
+      - "risky clauses are quoted verbatim"
+      - "no eligibility claim without supporting document evidence"
+  supplier_engine_agent:
+    professional_standard: "strategic sourcing and procurement specialist"
+    accio_skills: [product-supplier-sourcing, supplier-performance-manager, company-research, 1688-sourcing, aliexpress-supplier-evaluator]
+    claude_plugins: [operations, sales, browser, chrome, data]
+    quality_gates:
+      - "5 candidate suppliers minimum"
+      - "3 source types minimum"
+      - "2 quote proofs minimum before pricing"
+      - "blacklist/watchlist and certificate checks recorded"
+  pricing_agent:
+    professional_standard: "commercial finance/pricing analyst"
+    accio_skills: [profit-margin-analyzer, tariff-search, international-shipping-customs, sales-tax-vat-automator, b2b-payment-terms-optimizer, xlsx, ecommerce-budget-forecaster]
+    claude_plugins: [finance, small-business, data]
+    quality_gates:
+      - "complete cost waterfall with no invisible cost lines"
+      - "unknown costs are conservative assumptions, never zero by default"
+      - "price remains draft until owner approval"
+  compliance_agent:
+    professional_standard: "export compliance drafter"
+    accio_skills: [international-shipping-customs, tariff-search]
+    claude_plugins: [regulatory-legal, commercial-legal, corporate-legal, legal, privacy-legal, data]
+    quality_gates:
+      - "DGFT/SCOMET and destination requirement sources cited"
+      - "HSN/ITC-HS and origin are candidate/draft only"
+      - "SCOMET or prohibited suspicion stops processing"
+  pack_builder_agent:
+    professional_standard: "bid/proposal production manager"
+    accio_skills: [pdf, docx, xlsx, pptx, invoice-generator]
+    claude_plugins: [documents, pdf, pdf-viewer, pdf-server-mcp, pdf-filler-simple, presentations, spreadsheets, ms_office_word, ms_office_powerpoint]
+    quality_gates:
+      - "pack includes cover, source list, risk register, missing-items list"
+      - "artifact is opened/rendered/tested before approval support"
+      - "no unapproved final compliance, origin, price, or delivery claims"
+  approval_desk_agent:
+    professional_standard: "executive decision designer"
+    accio_skills: [sales-negotiator]
+    claude_plugins: [operations, legal, data]
+    quality_gates:
+      - "decision card is readable in under two minutes"
+      - "benefit, concrete risk, recovery path, and missing info are explicit"
+      - "approval status remains PENDING until explicit owner decision receipt"
+  execution_tracker_agent:
+    professional_standard: "operations follow-up controller"
+    accio_skills: [supplier-performance-manager, gmail-assistant, email-automation-flow-builder]
+    claude_plugins: [operations, productivity, enterprise-search]
+    quality_gates:
+      - "receipts are evidence-backed"
+      - "overdue follow-ups are escalated, not auto-sent"
+      - "WON/LOST requires evidence"
+  owner_briefing_agent:
+    professional_standard: "daily intelligence briefer"
+    accio_skills: [company-research, internal-comms, pptx, docx, xlsx]
+    claude_plugins: [data, productivity, enterprise-search]
+    quality_gates:
+      - "brief is signal over noise"
+      - "top approvals, blockers, deadline risks, and one owner action are shown"
+      - "raw documents are not dumped"
+  codex_plugin_factory_agent:
+    professional_standard: "artifact/runtime production lead"
+    accio_skills: [pdf, docx, xlsx, pptx, invoice-generator, skill-vetter, skill-creator]
+    claude_plugins: [claude-code-setup, claude-md-management, github, context7, engineering, testing-automation, documents, pdf, spreadsheets, presentations, data]
+    quality_gates:
+      - "plugin choice is recorded"
+      - "artifact is validated by opening/rendering/testing"
+      - "plugin run receipt is saved under receipts/plugin_runs/"
+  sales_followup_agent:
+    professional_standard: "B2B sales follow-up and buyer communication specialist"
+    accio_skills: [gmail-assistant, sales-negotiator, email-automation-flow-builder, lifecycle-marketing-automator, copywriting]
+    claude_plugins: [sales, small-business, enterprise-search, productivity, telegram, imessage]
+    quality_gates:
+      - "outbound messages are drafts until owner approval"
+      - "every claim is backed by approved case evidence"
+      - "stage, CTA, next touch, and stop/slow rule are explicit"
+  source_health_agent:
+    professional_standard: "source reliability and supplier/source health analyst"
+    accio_skills: [supplier-performance-manager, company-research, review-analyst-agent, review-summarizer, competitive-landscape]
+    claude_plugins: [data, enterprise-search, operations, browser, playwright]
+    quality_gates:
+      - "authority, recency, proximity, consistency, and historical accuracy are scored"
+      - "critical facts are backed by primary source or cross-checks"
+      - "stale, broken, conflicting, and low-trust sources are escalated"
+  learning_review_agent:
+    professional_standard: "continuous improvement and prompt/profile governance lead"
+    accio_skills: [self-improvement, skill-creator, skill-vetter, review-analyst-agent]
+    claude_plugins: [operations, productivity, data, engineering]
+    quality_gates:
+      - "wins/losses/errors are converted into specific corrective actions"
+      - "skill/memory/config proposals are reviewed before durable changes where required"
+      - "repeat defects and corrective-action closure rate are tracked"
+  chatgpt_boardroom_handoff_agent:
+    professional_standard: "strategy researcher and executive decision memo writer"
+    accio_skills: [pptx, docx, xlsx, internal-comms, company-research]
+    claude_plugins: [enterprise-search, data, productivity, product-management]
+    quality_gates:
+      - "boardroom handoff includes decision, options, recommendation, evidence, risks, assumptions, dissenting view, and next actions"
+      - "external facts cite sources and confidence"
+      - "one-page executive summary is included"

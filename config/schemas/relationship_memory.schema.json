@@ -1,0 +1,42 @@
+{
+  "file": "data/relationship_memory.csv",
+  "primary_key": "memory_id",
+  "required_columns": [
+    "memory_id",
+    "buyer_id",
+    "case_id",
+    "memory_type",
+    "summary",
+    "evidence_receipt_path",
+    "evidence_sha256",
+    "verification_status",
+    "source_communication_id",
+    "status",
+    "recorded_by",
+    "recorded_at",
+    "review_after",
+    "supersedes_memory_id",
+    "notes"
+  ],
+  "required_fields": [
+    "memory_id",
+    "buyer_id",
+    "memory_type",
+    "summary",
+    "evidence_receipt_path",
+    "evidence_sha256",
+    "verification_status",
+    "status",
+    "recorded_by",
+    "recorded_at"
+  ],
+  "enums": {
+    "memory_type": ["COMMUNICATION_PREFERENCE", "OPT_OUT", "RECURRING_OBJECTION", "OWNER_CORRECTION"],
+    "verification_status": ["VERIFIED"],
+    "status": ["ACTIVE", "SUPERSEDED", "EXPIRED"]
+  },
+  "datetime_fields": ["recorded_at"],
+  "date_fields": ["review_after"],
+  "numeric_fields": [],
+  "url_fields": []
+}

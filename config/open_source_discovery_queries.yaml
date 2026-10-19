@@ -1,0 +1,36 @@
+# Safe starter queries for scripts/run_open_source_discovery.py
+# These are broad discovery scouts only. They do not create cases or proof-ready records.
+
+defaults:
+  limit: 8
+  max_pages: 3
+  katana_depth: 1
+  katana_limit: 10
+  crawl4ai_limit: 1
+  ensure_searxng: true
+
+queries:
+  - id: gov_spices_india
+    workflow: GOV
+    query: "india government tender spices supply bid"
+    intent: "Find public Indian government tender leads around spices/food supply."
+
+  - id: gov_handicrafts_gifting
+    workflow: GOV
+    query: "government tender handicrafts corporate gifts India"
+    intent: "Find low-competition gifting/handicraft tender leads."
+
+  - id: export_spices_rfq
+    workflow: EXPORT
+    query: "export RFQ Indian spices buyer import requirement"
+    intent: "Find export RFQ/buyer lead pages for Indian spices."
+
+  - id: export_premium_handicrafts
+    workflow: EXPORT
+    query: "UK USA Canada buyer RFQ Indian handicrafts corporate gifting"
+    intent: "Find Western premium buyer/market leads for handicrafts/gifting."
+
+  - id: supplier_packaging_export
+    workflow: SUPPLIER
+    query: "India export packaging supplier fragile handicrafts quote"
+    intent: "Find supplier/packing proof leads for Western premium lane."

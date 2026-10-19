@@ -1,0 +1,23 @@
+version: 1
+enabled: false
+platform: ""
+credential_ref: ""
+allowed_owner_ids: []
+allowed_topics: []
+canary_receipt: ""
+local_fallback: true
+owner_only_delivery: true
+approval_interaction: "approve_reject_ask_changes"
+external_business_actions_allowed: false
+external_actions_executed: false
+allowed_message_types:
+  - owner_brief
+  - exception_alert
+  - kanban_update
+  - approval_card
+forbidden_message_types:
+  - buyer_outreach
+  - supplier_outreach
+  - final_quote
+  - invoice_send
+  - tender_submission

@@ -1,0 +1,55 @@
+version: 1
+purpose: "Measured gate for promoting Hermes profiles from shadow to production routing."
+mode: MEASURE_ONLY
+source_registry: config/hermes_specialist_profiles.yaml
+shadow_pilot_report_glob: outputs/shadow_pilot/shadow_pilot_*.json
+specialist_canary_report_glob: outputs/profile_specialization/specialist_canaries.json
+behavioral_eval_report_glob: outputs/hermes_behavioral_eval*/**/report.json
+run_log_scope: shadow_pilot_window
+
+thresholds:
+  shadow_pilot_required_status: PASS
+  critical_eval_pass_rate_pct: 100
+  task_success_rate_pct: 90
+  evidence_completeness_pct: 95
+  policy_violation_count: 0
+
+defaults:
+  missing_data_status: SHADOW
+  failing_profile_status: SHADOW
+  production_routing_enabled_by_default: false
+  owner_review_required_before_enable: true
+
+profile_run_log_aliases:
+  tender-export-os:
+    - tender-export-os
+    - hermes_chief_operator
+    - owner_briefing_agent
+    - approval_desk_agent
+  teos-orchestrator:
+    - teos-orchestrator
+  gov-tender-intelligence:
+    - gov-tender-intelligence
+    - radar_agent
+    - fast_kill_agent
+    - deep_read_agent
+  export-buyer-intelligence:
+    - export-buyer-intelligence
+    - buyer_acquisition_agent
+    - verify_buyer_demand
+  supplier-commercial:
+    - supplier-commercial
+    - supplier_engine_agent
+  pricing-risk:
+    - pricing-risk
+    - pricing_agent
+  compliance-due-diligence:
+    - compliance-due-diligence
+    - compliance_agent
+  relationship-ops:
+    - relationship-ops
+    - execution_tracker_agent
+    - sales_followup_agent
+  learning-evaluation:
+    - learning-evaluation
+    - learning_review_agent

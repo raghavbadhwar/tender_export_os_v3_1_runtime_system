@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Tender Export OS Export Commercial Readiness",
+  "schema_version": "export_commercial_readiness.v1",
+  "required_fields": [
+    "case_id",
+    "workflow_type",
+    "pricing_status",
+    "supplier_quote_proofs",
+    "cost_inputs_usd",
+    "quote_validity_days",
+    "payment_risk_note",
+    "candidate_hsn_itchs",
+    "scomet_review",
+    "origin_questions",
+    "destination_requirements",
+    "incoterm_rationale",
+    "unresolved_items",
+    "external_actions_executed"
+  ],
+  "pricing_statuses": ["DRAFT_READY", "BLOCKED"],
+  "required_cost_components_usd": ["supplier_base", "packaging", "inland_freight", "cha_customs_docs", "port_handling", "international_freight", "insurance", "bank_charges_pct", "inspection_certification", "sample_cost", "currency_buffer_pct", "payment_risk_pct", "margin_pct"],
+  "candidate_hsn_statuses": ["DRAFT", "OWNER_EXPERT_REVIEW", "BLOCKED"],
+  "scomet_statuses": ["CLEAR_DRAFT", "SUSPECTED", "SPECIALIST_REVIEW_REQUIRED", "PROHIBITED"],
+  "boundary": "All prices, classifications, origin positions, terms, and delivery assumptions remain internal drafts. A SCOMET, prohibited, missing-cost, missing-quote, or unresolved-compliance signal blocks quotation readiness."
+}

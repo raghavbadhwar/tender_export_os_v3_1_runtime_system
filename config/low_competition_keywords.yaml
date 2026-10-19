@@ -1,0 +1,101 @@
+clusters:
+  retender_corrigenda:
+    keywords:
+      - retender
+      - re-tender
+      - re tender
+      - recalled
+      - cancelled and recalled
+      - date extension
+      - corrigendum
+      - amendment
+      - revised BOQ
+      - revised bid
+      - extended bid date
+      - shortfall of bidders
+      - single bid received
+
+  maintenance_amc:
+    keywords:
+      - annual maintenance
+      - AMC
+      - comprehensive maintenance
+      - repair
+      - servicing
+      - refilling
+      - replacement
+      - maintenance of installed
+      - rate contract
+
+  record_digitisation:
+    keywords:
+      - scanning
+      - digitization
+      - digitisation
+      - indexing
+      - record room
+      - data entry
+      - data processing
+      - MIS
+      - dashboard
+      - document management
+
+  water_ro:
+    keywords:
+      - RO
+      - water purifier
+      - filter cartridge
+      - filter replacement
+      - RO membrane
+      - water cooler
+      - drinking water system
+      - AMC of RO
+
+  office_operations:
+    keywords:
+      - office stationery
+      - printing
+      - toner
+      - cartridge
+      - photocopier
+      - conference kit
+      - training material
+      - office automation
+
+  cleaning_facility:
+    keywords:
+      - cleaning material
+      - sanitation item
+      - housekeeping supplies
+      - waste bin
+      - segregation bins
+      - pest control
+      - disinfection
+      - linen washing
+      - hospital linen
+
+  badly_titled_operational:
+    keywords:
+      - misc item
+      - miscellaneous
+      - consumables
+      - supply of item
+      - item required
+      - material required
+      - annual rate contract
+      - local purchase
+      - repair of old
+      - replacement of damaged
+      - spares
+      - refilling work
+
+  crowded_watch_keywords:
+    keywords:
+      - laptop
+      - desktop computer
+      - CCTV
+      - solar plant
+      - LED street light
+      - manpower supply
+      - security guard
+      - civil work

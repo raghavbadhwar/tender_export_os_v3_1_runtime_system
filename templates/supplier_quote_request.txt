@@ -1,0 +1,47 @@
+Subject: Request for Quotation — {{PRODUCT_NAME}} | Case {{CASE_ID}}
+
+Dear {{SUPPLIER_CONTACT_NAME}} / Team,
+
+We are a procurement and export trading company exploring supply options for the following requirement.
+
+REQUEST FOR QUOTATION
+
+Product: {{PRODUCT_NAME}}
+Specification: {{PRODUCT_SPEC}}
+Quantity: {{QUANTITY}} {{UNIT}}
+Delivery Location: {{DELIVERY_LOCATION}}
+Required Delivery: Within {{DELIVERY_DAYS}} days from Purchase Order
+Intended Use: {{USE_TYPE}} — Government Supply / Export Order
+
+Please quote for the following:
+
+1. Unit price (exclusive of GST)
+2. GST applicable rate and amount
+3. Lead time from PO
+4. Minimum order quantity (if any)
+5. Packing details
+6. Payment terms you can offer
+7. Quote validity period
+
+Required certificates/compliance for this requirement:
+{{REQUIRED_CERTIFICATIONS}}
+
+Please also confirm:
+- Your GSTIN: ____________________
+- MSME/Udyam Number (if any): ____________________
+- Your ability to supply as per required specs and quantity
+
+Please send your quote within 48 hours of this request.
+
+This is an information-gathering inquiry only. No purchase commitment is made at this stage.
+
+Looking forward to your response.
+
+Regards,
+{{OWNER_NAME}}
+{{COMPANY_NAME}}
+{{PHONE}}
+{{EMAIL}}
+
+---
+Reference: Case {{CASE_ID}} | {{DATE}} | Tender + Export OS

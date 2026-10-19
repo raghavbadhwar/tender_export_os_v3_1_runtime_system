@@ -1,0 +1,39 @@
+NO-GO REASON NOTE
+Tender + Export OS — Case {{CASE_ID}}
+Date: {{DATE}}
+Agent: {{AGENT_NAME}}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CASE: {{CASE_ID}}
+OPPORTUNITY: {{OPPORTUNITY_TITLE}}
+BUYER: {{BUYER_NAME}}
+WORKFLOW: {{WORKFLOW_TYPE}}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+REJECTION DECISION: REJECTED
+
+REASON CODE: {{REASON_CODE}}
+
+EXPLANATION:
+{{EXPLANATION}}
+
+KILL RULE APPLIED: {{RULE_ID}}
+
+DATA CHECKED:
+{{DATA_CHECKED}}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CAN RECONSIDER: {{CAN_RECONSIDER}}
+
+RECONSIDER CONDITION:
+{{RECONSIDER_CONDITION}}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This case has been archived. Status: REJECTED
+No further resources will be allocated unless owner manually promotes.
+
+Reference: Case {{CASE_ID}} | Tender Export OS v4.1

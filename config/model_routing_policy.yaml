@@ -1,0 +1,49 @@
+version: 1
+purpose: "Cost-aware, approval-safe model selection for internal Tender Export OS work."
+default_route: high_reasoning
+
+routes:
+  high_reasoning:
+    provider: openai-codex
+    model: gpt-5.6-terra
+    allowed_work_types: [case_analysis, exception_diagnosis, approval_explanation, learning_review, compliance_due_diligence]
+    risk_tier: high
+    external_actions_executed: false
+  low_risk_classification:
+    provider: openai-codex
+    model: gpt-5.5
+    allowed_work_types: [bounded_classification, metadata_normalization, low_risk_synthesis]
+    risk_tier: low
+    external_actions_executed: false
+  artifact_worker:
+    provider: openai-codex
+    model: gpt-5.6-terra
+    allowed_work_types: [artifact_production, parser_repair, spreadsheet_validation, document_generation]
+    risk_tier: high
+    external_actions_executed: false
+  approval_desk:
+    provider: openai-codex
+    model: gpt-5.6-terra
+    allowed_work_types: [owner_brief, approval_card, approval_explanation]
+    risk_tier: high
+    external_actions_executed: false
+
+fallback:
+  same_provider:
+    enabled: true
+    provider: openai-codex
+    model: gpt-5.5
+    triggers: [rate_limit, overload, service_error, connection_failure]
+    external_actions_executed: false
+  cross_provider:
+    enabled: false
+    owner_approval_required: true
+    budget_required: true
+    data_boundary_review_required: true
+
+safety:
+  high_risk_work_types_must_not_use_low_risk_route: true
+  external_actions_executed: false
+  no_route_grants_external_authority: true
+  raw_prompts_persisted: false
+  raw_private_content_persisted: false

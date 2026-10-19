@@ -1,0 +1,52 @@
+{
+  "file": "data/model_registry.csv",
+  "primary_key": "model_id",
+  "required_columns": [
+    "model_id",
+    "target_id",
+    "workflow_type",
+    "horizon_days",
+    "model_version",
+    "feature_schema_hash",
+    "training_window_start",
+    "training_window_end",
+    "evaluation_window_start",
+    "evaluation_window_end",
+    "mature_sample_count",
+    "positive_class_count",
+    "negative_class_count",
+    "primary_metric",
+    "metric_value",
+    "brier_score",
+    "log_loss",
+    "calibration_error",
+    "calibration_status",
+    "status",
+    "artifact_path",
+    "approval_id",
+    "rollback_version",
+    "registered_at",
+    "notes"
+  ],
+  "required_fields": [
+    "model_id",
+    "target_id",
+    "workflow_type",
+    "horizon_days",
+    "model_version",
+    "feature_schema_hash",
+    "mature_sample_count",
+    "calibration_status",
+    "status",
+    "registered_at"
+  ],
+  "enums": {
+    "workflow_type": ["GOV", "EXPORT", "SUPPLIER", "SOURCE", "CROSS_WORKFLOW"],
+    "calibration_status": ["PRIOR_UNCALIBRATED", "INSUFFICIENT_MATURE_SAMPLE", "EVALUATED", "CALIBRATED", "DRIFTED", "REJECTED"],
+    "status": ["PRIOR", "CANDIDATE", "CHAMPION", "REJECTED", "RETIRED", "ROLLED_BACK"]
+  },
+  "date_fields": ["training_window_start", "training_window_end", "evaluation_window_start", "evaluation_window_end"],
+  "datetime_fields": ["registered_at"],
+  "numeric_fields": ["horizon_days", "mature_sample_count", "positive_class_count", "negative_class_count", "metric_value", "brier_score", "log_loss", "calibration_error"],
+  "url_fields": []
+}

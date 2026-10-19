@@ -1,0 +1,53 @@
+{
+  "file": "data/buyer_purchase_history.csv",
+  "primary_key": "history_id",
+  "required_columns": [
+    "history_id",
+    "buyer_name",
+    "buyer_type",
+    "department",
+    "country_or_state",
+    "workflow_type",
+    "category_code",
+    "category_name",
+    "source_names",
+    "past_case_count",
+    "last_seen_date",
+    "first_seen_date",
+    "avg_estimated_value",
+    "median_estimated_value",
+    "avg_emd",
+    "repeat_interval_days",
+    "next_likely_window_start",
+    "next_likely_window_end",
+    "buyer_repeat_score",
+    "evidence_level",
+    "confidence",
+    "notes",
+    "created_at",
+    "updated_at"
+  ],
+  "required_fields": ["history_id", "buyer_name", "workflow_type", "category_name", "past_case_count", "created_at"],
+  "enums": {
+    "workflow_type": ["GOV", "EXPORT", "MIXED"],
+    "confidence": ["HIGH", "MEDIUM", "LOW"],
+    "evidence_level": ["", "PUBLIC_LISTING_ONLY", "SOURCE_DETAIL_CAPTURED", "DOCUMENTS_DISCOVERED", "DOCUMENTS_DOWNLOADED", "DEEP_READ_COMPLETE", "RFQ_VERIFIED", "MIXED"]
+  },
+  "date_fields": [
+    "last_seen_date",
+    "first_seen_date",
+    "next_likely_window_start",
+    "next_likely_window_end",
+    "created_at",
+    "updated_at"
+  ],
+  "numeric_fields": [
+    "past_case_count",
+    "avg_estimated_value",
+    "median_estimated_value",
+    "avg_emd",
+    "repeat_interval_days",
+    "buyer_repeat_score"
+  ],
+  "url_fields": []
+}

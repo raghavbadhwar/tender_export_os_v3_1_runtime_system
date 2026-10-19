@@ -1,0 +1,9 @@
+{
+  "schema_version": "canonical_runtime.v1",
+  "mode": "public-template",
+  "hermes_workdir": ".",
+  "repository_remote": "git@github.com:raghavbadhwar/tender_export_os_v3_1_runtime_system.git",
+  "branch": "agent/teos-safe-sync-20260807",
+  "commit": "10d4941e8e0f836ba398502ed91fca526f239a2e",
+  "public_template": true
+}

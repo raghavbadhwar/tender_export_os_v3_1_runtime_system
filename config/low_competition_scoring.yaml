@@ -1,0 +1,34 @@
+score:
+  base: 50
+
+  positive:
+    retender_or_corrigendum: 15
+    deadline_extended: 10
+    repeat_buyer: 15
+    supplier_already_available: 20
+    local_delivery: 10
+    low_emd: 10
+    clear_boq: 15
+    category_beginner_friendly: 10
+    public_documents_available: 10
+    no_oem_requirement_visible: 10
+    no_past_experience_visible: 10
+    no_high_turnover_visible: 10
+
+  negative:
+    obvious_crowded_keyword: -15
+    high_emd: -15
+    oem_required: -20
+    past_experience_required: -20
+    manufacturer_only: -40
+    short_deadline: -15
+    remote_delivery: -10
+    high_turnover: -20
+    unclear_boq: -15
+    login_blocked_no_docs: -10
+    compliance_heavy: -20
+
+thresholds:
+  easy_capture: 75
+  watchlist: 55
+  avoid: 40

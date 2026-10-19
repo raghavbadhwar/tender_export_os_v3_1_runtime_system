@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tender-export-os.local/schemas/learning_promotion_receipt.schema.json",
+  "title": "Tender OS Learning Promotion Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "proposal_id",
+    "proposal_type",
+    "proposal_target",
+    "proposed_version",
+    "approval_id",
+    "evaluation_report_path",
+    "evaluation_report_sha256",
+    "checkpoint_path",
+    "rollback_artifact_path",
+    "artifact_hash",
+    "event_id",
+    "promoted_at",
+    "external_actions_executed",
+    "raw_content_persisted"
+  ],
+  "properties": {
+    "schema_version": {"const": "learning_promotion_receipt.v1"},
+    "proposal_id": {"type": "string", "minLength": 1},
+    "proposal_type": {"type": "string", "enum": ["memory", "skill", "rule", "prompt", "model", "source_adapter", "test"]},
+    "proposal_target": {"type": "string", "minLength": 1},
+    "proposed_version": {"type": "string", "minLength": 1},
+    "approval_id": {"type": "string", "minLength": 1},
+    "evaluation_report_path": {"type": "string", "minLength": 1},
+    "evaluation_report_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "checkpoint_path": {"type": "string", "minLength": 1},
+    "rollback_artifact_path": {"type": "string", "minLength": 1},
+    "artifact_hash": {"type": "string", "minLength": 1},
+    "event_id": {"type": "string", "minLength": 1},
+    "promoted_at": {"type": "string", "minLength": 1},
+    "external_actions_executed": {"const": false},
+    "raw_content_persisted": {"const": false}
+  }
+}

@@ -1,0 +1,37 @@
+source: cppp
+start_url: https://eprocure.gov.in/cppp/latestactivetendersnew/cpppdata
+listing_card:
+  - "table tbody tr"
+  - "tr"
+fields:
+  tender_id:
+    - "td:nth-child(5) a[href*='tendersfullview']"
+    - "td:nth-child(2)"
+  title:
+    - "td:nth-child(5):has(a[href*='tendersfullview'])"
+    - "td:nth-child(3) a"
+    - "td:nth-child(3)"
+  buyer:
+    - "td:nth-child(5):has(a[href*='tendersfullview']) + td"
+    - "td:nth-child(4)"
+  deadline:
+    - "td:nth-child(3):not(:has(a.detail-link))"
+    - "td:nth-child(5)"
+  value:
+    - ".value"
+    - "td:nth-child(6)"
+  detail_link:
+    - "td:nth-child(5) a[href*='tendersfullview']"
+    - "a.detail-link"
+    - "a[href*='TenderDetails']"
+  document_link:
+    - "a.document-link"
+    - "a[href$='.pdf']"
+    - "a[href*='download']"
+  corrigendum_link:
+    - "a.corrigendum-link"
+    - "a[href*='corrigendum']"
+  boq_link:
+    - "a.boq-link"
+    - "a[href*='boq']"
+unsafe_actions: [submit, upload, pay, declaration, dsc]
