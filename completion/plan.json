@@ -1,0 +1,367 @@
+{
+  "schema_version": "completion_plan.v1",
+  "project": "Tender Export OS",
+  "current_state": "Public-template regression is green; production remains read-only and blocked on canonical runtime identity, live source health, authenticated approvals, reproducibility, audit anchoring, and bounded pilot evidence.",
+  "execution_policy": {
+    "one_task_per_run": true,
+    "max_check_attempts": 2,
+    "external_actions_allowed": false,
+    "commit_allowed": false,
+    "push_allowed": false,
+    "deploy_allowed": false
+  },
+  "tasks": [
+    {
+      "id": "TEOS-01",
+      "title": "Add the canonical runtime identity gate",
+      "priority": "P0",
+      "status": "done",
+      "depends_on": [],
+      "objective": "Add a fail-closed manifest and validator that prove the configured Hermes workdir, repository remote, branch, commit, and public-template mode before readiness checks run.",
+      "context_files": [
+        "AGENTS.md",
+        "README.md",
+        "scripts/run_production_readiness_gate.py",
+        "config/profile_production_routing_gate.yaml",
+        "scripts/validate_business_state_consistency.py"
+      ],
+      "allowed_paths": [
+        "config/canonical_runtime.json",
+        "scripts/validate_canonical_runtime.py",
+        "tests/test_validate_canonical_runtime.py",
+        "completion/plan.json",
+        "completion/evidence"
+      ],
+      "max_changed_files": 5,
+      "steps": [
+        "Inspect existing readiness and path checks.",
+        "Define the minimal canonical runtime manifest with no private absolute path in public mode.",
+        "Resolve live Git identity read-only and compare every declared field.",
+        "Fail on missing repository, remote mismatch, branch mismatch, dirty tracked source, or commit mismatch.",
+        "Add positive and negative tests."
+      ],
+      "checks": [
+        "python3 -m pytest -q tests/test_validate_canonical_runtime.py",
+        "python3 scripts/validate_canonical_runtime.py --public-template --json",
+        "python3 completion/validate.py --next",
+        "git diff --check"
+      ],
+      "acceptance": [
+        "A missing or mismatched commit fails closed.",
+        "A dirty tracked source tree fails while ignored runtime data is reported separately.",
+        "Public output contains no private absolute path.",
+        "The validator performs no mutation or external action."
+      ],
+      "stop_conditions": [
+        "The canonical checkout has not been selected by the owner.",
+        "Validation would require changing Hermes, cron, Drive, or live runtime state."
+      ],
+      "evidence_receipt": "completion/evidence/TEOS-01.json",
+      "human_gate": false,
+      "blocker": null
+    },
+    {
+      "id": "TEOS-02",
+      "title": "Require a seven-run source-canary window",
+      "priority": "P0",
+      "status": "done",
+      "depends_on": [
+        "TEOS-01"
+      ],
+      "objective": "Extend the existing reliability gate so production routing cannot advance without seven consecutive scheduled receipts showing every configured read-only source adapter healthy.",
+      "context_files": [
+        "scripts/check_cron_gateway_reliability.py",
+        "scripts/run_production_readiness_gate.py",
+        "tests/test_cron_gateway_reliability.py",
+        "config/profile_production_routing_gate.yaml"
+      ],
+      "allowed_paths": [
+        "scripts/check_cron_gateway_reliability.py",
+        "scripts/run_production_readiness_gate.py",
+        "tests/test_cron_gateway_reliability.py",
+        "completion/plan.json",
+        "completion/evidence"
+      ],
+      "max_changed_files": 5,
+      "steps": [
+        "Trace the current source-health receipt format.",
+        "Add a bounded chronological seven-run evaluator.",
+        "Reject gaps, duplicates, stale receipts, partial adapter sets, and any unhealthy result.",
+        "Keep all checks read-only.",
+        "Add deterministic fixtures in the existing test file."
+      ],
+      "checks": [
+        "python3 -m pytest -q tests/test_cron_gateway_reliability.py tests/test_run_production_readiness_gate.py",
+        "python3 completion/validate.py --next",
+        "git diff --check"
+      ],
+      "acceptance": [
+        "Six healthy runs remain blocked.",
+        "Any unhealthy or missing adapter resets the consecutive window.",
+        "Stale or duplicated receipts cannot satisfy the gate.",
+        "No source adapter is invoked by the evaluator."
+      ],
+      "stop_conditions": [
+        "The current receipt schema cannot identify scheduled runs deterministically.",
+        "The change would enable live production routing."
+      ],
+      "evidence_receipt": "completion/evidence/TEOS-02.json",
+      "human_gate": false,
+      "blocker": null
+    },
+    {
+      "id": "TEOS-03",
+      "title": "Bind owner decisions to an authenticated principal contract",
+      "priority": "P0",
+      "status": "done",
+      "depends_on": [
+        "TEOS-01"
+      ],
+      "objective": "Replace trust in arbitrary owner strings at the decision boundary with a typed verifier contract that fails closed when authenticated principal evidence is absent or mismatched.",
+      "context_files": [
+        "AGENTS.md",
+        "scripts/process_owner_decision.py",
+        "scripts/tender_os_policy.py",
+        "tests/test_tender_os_policy.py",
+        "config/approval_policy.yaml"
+      ],
+      "allowed_paths": [
+        "scripts/process_owner_decision.py",
+        "scripts/owner_identity.py",
+        "tests/test_process_owner_decision.py",
+        "tests/test_owner_identity.py",
+        "completion/plan.json",
+        "completion/evidence"
+      ],
+      "max_changed_files": 5,
+      "steps": [
+        "Trace every caller of the owner decision entrypoint.",
+        "Define a verifier interface using existing receipt fields and no live provider dependency.",
+        "Require verified subject, issuer, audience, expiry, and decision scope.",
+        "Fail closed for missing, expired, mismatched, or caller-supplied identity.",
+        "Add negative tests before integration."
+      ],
+      "checks": [
+        "python3 -m pytest -q tests/test_owner_identity.py tests/test_process_owner_decision.py",
+        "python3 completion/validate.py --next",
+        "git diff --check"
+      ],
+      "acceptance": [
+        "Caller-provided owner text alone cannot authorize a decision.",
+        "Expired or scope-mismatched identity fails.",
+        "The verifier contract is injectable for deterministic tests.",
+        "No live identity provider is contacted."
+      ],
+      "stop_conditions": [
+        "No stable decision receipt or approval scope exists to bind.",
+        "The task requires selecting or configuring a live identity provider."
+      ],
+      "evidence_receipt": "completion/evidence/TEOS-03.json",
+      "human_gate": false,
+      "blocker": null
+    },
+    {
+      "id": "TEOS-04",
+      "title": "Prove atomic single-use approval consumption",
+      "priority": "P0",
+      "status": "done",
+      "depends_on": [
+        "TEOS-03"
+      ],
+      "objective": "Make the approval decision path reject reuse, payload drift, expiry, and concurrent consumption before any future executor can be connected.",
+      "context_files": [
+        "scripts/tender_os_policy.py",
+        "scripts/business_effect_guard.py",
+        "tests/test_tender_os_policy.py",
+        "tests/test_business_effect_guard.py"
+      ],
+      "allowed_paths": [
+        "scripts/tender_os_policy.py",
+        "scripts/business_effect_guard.py",
+        "tests/test_tender_os_policy.py",
+        "tests/test_business_effect_guard.py",
+        "completion/plan.json",
+        "completion/evidence"
+      ],
+      "max_changed_files": 5,
+      "steps": [
+        "Trace approval verification and receipt-write callers.",
+        "Define the exact atomicity invariant at the shared boundary.",
+        "Reject consumed, expired, mismatched, or concurrently claimed approvals.",
+        "Keep missing policy/ledger services fail-closed.",
+        "Add replay and concurrency regression tests."
+      ],
+      "checks": [
+        "python3 -m pytest -q tests/test_tender_os_policy.py tests/test_business_effect_guard.py",
+        "python3 scripts/tender_os_policy.py --self-test",
+        "python3 completion/validate.py --next",
+        "git diff --check"
+      ],
+      "acceptance": [
+        "An approval can authorize at most one exact effect intent.",
+        "Payload or scope drift is denied.",
+        "Concurrent claims produce at most one success.",
+        "No external effect tool is added or invoked."
+      ],
+      "stop_conditions": [
+        "The current local storage cannot provide an atomic primitive.",
+        "The proposed change would weaken fail-closed behavior when OPA or the ledger is unavailable."
+      ],
+      "evidence_receipt": "completion/evidence/TEOS-04.json",
+      "human_gate": false,
+      "blocker": null
+    },
+    {
+      "id": "TEOS-05",
+      "title": "Make dependency drift an explicit release blocker",
+      "priority": "P1",
+      "status": "done",
+      "depends_on": [
+        "TEOS-01"
+      ],
+      "objective": "Add a deterministic dependency-lock coverage check that reports unpinned runtime requirements without guessing upgrades or performing network installation.",
+      "context_files": [
+        "requirements.txt",
+        "requirements-mcp.lock.txt",
+        ".github/workflows/ci.yml",
+        "scripts/run_full_safe_regression.py"
+      ],
+      "allowed_paths": [
+        "scripts/validate_dependency_locks.py",
+        "tests/test_validate_dependency_locks.py",
+        ".github/workflows/ci.yml",
+        "completion/plan.json",
+        "completion/evidence"
+      ],
+      "max_changed_files": 5,
+      "steps": [
+        "Inventory runtime requirement files and CI installation commands.",
+        "Define exact pin and duplicate/conflict rules.",
+        "Add a read-only validator with machine-readable output.",
+        "Test unpinned, duplicated, conflicting, URL, and marker cases.",
+        "Add the validator to CI only after local tests pass."
+      ],
+      "checks": [
+        "python3 -m pytest -q tests/test_validate_dependency_locks.py",
+        "python3 scripts/validate_dependency_locks.py --json",
+        "python3 completion/validate.py --next",
+        "git diff --check"
+      ],
+      "acceptance": [
+        "Every installed production dependency is covered by an exact lock or explicit approved exception.",
+        "The validator performs no network access.",
+        "Conflicting duplicate requirements fail.",
+        "CI runs the same validator."
+      ],
+      "stop_conditions": [
+        "A requirement source is generated externally and cannot be reproduced.",
+        "Resolving a conflict requires choosing a new package version."
+      ],
+      "evidence_receipt": "completion/evidence/TEOS-05.json",
+      "human_gate": false,
+      "blocker": null
+    },
+    {
+      "id": "TEOS-06",
+      "title": "Export a privacy-safe ledger checkpoint",
+      "priority": "P1",
+      "status": "done",
+      "depends_on": [
+        "TEOS-01"
+      ],
+      "objective": "Create a deterministic checkpoint over the append-only event ledger that can be stored externally later without exposing business data or pretending to be a deployed trust anchor.",
+      "context_files": [
+        "scripts/event_ledger.py",
+        "data/events.jsonl",
+        "docs/FINAL_ARCHITECTURE.md",
+        "tests/test_event_ledger_concurrency.py"
+      ],
+      "allowed_paths": [
+        "scripts/export_ledger_checkpoint.py",
+        "tests/test_event_ledger_concurrency.py",
+        "tests/test_export_ledger_checkpoint.py",
+        "docs/LEDGER_CHECKPOINTS.md",
+        "completion/plan.json",
+        "completion/evidence"
+      ],
+      "max_changed_files": 5,
+      "steps": [
+        "Reuse the canonical event ordering and hashing rules.",
+        "Emit only count, terminal hash, source digest, timestamp policy, and schema version.",
+        "Verify tamper and truncation detection.",
+        "Document that external anchoring remains a separate human/infra gate.",
+        "Add deterministic tests."
+      ],
+      "checks": [
+        "python3 -m pytest -q tests/test_export_ledger_checkpoint.py tests/test_event_ledger_concurrency.py",
+        "python3 completion/validate.py --next",
+        "git diff --check"
+      ],
+      "acceptance": [
+        "Checkpoint generation is deterministic for identical bytes.",
+        "Tamper and truncation are detected.",
+        "No tender, supplier, buyer, price, credential, or owner data is emitted.",
+        "No external anchor is contacted or claimed."
+      ],
+      "stop_conditions": [
+        "The current event ordering cannot be reproduced deterministically.",
+        "The checkpoint would expose raw business identifiers or personal data."
+      ],
+      "evidence_receipt": "completion/evidence/TEOS-06.json",
+      "human_gate": false,
+      "blocker": null
+    },
+    {
+      "id": "TEOS-07",
+      "title": "Complete supervised shadow and bounded pilot evidence",
+      "priority": "P2",
+      "status": "blocked",
+      "depends_on": [
+        "TEOS-02",
+        "TEOS-03",
+        "TEOS-04",
+        "TEOS-05",
+        "TEOS-06"
+      ],
+      "objective": "Collect seven healthy scheduled source runs, fourteen clean shadow days, an owner-approved read-only canary, restore evidence, and a thirty-day bounded pilot with zero prohibited external effects.",
+      "context_files": [
+        "AGENTS.md",
+        "scripts/run_production_readiness_gate.py",
+        "config/profile_production_routing_gate.yaml",
+        "docs/HERMES_NATIVE_CONTROL_PLANE.md"
+      ],
+      "allowed_paths": [
+        "outputs/production_readiness",
+        "docs/BOUNDED_PILOT_RUNBOOK.md",
+        "completion/plan.json",
+        "completion/evidence"
+      ],
+      "max_changed_files": 4,
+      "steps": [
+        "Obtain authenticated owner approval for the exact read-only pilot scope.",
+        "Collect scheduled receipts without backfilling or simulation.",
+        "Run the restore and incident drills.",
+        "Review weekly policy, evidence, and external-effect metrics.",
+        "Record final owner/security signoff or blockers."
+      ],
+      "checks": [
+        "python3 scripts/run_production_readiness_gate.py --help",
+        "python3 scripts/run_full_safe_regression.py --include-pytest",
+        "python3 completion/validate.py --next"
+      ],
+      "acceptance": [
+        "Seven consecutive source runs are fully healthy.",
+        "Fourteen shadow days meet the documented thresholds.",
+        "The thirty-day pilot records zero policy violations and zero prohibited external effects.",
+        "Restore and incident drills pass at the same immutable commit."
+      ],
+      "stop_conditions": [
+        "Owner approval is absent, expired, or not scope-bound.",
+        "Any portal submit, DSC, payment, final price, classification, origin, delivery, or supplier commitment is requested."
+      ],
+      "evidence_receipt": "completion/evidence/TEOS-07.json",
+      "human_gate": true,
+      "blocker": "Scheduled elapsed evidence, authenticated owner approval, and supervised real pilot are required."
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "project": "TEOS",
+  "copy_id": "teos-02",
+  "snapshot_date": "2026-10-19",
+  "original_local_head": "822ecbc34342395ffff718a9e846b90185635163",
+  "original_history_included": false,
+  "scope": "Reviewed current source snapshot, not a full disk backup. Dependencies, generated builds, private data, credentials and workflow execution definitions omitted. No build or production-readiness claim.",
+  "source_file_count": 827,
+  "source_manifest_sha256": "db27db30542e157a0f6ed7b5f72fad9e728592de226687550eaca34ac7c9191d",
+  "exclusion_reason_counts": {
+    "unclassified_file_type": 17,
+    "private_data_binary_or_generated_artifact": 42,
+    "binary_asset_needs_review": 51,
+    "workflow_execution_prevention": 1,
+    "generated_dependency_or_filesystem_metadata": 6,
+    "runtime_dataset": 1,
+    "generated_agent_or_compiler_output": 77,
+    "private_business_or_personal_runtime": 5
+  },
+  "original_source_untouched": true
+}

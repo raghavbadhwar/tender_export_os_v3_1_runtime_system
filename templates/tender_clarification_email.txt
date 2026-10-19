@@ -1,0 +1,36 @@
+Subject: Seeking Clarification on Tender — {{TENDER_REF}}
+
+Dear {{BUYER_CONTACT_NAME}} / Tender Authority,
+
+Sub: Request for Clarification — {{TENDER_TITLE}}
+
+Tender Reference: {{TENDER_REF}}
+Portal: {{PORTAL_NAME}}
+Bid Submission Date: {{BID_DEADLINE}}
+
+We refer to the above-mentioned tender and have reviewed the tender document. We request clarification on the following points:
+
+Query 1: {{QUERY_1}}
+Reference Clause: {{CLAUSE_1}}
+
+Query 2: {{QUERY_2}}
+Reference Clause: {{CLAUSE_2}}
+
+Query 3: {{QUERY_3}}
+Reference Clause: {{CLAUSE_3}}
+
+We would appreciate a formal corrigendum or written clarification at the earliest, to enable us to prepare our bid accurately.
+
+We are committed to submitting a complete and compliant bid before the deadline.
+
+Thanking you,
+
+{{OWNER_NAME}}
+{{DESIGNATION}}
+{{COMPANY_NAME}}
+{{PHONE}} | {{EMAIL}}
+
+---
+⚠️ INTERNAL: DO NOT SEND WITHOUT OWNER REVIEW
+Queries drafted by deep_read_agent. Owner must verify before sending.
+Reference: Case {{CASE_ID}}

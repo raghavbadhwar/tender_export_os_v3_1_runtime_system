@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tender-export-os.local/schemas/codex_artifact_task.schema.json",
+  "title": "Tender OS Governed Codex Artifact Task",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "task_type", "case_id", "artifact_kind", "workflow_type", "source_artifact_hashes", "expected_outputs", "allowed_paths", "required_output_schema", "prohibited_claims", "external_actions_executed", "input_fingerprint"],
+  "properties": {
+    "schema_version": {"const": "codex_artifact_task.v1"},
+    "task_type": {"const": "CODEX_ARTIFACT"},
+    "case_id": {"type": "string", "minLength": 1},
+    "artifact_kind": {"enum": ["spreadsheet", "pdf", "docx", "pptx", "dashboard", "parser", "bid_pack", "quote_pack"]},
+    "workflow_type": {"enum": ["GOV", "EXPORT", "SYSTEM"]},
+    "source_artifact_hashes": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["path", "sha256"], "properties": {"path": {"type": "string"}, "sha256": {"pattern": "^[0-9a-f]{64}$"}}}},
+    "expected_outputs": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "allowed_paths": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "required_output_schema": {"type": "string", "minLength": 1},
+    "prohibited_claims": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "external_actions_executed": {"const": false},
+    "input_fingerprint": {"pattern": "^[0-9a-f]{64}$"},
+    "task": {"type": "string"},
+    "approval_boundary": {"type": "string"}
+  }
+}

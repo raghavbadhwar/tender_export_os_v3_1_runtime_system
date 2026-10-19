@@ -1,0 +1,36 @@
+# Document Intelligence + Evidence Archive configuration
+
+runtime:
+  default_output_root: outputs/document_intelligence
+  external_side_effects_allowed: false
+  cases_created_by_default: false
+  approval_required_before_external_action: true
+
+archive:
+  mode: local_copy_hash_manifest
+  archive_inputs_default: true
+  optional_archivebox_fallback: false
+  note: "ArchiveBox is not required for the no-key local lane; current wrapper preserves source copies plus SHA256 metadata."
+
+ocr:
+  enable_ocr_default: false
+  preferred_command: ocrmypdf
+  scanned_pdf_policy: manual_review_when_ocr_missing
+
+parsing:
+  pdf_primary: pymupdf
+  pdf_tables: pdfplumber
+  csv_tables: builtin_csv
+  excel_tables: pandas_openpyxl
+  docx: python_docx
+  html: beautifulsoup_lxml_via_existing_runtime
+
+outputs:
+  - manifest.json
+  - extraction_report.md
+  - source_files/
+  - ocr_pdf/
+  - markdown/
+  - tables_csv/
+  - tables_xlsx/
+  - evidence_archive/

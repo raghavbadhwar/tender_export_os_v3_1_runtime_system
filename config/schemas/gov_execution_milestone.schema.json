@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Tender Export OS GOV Owner-Operated Execution Milestone",
+  "schema_version": "gov_execution_milestone.v1",
+  "workflow_type": "GOV",
+  "required_fields": [
+    "milestone_id",
+    "case_id",
+    "milestone_type",
+    "outcome_id",
+    "outcome_type",
+    "execution_sub_status",
+    "occurred_at",
+    "evidence_path",
+    "evidence_sha256",
+    "verification_status",
+    "recorded_by",
+    "recorded_at",
+    "external_actions_executed"
+  ],
+  "verification_statuses": ["EVIDENCE_PRESENT", "VERIFIED", "REJECTED", "SUPERSEDED"],
+  "milestones": {
+    "SUBMISSION_ACKNOWLEDGED": {"outcome_type": "SUBMISSION_ACKNOWLEDGED", "execution_sub_status": "SUBMITTED", "rank": 10, "requires_approval_reference": true, "requires_portal_reference": true},
+    "TECHNICAL_EVALUATION_STARTED": {"outcome_type": "TECHNICAL_EVALUATION_STARTED", "execution_sub_status": "TECHNICAL_EVALUATION", "rank": 20},
+    "TECHNICAL_QUALIFIED": {"outcome_type": "TECHNICAL_QUALIFIED", "execution_sub_status": "TECHNICAL_RESULT", "rank": 30},
+    "TECHNICAL_DISQUALIFIED": {"outcome_type": "TECHNICAL_DISQUALIFIED", "execution_sub_status": "TECHNICAL_RESULT", "rank": 30},
+    "FINANCIAL_BID_OPENED": {"outcome_type": "FINANCIAL_BID_OPENED", "execution_sub_status": "FINANCIAL_BID_OPEN", "rank": 40},
+    "L1_DECLARED": {"outcome_type": "L1_DECLARED", "execution_sub_status": "L1_DECLARED", "rank": 50},
+    "AWARD_DECLARED": {"outcome_type": "AWARD_DECLARED", "execution_sub_status": "AWARD_DECLARED", "rank": 60},
+    "WORK_ORDER_RECEIVED": {"outcome_type": "WORK_ORDER_RECEIVED", "execution_sub_status": "WORK_ORDER", "rank": 70},
+    "DELIVERY_CONFIRMED": {"outcome_type": "DELIVERED", "execution_sub_status": "DELIVERY", "rank": 80},
+    "INVOICE_SUBMITTED": {"outcome_type": "INVOICED", "execution_sub_status": "INVOICE_SUBMITTED", "rank": 90},
+    "PAYMENT_DUE": {"outcome_type": "PAYMENT_DUE", "execution_sub_status": "PAYMENT_PENDING", "rank": 100},
+    "PAYMENT_RECEIVED": {"outcome_type": "PAYMENT_RECEIVED", "execution_sub_status": "PAYMENT_RECEIVED", "rank": 110}
+  },
+  "conflicting_milestone_pairs": [["TECHNICAL_QUALIFIED", "TECHNICAL_DISQUALIFIED"]],
+  "boundary": "This contract records owner-operated evidence only. It never submits, uploads, uses DSC, pays, accepts a contract, or otherwise performs an external action. Only VERIFIED evidence may update execution_sub_status."
+}

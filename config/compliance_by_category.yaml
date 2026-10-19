@@ -1,0 +1,91 @@
+defaults: &category_defaults
+  certificates_required: [GST, IEC where export applies, category-specific supplier declaration]
+  issuing_authority: [supplier, manufacturer, statutory authority where applicable]
+  lead_time_days: 7
+  cost_band_inr: "1000-25000"
+  validity: order_or_certificate_specific
+  destination_specific_checks: [labelling, import rules, restricted/prohibited/SCOMET screen]
+  supplier_documents_needed: [GST, IEC if export, product specification, certificate proof if claimed]
+  buyer_documents_needed: [destination requirements, consignee details, payment terms]
+  quote_impact: include certificate lead time, inspection cost, packaging, and compliance buffer where applicable
+  hard_stop_conditions: [SCOMET_suspected, prohibited_export_policy, mandatory_certificate_unavailable]
+  draft_only_warning: Draft only; HSN/ITC-HS, origin, certificate compliance, and legal/tax positions require expert and owner approval.
+
+categories:
+  Spices and condiments:
+    <<: *category_defaults
+    certificates_required: [FSSAI, Spices Board registration where applicable, phytosanitary certificate by destination]
+    lead_time_days: 10
+    destination_specific_checks: [SPS, pesticide residue limits, labelling, fumigation]
+  Agricultural commodities:
+    <<: *category_defaults
+    certificates_required: [phytosanitary certificate, APEDA or commodity-board registration where applicable]
+    lead_time_days: 14
+    hard_stop_conditions: [restricted_or_prohibited_export, missing_phytosanitary_path]
+  Textiles and garments:
+    <<: *category_defaults
+    certificates_required: [fabric composition declaration, testing certificate if buyer requires]
+    destination_specific_checks: [labelling, restricted dyes, buyer standards]
+  Handicrafts:
+    <<: *category_defaults
+    certificates_required: [material declaration, GST, IEC where export applies]
+    destination_specific_checks: [wood treatment, animal-origin material, labelling]
+    hard_stop_conditions: [wildlife_or_restricted_material]
+  Engineering goods:
+    <<: *category_defaults
+    certificates_required: [test certificate, BIS or ISO where required]
+    lead_time_days: 14
+    hard_stop_conditions: [controlled_dual_use_suspected, mandatory_standard_unavailable]
+  Office stationery:
+    <<: *category_defaults
+    certificates_required: [GST, OEM or brand authorization if tender requires]
+    lead_time_days: 3
+    hard_stop_conditions: [oem_authorization_required_but_missing]
+  IT hardware/peripherals:
+    <<: *category_defaults
+    certificates_required: [BIS where applicable, OEM authorization, warranty support letter]
+    lead_time_days: 10
+    hard_stop_conditions: [oem_authorization_missing, bis_required_unavailable]
+  Cleaning/housekeeping supplies:
+    <<: *category_defaults
+    certificates_required: [GST, product MSDS where chemical]
+    hard_stop_conditions: [hazardous_chemical_without_msds]
+  Safety/PPE:
+    <<: *category_defaults
+    certificates_required: [BIS/CE/EN/ISO as tender requires, test certificate]
+    lead_time_days: 14
+    hard_stop_conditions: [mandatory_standard_unavailable]
+  Furniture:
+    <<: *category_defaults
+    certificates_required: [GST, material and warranty declaration]
+    quote_impact: include freight, installation, damage reserve, and warranty support
+  Water filters / RO / AMC:
+    <<: *category_defaults
+    certificates_required: [BIS where applicable, OEM authorization, service support proof]
+    hard_stop_conditions: [service_commitment_unavailable, oem_authorization_missing]
+  Waste-management consumables:
+    <<: *category_defaults
+    certificates_required: [material compliance, pollution-control proof if applicable]
+    hard_stop_conditions: [regulated_waste_handling_without_authorization]
+  Digitisation / scanning / record management:
+    <<: *category_defaults
+    certificates_required: [data security undertaking, experience certificates if tender requires]
+    destination_specific_checks: [data privacy, confidentiality, site access]
+    hard_stop_conditions: [mandatory_experience_missing, data_security_unacceptable]
+  Data entry / MIS dashboard / call centre:
+    <<: *category_defaults
+    certificates_required: [manpower compliance, data security undertaking, GST]
+    destination_specific_checks: [data privacy, labour compliance, SLA terms]
+    hard_stop_conditions: [labour_compliance_unavailable, mandatory_experience_missing]
+  Pest control:
+    <<: *category_defaults
+    certificates_required: [pest control license, chemical MSDS, GST]
+    hard_stop_conditions: [license_missing]
+  CCTV / biometric small installation:
+    <<: *category_defaults
+    certificates_required: [OEM authorization where required, installation warranty, GST]
+    hard_stop_conditions: [oem_authorization_missing_if_required, installer_unavailable]
+  Hospital non-medical consumables, license-light only:
+    <<: *category_defaults
+    certificates_required: [product safety declaration, batch COA if required, GST]
+    hard_stop_conditions: [medical_device_license_required, drug_license_required]

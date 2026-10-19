@@ -1,0 +1,17 @@
+playwright
+beautifulsoup4
+lxml
+pandas
+openpyxl
+python-docx
+PyMuPDF
+pdfplumber
+pydantic
+PyYAML
+python-dateutil
+rapidfuzz
+requests
+rich
+tenacity
+pytest
+fastmcp==3.4.4

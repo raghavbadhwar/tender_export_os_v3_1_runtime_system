@@ -1,0 +1,360 @@
+# Level 6 constitutional authority matrix for Tender Export OS.
+# This is a declarative cross-check layer over approval_policy.yaml,
+# tender_tool_policy.yaml, and hermes_specialist_profiles.yaml.
+# It does not grant execution authority. External actions remain owner-gated.
+version: 1
+schema_version: authority_matrix.v1
+policy_name: tender-export-os-level6-authority
+owner_profile: tender-export-os
+orchestrator_profile: teos-orchestrator
+default_policy: deny
+external_actions_default: false
+
+receipt_contracts:
+  internal:
+    required_fields: [schema_version, action, case_id, actor_profile, idempotency_key, event_id, event_type, citations, policy_decision_id, external_actions_executed]
+    external_actions_executed: false
+  approval:
+    required_fields: [schema_version, approval_id, case_id, action, scope_hash, owner_decision_receipt, approval_timeout_at, post_action_receipt, external_actions_executed]
+    external_actions_executed: false
+  execution:
+    required_fields: [schema_version, receipt_id, case_id, action, approval_id, actor_runtime, executed_at, verification_status, external_actions_executed]
+    external_actions_executed: false
+  prohibited:
+    required_fields: [schema_version, action, actor_profile, policy_decision_id, external_actions_executed]
+    external_actions_executed: false
+
+# profile names here describe who may prepare/stage a request. They do not
+# grant external execution authority; all external classes have execution_profiles: [owner].
+action_classes:
+  internal_read:
+    tier: 0
+    description: "Read canonical internal state or policy-visible health."
+    external_effect: false
+    approval_mode: not_required
+    staging_profiles: [tender-export-os, teos-orchestrator, gov-tender-intelligence, export-buyer-intelligence, supplier-commercial, pricing-risk, compliance-due-diligence, relationship-ops, learning-evaluation]
+    execution_profiles: []
+    receipt_contract: internal
+
+  public_read_only:
+    tier: 1
+    description: "Capture bounded public evidence without login, submission, messaging, or access-control bypass."
+    external_effect: false
+    approval_mode: not_required
+    staging_profiles: [tender-export-os, gov-tender-intelligence, export-buyer-intelligence, supplier-commercial]
+    execution_profiles: []
+    receipt_contract: internal
+
+  advisory:
+    tier: 2
+    description: "Produce an internal score or recommendation; never a final commercial or compliance commitment."
+    external_effect: false
+    approval_mode: not_required
+    staging_profiles: [tender-export-os, gov-tender-intelligence, export-buyer-intelligence]
+    execution_profiles: []
+    receipt_contract: internal
+
+  internal_evidence_write:
+    tier: 2
+    description: "Attach or parse evidence inside the workspace with hashes and citations."
+    external_effect: false
+    approval_mode: not_required
+    staging_profiles: [tender-export-os, teos-orchestrator, gov-tender-intelligence, export-buyer-intelligence, supplier-commercial, pricing-risk, compliance-due-diligence]
+    execution_profiles: []
+    receipt_contract: internal
+
+  internal_state_staging:
+    tier: 2
+    description: "Stage a typed, validated internal case transition in the event ledger."
+    external_effect: false
+    approval_mode: not_required
+    staging_profiles: [tender-export-os, teos-orchestrator]
+    execution_profiles: []
+    receipt_contract: internal
+
+  internal_supplier_staging:
+    tier: 2
+    description: "Stage a supplier candidate from case-scoped evidence without contacting or committing to the supplier."
+    external_effect: false
+    approval_mode: not_required
+    staging_profiles: [tender-export-os, supplier-commercial, teos-orchestrator]
+    execution_profiles: []
+    receipt_contract: internal
+
+  internal_quote_review:
+    tier: 2
+    description: "Record quote-proof validation or rejection from retained evidence."
+    external_effect: false
+    approval_mode: not_required
+    staging_profiles: [tender-export-os, supplier-commercial, pricing-risk]
+    execution_profiles: []
+    receipt_contract: internal
+
+  internal_approval_staging:
+    tier: 2
+    description: "Create an owner decision card; creating a card is not approval and does not execute the proposed action."
+    external_effect: false
+    approval_mode: not_required
+    staging_profiles: [tender-export-os, teos-orchestrator]
+    execution_profiles: []
+    receipt_contract: approval
+
+  internal_outcome_recording:
+    tier: 2
+    description: "Record a verified internal outcome from a retained receipt or evidence artifact."
+    external_effect: false
+    approval_mode: not_required
+    staging_profiles: [tender-export-os, teos-orchestrator, learning-evaluation]
+    execution_profiles: []
+    receipt_contract: internal
+
+  learning_staging:
+    tier: 2
+    description: "Stage a bounded learning proposal for later evaluation and owner-approved promotion."
+    external_effect: false
+    approval_mode: not_required
+    staging_profiles: [tender-export-os, learning-evaluation]
+    execution_profiles: []
+    receipt_contract: internal
+
+  projection_reconciliation:
+    tier: 2
+    description: "Reconcile a working projection from a retained receipt without making an external change."
+    external_effect: false
+    approval_mode: not_required
+    staging_profiles: [tender-export-os, teos-orchestrator]
+    execution_profiles: []
+    receipt_contract: internal
+
+  credentialed_prepare:
+    tier: 3
+    description: "Prepare a credentialed portal action; login/session use remains owner-controlled and approval-gated."
+    external_effect: true
+    approval_mode: required
+    staging_profiles: [tender-export-os]
+    execution_profiles: [owner]
+    receipt_contract: approval
+
+  external_message:
+    tier: 4
+    description: "Prepare or send a buyer/supplier message; no message is sent without a fresh scoped owner approval."
+    external_effect: true
+    approval_mode: required
+    staging_profiles: [tender-export-os, relationship-ops, supplier-commercial, export-buyer-intelligence]
+    execution_profiles: [owner]
+    receipt_contract: execution
+
+  external_commercial_commitment:
+    tier: 4
+    description: "Prepare or make a quotation, final price, delivery, or payment-term commitment."
+    external_effect: true
+    approval_mode: required
+    staging_profiles: [tender-export-os, pricing-risk, relationship-ops]
+    execution_profiles: [owner]
+    receipt_contract: execution
+
+  portal_mutation:
+    tier: 4
+    description: "Upload or mutate an external procurement portal."
+    external_effect: true
+    approval_mode: required
+    staging_profiles: [tender-export-os, gov-tender-intelligence]
+    execution_profiles: [owner]
+    receipt_contract: execution
+
+  external_financial_document:
+    tier: 4
+    description: "Issue an invoice or other external financial document."
+    external_effect: true
+    approval_mode: required
+    staging_profiles: [tender-export-os]
+    execution_profiles: [owner]
+    receipt_contract: execution
+
+  internal_high_impact_mutation:
+    tier: 4
+    description: "Change an internal high-impact commercial record such as a permanent blacklist."
+    external_effect: false
+    approval_mode: required
+    staging_profiles: [tender-export-os, supplier-commercial]
+    execution_profiles: [owner]
+    receipt_contract: approval
+
+  governed_runtime_mutation:
+    tier: 4
+    description: "Change reusable pricing/compliance behavior; requires a versioned change, rollback artifact, and owner approval."
+    external_effect: false
+    approval_mode: required
+    staging_profiles: [tender-export-os, learning-evaluation]
+    execution_profiles: [owner]
+    receipt_contract: approval
+
+  network_or_credential_plugin_activation:
+    tier: 4
+    description: "Enable a network- or credential-heavy plugin; requires a scoped owner decision and rollback path."
+    external_effect: true
+    approval_mode: required
+    staging_profiles: [tender-export-os]
+    execution_profiles: [owner]
+    receipt_contract: approval
+
+  public_service_exposure:
+    tier: 4
+    description: "Expose Hermes or Codex to a public network surface."
+    external_effect: true
+    approval_mode: required
+    staging_profiles: [tender-export-os]
+    execution_profiles: [owner]
+    receipt_contract: approval
+
+  payment:
+    tier: 5
+    description: "Move money or purchase an external plan."
+    external_effect: true
+    approval_mode: required
+    staging_profiles: [tender-export-os, pricing-risk]
+    execution_profiles: [owner]
+    receipt_contract: execution
+
+  legal_compliance_claim:
+    tier: 5
+    description: "Make a final classification, origin, legal, tax, or compliance representation."
+    external_effect: true
+    approval_mode: required
+    staging_profiles: [tender-export-os, compliance-due-diligence]
+    execution_profiles: [owner]
+    receipt_contract: execution
+
+  binding_submission:
+    tier: 5
+    description: "Submit a binding tender or other external bid."
+    external_effect: true
+    approval_mode: required
+    staging_profiles: [tender-export-os, gov-tender-intelligence]
+    execution_profiles: [owner]
+    receipt_contract: execution
+
+  legal_signature:
+    tier: 5
+    description: "Use DSC or another legal signature."
+    external_effect: true
+    approval_mode: required
+    staging_profiles: [tender-export-os]
+    execution_profiles: [owner]
+    receipt_contract: execution
+
+  binding_purchase:
+    tier: 5
+    description: "Place a supplier purchase order or other binding purchase."
+    external_effect: true
+    approval_mode: required
+    staging_profiles: [tender-export-os, supplier-commercial, pricing-risk]
+    execution_profiles: [owner]
+    receipt_contract: execution
+
+  prohibited:
+    tier: 5
+    description: "Never permitted, including access-control bypass, credential exfiltration, ledger rewrite, or self-promotion."
+    external_effect: false
+    approval_mode: prohibited
+    staging_profiles: []
+    execution_profiles: []
+    receipt_contract: prohibited
+
+# Every action in tender_tool_policy.yaml must be mapped exactly once here.
+policy_action_classes:
+  mcp.capability_status: internal_read
+  mcp.get_case: internal_read
+  mcp.search_cases: internal_read
+  mcp.get_source_health: internal_read
+  mcp.get_approval_status: internal_read
+  mcp.evaluate_business_action: internal_read
+  mcp.capture_public_web: public_read_only
+  mcp.assess_opportunity: advisory
+  mcp.parse_local_documents: internal_evidence_write
+  mcp.stage_case_transition: internal_state_staging
+  mcp.attach_case_evidence: internal_evidence_write
+  mcp.stage_supplier_candidate: internal_supplier_staging
+  mcp.record_quote_proof_review: internal_quote_review
+  mcp.create_internal_approval_card: internal_approval_staging
+  mcp.record_case_outcome: internal_outcome_recording
+  mcp.stage_learning_proposal: learning_staging
+  mcp.reconcile_projection_from_receipt: projection_reconciliation
+  portal_login_for_research: credentialed_prepare
+  portal_signup_for_research: credentialed_prepare
+  portal_credential_creation: credentialed_prepare
+  portal_session_refresh_for_research: credentialed_prepare
+  send_supplier_quote_request: external_message
+  send_supplier_clarification_request: external_message
+  send_supplier_follow_up: external_message
+  request_supplier_price_and_availability: external_message
+  send_buyer_rfq_reply: external_message
+  send_buyer_introductory_outreach: external_message
+  send_export_quotation: external_commercial_commitment
+  upload_tender_documents: portal_mutation
+  commit_final_price: external_commercial_commitment
+  commit_delivery_timeline: external_commercial_commitment
+  accept_payment_terms: external_commercial_commitment
+  send_invoice_externally: external_financial_document
+  blacklist_supplier_permanently: internal_high_impact_mutation
+  patch_pricing_or_compliance_skill: governed_runtime_mutation
+  enable_network_or_credential_heavy_plugin: network_or_credential_plugin_activation
+  expose_hermes_or_codex_service_publicly: public_service_exposure
+  purchase_paid_subscription_or_portal_plan: payment
+  make_legal_tax_origin_certification: legal_compliance_claim
+  submit_tender_bid: binding_submission
+  use_dsc: legal_signature
+  pay_emd_or_bid_security: payment
+  pay_security_deposit: payment
+  pay_advance_to_supplier: payment
+  place_supplier_purchase_order: binding_purchase
+  confirm_hsn_itchs_classification: legal_compliance_claim
+  claim_country_of_origin: legal_compliance_claim
+  captcha_bypass: prohibited
+  otp_bypass: prohibited
+  credential_exfiltration: prohibited
+  unrestricted_browser_execution: prohibited
+  rewrite_event_ledger: prohibited
+  self_promote_runtime_policy: prohibited
+
+# This list is deliberately derived from both approval policy sections and is
+# checked for drift by scripts/validate_authority_matrix.py.
+approval_required_actions:
+  - send_supplier_quote_request
+  - send_supplier_clarification_request
+  - send_supplier_follow_up
+  - request_supplier_price_and_availability
+  - portal_login_for_research
+  - portal_signup_for_research
+  - portal_credential_creation
+  - portal_session_refresh_for_research
+  - send_buyer_rfq_reply
+  - send_buyer_introductory_outreach
+  - send_export_quotation
+  - submit_tender_bid
+  - upload_tender_documents
+  - commit_final_price
+  - commit_delivery_timeline
+  - accept_payment_terms
+  - confirm_hsn_itchs_classification
+  - claim_country_of_origin
+  - pay_emd_or_bid_security
+  - pay_security_deposit
+  - pay_advance_to_supplier
+  - place_supplier_purchase_order
+  - use_dsc
+  - send_invoice_externally
+  - blacklist_supplier_permanently
+  - patch_pricing_or_compliance_skill
+  - enable_network_or_credential_heavy_plugin
+  - expose_hermes_or_codex_service_publicly
+  - purchase_paid_subscription_or_portal_plan
+  - make_legal_tax_origin_certification
+
+prohibited_actions:
+  - captcha_bypass
+  - otp_bypass
+  - credential_exfiltration
+  - unrestricted_browser_execution
+  - rewrite_event_ledger
+  - self_promote_runtime_policy

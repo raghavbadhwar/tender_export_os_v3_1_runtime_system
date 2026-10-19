@@ -1,0 +1,84 @@
+version: 4.1
+drive_root_name: "Tender Export OS - Knowledge Bus"
+mode: dry_run_first
+communication_mode: "drive_chatgpt_codex_hermes_bridge"
+
+sync_to_drive:
+  project_context_instructions:
+    local:
+      - AGENTS.md
+      - README.md
+      - SOUL.md
+      - HERMES.md
+      - docs/FINAL_ARCHITECTURE.md
+      - docs/GOOGLE_DRIVE_KNOWLEDGE_BUS.md
+      - docs/CHATGPT_CODEX_HERMES_DRIVE_COMMUNICATION.md
+    drive_folder: 00_Project_Context/01_Instructions
+  project_context_state_snapshots:
+    local:
+      - data/chatgpt_snapshot.md
+      - outputs/drive_knowledge_bus_setup.json
+    drive_folder: 00_Project_Context/02_State_Snapshots
+  project_context_receipts:
+    local_glob: receipts/drive_setup/**
+    drive_folder: 00_Project_Context/03_Context_Receipts
+  control_center:
+    local:
+      - data/events.jsonl
+      - data/master_cases.csv
+      - data/supplier_master.csv
+      - data/approvals_receipts.csv
+      - data/source_health.csv
+      - data/plugin_health.csv
+      - data/quote_master.csv
+      - data/agent_run_log.csv
+    drive_folder: 00_Control_Center
+  schemas:
+    local_glob: config/schemas/*.json
+    drive_folder: 00_Schemas
+  daily_briefs:
+    local_glob: outputs/daily_briefs/*.html
+    drive_folder: 01_Daily_Briefs
+  case_reports:
+    local_glob: outputs/case_reports/**
+    drive_folder: 02_Case_Reports
+  bid_packs:
+    local_glob: outputs/bid_packs/**
+    drive_folder: 03_Bid_Packs
+  export_quote_packs:
+    local_glob: outputs/export_quote_packs/**
+    drive_folder: 04_Export_Quote_Packs
+  receipts:
+    local_glob: receipts/**
+    drive_folder: 06_Receipts
+  config_snapshots:
+    local_glob: config/*
+    drive_folder: 07_Config_Snapshots
+  chatgpt_bridge_to_chatgpt:
+    local:
+      - data/chatgpt_snapshot.md
+    local_glob: outputs/chatgpt_bridge/to_chatgpt/**
+    drive_folder: 08_ChatGPT_Bridge/01_To_ChatGPT
+  chatgpt_bridge_from_chatgpt:
+    local_glob: outputs/chatgpt_bridge/from_chatgpt/**
+    drive_folder: 08_ChatGPT_Bridge/02_From_ChatGPT
+  chatgpt_bridge_reviewed:
+    local_glob: outputs/chatgpt_bridge/reviewed/**
+    drive_folder: 08_ChatGPT_Bridge/03_Reviewed_For_Codex_Hermes
+
+never_sync:
+  - secrets
+  - cookies
+  - DSC files
+  - credentials
+  - raw browser cache
+  - private tokens
+  - passwords
+  - bank details
+  - unverified claims as final facts
+
+execution_policy:
+  dry_run_default: true
+  explicit_execute_flag_required: true
+  connector_auth_required: true
+  owner_approval_required_for_public_share: true

@@ -1,0 +1,629 @@
+# Tender Export OS v4.1
+
+**A safety-gated, event-ledger reference implementation for Indian government-tender and export-RFQ decision support.**
+
+[Portfolio case study](docs/PORTFOLIO.md) · [Architecture](docs/FINAL_ARCHITECTURE.md) · [Approval boundaries](docs/APPROVAL_BOUNDARIES.md)
+
+---
+
+## What This Repository Demonstrates
+
+Tender Export OS models a traceable path from opportunity discovery to internal analysis, evidence, pricing drafts, approval, and receipts:
+
+```text
+Find → Fast Kill → Deep Read → Supplier Proof → Pricing Proof → Approval → Execution → Receipt
+```
+
+The repository is declared as a `public-template` in [`config/canonical_runtime.json`](config/canonical_runtime.json). It contains local Python runtime code, policy/configuration contracts, sanitized fixtures, and tests. It is not evidence of a deployed business service.
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [ARCHITECTURE.md](ARCHITECTURE.md) | **Complete architecture reference** with Mermaid diagrams: system layers, canonical state model, hybrid research/capture model, agent pipeline, status flow, approval boundaries (Mode A/B/C), daily operating rhythm (Gantt), MCP gateway, buyer acquisition lane, prediction contract |
+| [AGENT_REFERENCE.md](AGENT_REFERENCE.md) | **Agent quick reference card** — one-page lookup for all 11 agents with inputs, outputs, capability bundles, quality gates, scripts, and approval gates |
+| [AGENTS.md](AGENTS.md) | Agent roster and responsibilities |
+| [HERMES.md](HERMES.md) | Hermes chief operator instructions |
+| [SOUL.md](SOUL.md) | Operating identity and non-negotiables |
+
+---
+
+The design separates responsibilities as follows:
+
+- broad research discovers candidates;
+- deterministic Python/Playwright paths capture and cite evidence from known sources;
+- `data/events.jsonl` is the configured canonical runtime state stream; the public template includes a sanitized [`events.example.jsonl`](data/examples/events.example.jsonl), with CSVs and external workboards treated as projections;
+- Hermes and Codex are designed as the control-plane and artifact-runtime roles;
+- the owner approves external, financial, legal, DSC, classification, origin, price, and delivery commitments.
+
+## Architecture at a Glance
+
+```mermaid
+flowchart TD
+  H0["Agent 0 — Hermes Chief Operator"] --> R1["Agent 1 — Radar Agent<br/>discovery"]
+  R1 --> F2["Agent 2 — Fast Kill Agent<br/>triage"]
+  F2 -->|"DEEP_READ"| D3["Agent 3 — Deep Read Agent<br/>extraction"]
+  F2 -->|"reject or watch"| STOP["Reject / watchlist"]
+  D3 --> S4["Agent 4 — Supplier Engine<br/>sourcing proof"]
+  D3 --> C6["Agent 6 — Compliance Agent<br/>draft-only checks"]
+  S4 --> P5["Agent 5 — Pricing Agent<br/>cost waterfall"]
+  P5 --> B7["Agent 7 — Pack Builder<br/>artifact assembly"]
+  C6 --> B7
+  C11["Agent 11 — Codex Plugin Factory<br/>bounded artifact production"] -.-> B7
+  H0 -.-> C11
+  B7 --> A8["Agent 8 — Approval Desk<br/>decision interface"]
+  A8 --> O{"Owner approval boundary"}
+  O -->|"approved + configured"| E9["Agent 9 — Execution Tracker<br/>post-approval monitoring"]
+  O -->|"changes requested"| D3
+  E9 --> O10["Agent 10 — Owner Briefing Agent<br/>daily intelligence"]
+  O10 --> H0
+  E9 --> L["Canonical append-only event ledger"]
+```
+
+| Layer | Repository contract | Evidence boundary |
+|---|---|---|
+| State core | Append-only JSONL events, registered event types, schema checks, rebuildable projections | Local code and tests |
+| Source/evidence runtime | Fixture-backed adapters, document extraction, evidence spans, blocker detection | Mock/fixture paths are testable; live portal access is environment-dependent |
+| Control plane | Hermes profiles, Kanban/cron contracts, approval routing | Integration design is present; a running Hermes deployment is not proven here |
+| Artifact runtime | Codex routing for internal files, analyses, and draft packs | Contracts and generators are present; external Codex services are not required for local tests |
+| Research/knowledge bus | Bounded ChatGPT packets and Google Drive projection/sync contracts | Connectivity, credentials, and scheduled runs are not proven by the repository |
+| Human boundary | Scoped approval receipts and forbidden-action guards | No bounded MCP tool performs external execution |
+
+Paperclip is intentionally excluded from the default architecture; the design first uses the primitives already assigned to Hermes.
+
+## Verified Local Capabilities
+
+A local run on 2026-08-07 with Python 3.12.13 and pytest 9.1.1 completed **719 tests successfully**. Representative, directly inspectable evidence includes:
+
+| Capability | Test evidence |
+|---|---|
+| Concurrent ledger appends remain uniquely ordered; projection drift is reported | [`tests/test_event_ledger_concurrency.py`](tests/test_event_ledger_concurrency.py), [`tests/test_projection_integrity.py`](tests/test_projection_integrity.py) |
+| Tender fields retain exact source spans; marketplace prices remain indicative rather than final-price proof | [`scripts/tests/test_source_grounded_extraction.py`](scripts/tests/test_source_grounded_extraction.py) |
+| A mock source scan records lifecycle events while declaring no case creation or external side effects | [`tests/test_run_source_adapter_cli.py`](tests/test_run_source_adapter_cli.py) |
+| Owner text alone cannot authorize an action; case/action scope and forbidden controls are checked | [`tests/test_process_owner_decision.py`](tests/test_process_owner_decision.py), [`tests/test_forbidden_action_guard.py`](tests/test_forbidden_action_guard.py) |
+| The FastMCP surface is bounded to nine typed tools and exposes no external-execution tool | [`tests/test_tender_os_mcp_tools.py`](tests/test_tender_os_mcp_tools.py) |
+| Public-template privacy, file, JSON/YAML, example-CSV, compile, and loop checks pass locally | [`scripts/check_no_private_runtime_data.py`](scripts/check_no_private_runtime_data.py), [`scripts/system_health_check.py`](scripts/system_health_check.py) |
+
+The count is a point-in-time worktree result, not a coverage percentage or production certification. See the [portfolio evidence map](docs/PORTFOLIO.md#capability-to-evidence-map) for the claim-to-code boundary.
+
+## Quick Local Demo and Tests
+
+Python 3.12 was used for the verified run:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.lock.txt
+```
+
+Run a focused, fixture-only slice and the public-template checks:
+
+```bash
+.venv/bin/python -m pytest -q \
+  tests/test_event_ledger_concurrency.py \
+  scripts/tests/test_source_grounded_extraction.py \
+  tests/test_process_owner_decision.py \
+  tests/test_forbidden_action_guard.py \
+  tests/test_run_source_adapter_cli.py
+
+.venv/bin/python scripts/check_no_private_runtime_data.py --public-template
+.venv/bin/python scripts/system_health_check.py --public-template
+```
+
+Run the complete local suite with:
+
+```bash
+.venv/bin/python -m pytest -q
+```
+
+A safe mock scan can write all demo artifacts outside the repository:
+
+```bash
+demo_dir="$(mktemp -d)"
+TENDER_OS_EVENTS_FILE="$demo_dir/events.jsonl" \
+  .venv/bin/python scripts/run_source_adapter.py \
+  --adapter mock --mode scan --limit 2 \
+  --output "$demo_dir/scan.json" --record-event
+.venv/bin/python -m json.tool "$demo_dir/scan.json"
+```
+
+Expected invariants are `create_cases: false`, `external_side_effects: false`, and `source_adapter.scan_started` / `source_adapter.scan_completed` events in the temporary ledger.
+
+### Evidence and Non-Claims
+
+Passing local checks establishes behavior against repository code, policies, mocks, and fixtures. It does **not** establish live portal coverage, deployed Hermes/Codex/ChatGPT/Drive/MCP/OPA connectivity, credential readiness, regulatory correctness, forecast accuracy, uptime, successful bids, revenue, or other business outcomes. CAPTCHA, OTP, login, payment, DSC, submit, and upload boundaries remain blockers or separately approved actions—not targets of the local demo.
+
+---
+
+## Designed Workflow A — Government Tenders
+
+1. Radar Agent scans GeM, CPPP, eProcure, state portals daily
+2. Fast Kill Agent rejects non-starters (EMD, eligibility, deadline, experience)
+3. Deep Read Agent extracts BOQ, eligibility, clauses, delivery, payment, penalties
+4. Supplier Engine sources 5+ candidate suppliers across 3+ source types
+5. Pricing Agent builds landed-cost bid price waterfall
+6. Pack Builder prepares full bid pack + compliance matrix
+7. Approval Desk creates approval card → owner approves
+8. After approval: Execution Tracker monitors submission, follow-up, result
+
+---
+
+## Designed Workflow B — Export RFQs
+
+1. Radar Agent scans buyer portals, RFQ platforms, foreign-government sources
+2. Fast Kill Agent rejects on buyer risk, payment risk, product restriction
+3. Deep Read Agent extracts product spec, quantity, destination, deadline, Incoterms
+4. Compliance Agent drafts HSN/ITC-HS candidate, export policy flags, certificates
+5. Supplier Engine sources from India/global using 5-3-2 rule
+6. Pricing Agent builds EXW/FOB/CIF waterfall
+7. Pack Builder prepares export quote pack
+8. Approval Desk creates approval card → owner approves before any reply
+
+---
+
+## Operational Runbook (After Integrations Are Configured)
+
+The steps below are an operating design. They require the named local tools, credentials, gateways, and owner-approved integrations; they are not part of the fixture-only demo above.
+
+### Morning (5–10 minutes)
+1. Open Hermes through the configured gateway (Telegram/WhatsApp/CLI/local file).
+2. Review the daily brief. If gateway delivery is not configured, read `outputs/daily_briefs/brief_YYYYMMDD.html`.
+3. Review pending approval cards in `receipts/approvals/`.
+4. Approve, reject, or request changes through Hermes using commands such as `approve case GOV-20260630-001`.
+
+### First Commands / Actions
+
+1. Inspect Hermes:
+```bash
+hermes doctor
+hermes --help
+hermes tools --help
+hermes skills --help
+hermes mcp --help
+```
+
+2. Inspect Codex:
+```bash
+codex --version
+codex --help
+codex plugin list --available --json
+codex app-server --help
+```
+
+3. Run local readiness check:
+```bash
+python3 scripts/check_codex_runtime_readiness.py
+```
+
+4. Run full safe system health check:
+```bash
+python3 scripts/system_health_check.py --runtime
+```
+
+5. Validate v4.1 state contracts:
+```bash
+python3 scripts/validate_register_schemas.py
+python3 scripts/rebuild_projections_from_events.py
+python3 scripts/validate_case_readiness.py --all
+python3 scripts/prepare_chatgpt_drive_packet.py
+```
+
+6. Configure safety:
+- `config/memory_policy.yaml`: `memory.write_approval = true`
+- `config/memory_policy.yaml`: `skills.write_approval = true`
+- `config/memory_policy.yaml`: `display.memory_notifications = verbose`
+- `config/approval_policy.yaml`: external/money/legal/DSC/classification/origin gates stay strict
+
+7. Enable Codex runtime inside Hermes if supported:
+```text
+/codex-runtime codex_app_server
+```
+
+Fallback:
+```text
+/codex-runtime auto
+```
+
+8. Create Hermes Kanban board after checking local syntax:
+```bash
+hermes kanban --help
+bash scripts/setup_hermes_kanban_board.sh
+```
+
+9. Create Hermes cron jobs from `config/hermes_cron.yaml` after checking:
+```bash
+hermes cron --help
+```
+
+10. Create the Google Drive Knowledge Bus using `docs/GOOGLE_DRIVE_KNOWLEDGE_BUS.md`, then dry-run sync:
+```bash
+python3 scripts/sync_to_drive.py
+```
+
+11. Run dry-run artifacts/snapshots:
+```bash
+python3 scripts/generate_chatgpt_snapshot.py
+python3 scripts/supplier_score.py
+python3 scripts/case_id_generator.py --type GOV
+python3 scripts/case_id_generator.py --type EXP
+```
+
+12. Review:
+- Hermes Kanban board
+- daily brief
+- case report
+- artifact pack
+
+13. Create/refresh max-capability case operating assets:
+```bash
+python3 scripts/create_case_workspace.py --all-active --record-event
+python3 scripts/capture_case_evidence.py --case-id GOV-20260630-001 --record-event
+python3 scripts/create_case_task_graph.py --case-id GOV-20260630-001 --execute --record-event
+python3 scripts/generate_approval_cards.py --json --overwrite --record-event
+```
+
+Use `--execute` on `create_case_task_graph.py` only for internal Kanban task creation. It does not send, submit, upload, pay, use DSC, or commit commercial/compliance claims.
+- approval queue
+- receipts
+
+### Manual CLI Operations
+If you want to trigger parts of the system manually:
+```bash
+python3 scripts/system_health_check.py --runtime
+python3 scripts/validate_register_schemas.py
+python3 scripts/rebuild_projections_from_events.py
+python3 scripts/process_owner_decision.py --approval-id APR-001 --decision ask-changes --owner OWNER --changes "what to change" --dry-run
+python3 scripts/validate_case_readiness.py --all
+python3 scripts/generate_artifact_manifest.py --all
+python3 scripts/run_source_adapter.py --adapter mock
+python3 scripts/reconcile_hermes_kanban.py
+python3 scripts/prepare_chatgpt_drive_packet.py
+python3 scripts/stage_chatgpt_return.py --input tests/fixtures/chatgpt_returns/sample_return.md
+python3 scripts/run_daily_autopilot_pseudocode.py
+python3 scripts/generate_daily_brief.py
+python3 scripts/score_opportunity.py --case_id GOV-20260630-001
+python3 scripts/generate_chatgpt_snapshot.py
+```
+
+### Low-Competition Order Radar
+Run these internal-only analyzers to find legally public, under-seen order opportunities:
+
+```bash
+python3 scripts/low_competition_order_radar.py --dry-run
+python3 scripts/retender_corrigenda_watch.py --dry-run
+python3 scripts/buyer_repeat_purchase_analyzer.py --dry-run
+python3 scripts/supplier_ready_category_matcher.py --dry-run
+```
+
+Outputs are written under `outputs/low_competition_radar/`. `PUBLIC_LISTING_ONLY` rows remain leads, not bid-ready cases. Marketplace listing prices are not quote proof; supplier-specific quote evidence is required before pricing.
+
+### V5 Demand Forecasting + Low-Competition Engine
+The V5 module turns current cases, demand research, low-competition radar output, buyer repeat history, and category demand history into proof-aware daily recommendations.
+
+- Spec: `docs/V5_DEMAND_FORECASTING_LOW_COMPETITION_ENGINE.md`
+- Runbook: `docs/V5_DEMAND_FORECASTING_LOW_COMPETITION_RUNBOOK.md`
+- Generator: `scripts/generate_v5_demand_forecast_low_competition.py`
+- Projection builders: `scripts/build_buyer_purchase_history.py`, `scripts/build_category_demand_history.py`
+- Backtester: `scripts/backtest_v5_demand_forecasts.py`
+
+Default generator mode is report-only. Use `--write-candidates` only when you want to refresh `data/forecast_candidates.csv`.
+
+### Scheduled Deep Research Tasks
+The prompt files under `scheduled_deep_research_tasks/` are for ChatGPT Scheduled Deep Research, not Python scraping:
+
+```text
+scheduled_deep_research_tasks/daily_low_competition_order_radar.md
+scheduled_deep_research_tasks/daily_retender_corrigenda_watch.md
+scheduled_deep_research_tasks/weekly_repeat_buyer_review.md
+scheduled_deep_research_tasks/weekly_supplier_ready_category_review.md
+scheduled_deep_research_tasks/weekly_export_opportunity_intelligence.md
+```
+
+These reports may identify leads and case candidates for later staging. They do not mutate repo state, approve actions, send messages, submit/upload/pay/use DSC, or make final price, HSN/ITC-HS, origin, legal, tax, or compliance claims.
+
+Stage a saved Deep Research lead report with:
+
+```bash
+python3 scripts/stage_deep_research_leads.py --input <file> --dry-run
+python3 scripts/stage_deep_research_leads.py --input <file> --stage
+```
+
+Default behavior is dry-run/staging only. `PUBLIC_LISTING_ONLY` remains a lead, not a bid-ready case. `DOCUMENTS_DOWNLOADED` or manually uploaded evidence can become a case candidate only after operational review.
+
+### Hybrid Example Workflows
+Workflow A: New category discovery
+1. Deep Research finds low-competition categories.
+2. Owner selects categories.
+3. Repo adds source/keyword watch.
+4. Python scans known sources repeatedly.
+
+Workflow B: Specific tender proof
+1. Deep Research flags a possible retender.
+2. Lead is staged.
+3. Python/Playwright checks source.
+4. Documents/evidence are captured.
+5. Case enters Fast Kill/Deep Read only if evidence supports it.
+
+Workflow C: Export opportunity
+1. Deep Research identifies buyer/product market.
+2. Lead is staged.
+3. Repo validates buyer, supplier readiness, compliance category, and quote proof.
+
+### Deep Source Access Runtime
+Install the browser/document parsing dependencies before running authorised deep source access:
+
+```bash
+python3 -m pip install -r requirements.txt
+python3 -m playwright install chromium
+```
+
+If your Python is externally managed by Homebrew, use a virtualenv:
+
+```bash
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install -r requirements.txt
+python -m playwright install chromium
+```
+
+Safe scan mode remains output-only by default:
+
+```bash
+python3 scripts/run_source_adapter.py --adapter mock --mode scan --record-event
+python3 scripts/run_source_adapter.py --adapter gem --mode scan --keyword "water purifier" --limit 5 --headful --record-event
+python3 scripts/run_source_adapter.py --adapter cppp --mode scan --keyword "data entry" --limit 5 --headful --record-event
+python3 scripts/run_source_adapter.py --adapter all --mode scan --limit 5 --record-event
+```
+
+Deep evidence mode opens detail pages, saves raw HTML/screenshots, attempts document downloads where allowed, parses evidence, and writes source events. It does not create cases unless explicitly promoted:
+
+```bash
+python3 scripts/run_source_adapter.py \
+  --adapter gem \
+  --mode deep \
+  --keyword "water purifier" \
+  --limit 5 \
+  --headful \
+  --record-event \
+  --evidence-only
+```
+
+Deep outputs are written under:
+
+```text
+outputs/evidence/GOV/<candidate-id>/
+outputs/source_runs/<run_id>/deep_results.json
+outputs/deep_source_reports/report_YYYYMMDD_HHMM.html
+```
+
+Generate the HTML report from a run:
+
+```bash
+python3 scripts/generate_deep_source_report.py --input outputs/source_runs/<run_id>/deep_results.json
+```
+
+Case creation is gated and off by default. Review evidence first, then promote with:
+
+```bash
+python3 scripts/create_cases_from_deep_source_results.py outputs/source_runs/<run_id>/deep_results.json --respect-deadline --record-event
+python3 scripts/rebuild_projections_from_events.py
+```
+
+Approval boundaries remain hard: the runtime must not submit bids, upload tender documents, use DSC, pay EMD/security/subscriptions, accept legal declarations, send buyer quotations, commit price/delivery/origin/classification, or contact suppliers without the configured owner approval.
+
+### Weekly (30 minutes)
+- ChatGPT Project: weekly review of wins/losses, source health, supplier performance
+- Update `config/categories.yaml` for new product focus areas
+- Archive closed cases
+
+---
+
+## Folder Structure
+
+```
+tender-export-os/
+├── README.md                    ← You are here
+├── AGENTS.md                    ← Agent roster and responsibilities
+├── HERMES.md                    ← Hermes chief operator instructions
+├── SOUL.md                      ← v4 operating identity and non-negotiables
+├── docs/                        ← v4 architecture and policy docs
+├── manifest.json                ← System metadata
+├── config/                      ← All configurable rules and sources
+│   ├── sources.gov.yaml
+│   ├── sources.export.yaml
+│   ├── sources.supplier.yaml
+│   ├── categories.yaml
+│   ├── kill_rules.yaml
+│   ├── scoring_weights.yaml
+│   ├── approval_policy.yaml
+│   ├── codex_runtime_policy.yaml
+│   ├── hermes_cron.yaml
+│   ├── kanban_board.yaml
+│   ├── memory_policy.yaml
+│   ├── plugin_routing.yaml
+│   ├── agent_capability_routing.yaml
+│   ├── source_strategy.yaml
+│   ├── sync_policy.yaml
+│   ├── schemas/
+│   ├── agent_loops.json
+│   └── loop_schedule.json
+├── data/                        ← Master registers (Excel/CSV)
+│   ├── events.jsonl             ← v4.1 append-only canonical event ledger
+│   ├── master_cases.csv
+│   ├── supplier_master.csv
+│   ├── source_health.csv
+│   ├── approvals_receipts.csv
+│   ├── quote_master.csv
+│   ├── plugin_health.csv
+│   ├── capability_registry.csv
+│   ├── chatgpt_snapshot.md
+│   └── agent_run_log.csv
+├── agents/                      ← Agent instruction files
+├── skills/                      ← v4 reusable Hermes/Codex workflow skills
+├── chatgpt_project/             ← Boardroom instructions and research prompts
+├── scheduled_deep_research_tasks/ ← ChatGPT Scheduled Deep Research prompt files
+├── workflows/                   ← Runtime flow documents and agent loop handoff
+├── templates/                   ← Email, approval card, brief templates
+├── hermes/                      ← Hermes mobile command center config
+├── codex/                       ← Codex backend operator config
+├── outputs/                     ← Generated outputs (briefs, packs, reports)
+│   ├── daily_briefs/
+│   ├── case_reports/
+│   ├── bid_packs/
+│   ├── export_quote_packs/
+│   └── dashboards/
+├── receipts/                    ← Immutable action receipts
+│   ├── approvals/
+│   ├── submissions/
+│   ├── supplier_quotes/
+│   └── owner_decisions/
+├── scripts/                     ← Python utilities and loop validators
+└── tests/fixtures/sources/       ← Safe source-adapter fixtures
+```
+
+---
+
+## Non-Negotiable Safety Rules
+
+- ❌ Never submit bids automatically
+- ❌ Never send final quotes without owner approval
+- ❌ Never confirm HSN/ITC-HS classification without export expert review
+- ❌ Never claim origin, eligibility, or certificates not verified
+- ❌ Never use DSC without explicit owner action
+- ❌ Never commit payment terms or delivery without approval
+- ❌ Never pay EMD, security deposit, or advance without approval
+- ✅ All approvals must be logged with case_id, timestamp, and receipt
+- ✅ Codex App-Server Runtime is preferred for plugin-heavy artifact/file work
+- ✅ Hermes Kanban is the default durable workboard
+- ✅ ChatGPT receives bounded snapshots, not raw operational databases
+- ✅ `data/events.jsonl` is the canonical v4.1 event stream; CSVs and Kanban are projections
+- ✅ Owner decisions create receipts but never send, submit, upload, pay, or commit externally by themselves
+
+## Agent Loop Runtime
+
+The bounded loop contracts live in `config/agent_loops.json`.
+The scheduled operating cadence lives in `config/loop_schedule.json`.
+
+Before changing loop behavior or running a new automation pattern:
+
+```bash
+python scripts/validate_agent_loops.py
+python scripts/validate_loop_schedule.py
+```
+
+Human-readable handoff: `workflows/agent_loop_runtime.md`
+Schedule handoff: `workflows/agent_loop_schedule.md`
+
+Every loop must keep:
+- explicit stop conditions
+- max iteration and timeout limits
+- approval gates for external or financial actions
+- append-only run logging
+- source citations in generated reports
+- no fabricated supplier, pricing, eligibility, classification, or origin claims
+
+The default schedule is:
+- Morning Operator Brief at 08:30 IST
+- Midday Opportunity Radar at 13:00 IST
+- Supplier Follow-up Review at 17:00 IST
+- Evening Execution Close at 20:30 IST
+- Weekly Learning Review on Friday at 18:00 IST
+- Monthly Strategy Deep Research only when owner-approved
+
+---
+
+## First-Time Setup Checklist
+
+- [ ] Run `python3 scripts/check_codex_runtime_readiness.py`
+- [ ] Run `python3 scripts/system_health_check.py --runtime`
+- [ ] Run `python3 scripts/validate_register_schemas.py`
+- [ ] Run `python3 scripts/rebuild_projections_from_events.py` and review `outputs/projections/`
+- [ ] Run `python3 scripts/generate_artifact_manifest.py --all`
+- [ ] Inspect `hermes kanban --help` and configure the `tender-export-os` board from `config/kanban_board.yaml`
+- [ ] Inspect `hermes cron --help` and configure jobs from `config/hermes_cron.yaml`
+- [ ] Configure `config/memory_policy.yaml` with write approvals enabled
+- [ ] Confirm Google Drive connector/auth before any non-dry-run sync
+- [ ] Copy `config/sources.gov.yaml` and add your preferred portals with login flags
+- [ ] Copy `config/categories.yaml` and mark your active product/service categories
+- [ ] Fill `data/supplier_master.csv` with any existing supplier contacts
+- [ ] Set your IEC, GSTIN, company name in `codex/codex_project_prompt.md`
+- [ ] Configure Hermes profile from `hermes/hermes_profile.md`
+- [ ] Read `hermes/mobile_commands.md` for all available Hermes commands
+- [ ] Trigger first Codex artifact/runtime dry run using `codex/codex_runtime_instructions.md`
+
+---
+
+## v4.1.2 Safe Setup And Regression
+
+Use a local virtualenv for deterministic runs:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.lock.txt
+```
+
+If the lock file is too strict for a fresh platform, install the source requirements and regenerate the lock from the working environment:
+
+```bash
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m pip freeze > requirements.lock.txt
+```
+
+Public-template checks never upload, send, submit, pay, use DSC, or commit pricing/classification/origin claims:
+
+```bash
+.venv/bin/python scripts/check_no_private_runtime_data.py --public-template
+.venv/bin/python scripts/system_health_check.py --public-template
+.venv/bin/python scripts/run_full_safe_regression.py
+.venv/bin/python scripts/stage_deep_research_leads.py --input tests/fixtures/deep_research_leads/good_leads.json --dry-run
+.venv/bin/pytest
+```
+
+Drive setup is dry-run and lock-protected by default:
+
+```bash
+.venv/bin/python scripts/setup_drive_folders.py --dry-run
+.venv/bin/python scripts/sync_to_drive.py
+```
+
+Safe source-adapter smoke commands:
+
+```bash
+.venv/bin/python scripts/test_source_adapters.py --safe --limit 5
+.venv/bin/python scripts/run_source_adapter.py --adapter gem --mode scan --keyword "water purifier" --limit 5 --headful
+.venv/bin/python scripts/run_source_adapter.py --adapter cppp --mode scan --keyword "data entry" --limit 5 --headful
+```
+
+The GeM/CPPP commands are read-only browser scans. CAPTCHA, OTP, login walls, payment pages, DSC prompts, and submit/upload buttons are blockers or forbidden-action evidence, not automation targets.
+
+---
+
+## Key v4 Files
+
+- `docs/ARCHITECTURE_CRITIQUE_AND_V4_1_PROPOSAL.md`
+- `docs/FINAL_ARCHITECTURE.md`
+- `docs/HERMES_NATIVE_CONTROL_PLANE.md`
+- `docs/CODEX_APP_SERVER_RUNTIME.md`
+- `docs/HERMES_KANBAN_BOARD.md`
+- `docs/CODEX_PLUGIN_RUNTIME_POLICY.md`
+- `docs/GOOGLE_DRIVE_KNOWLEDGE_BUS.md`
+- `docs/CHATGPT_BOARDROOM.md`
+- `docs/PAPERCLIP_DECISION.md`
+- `docs/APPROVAL_BOUNDARIES.md`
+- `docs/WEB_BROWSER_RESEARCH_ROUTING.md`
+- `docs/HYBRID_RESEARCH_AND_CAPTURE_MODEL.md`
+- `docs/DEEP_RESEARCH_TO_REPO_STAGING.md`
+- `docs/DRIVE_CHATGPT_PRIVACY_BOUNDARY.md`
+- `config/research_capture_routing.yaml`
+
+- `data/events.jsonl`
+- `config/schemas/`
+- `scripts/validate_register_schemas.py`
+- `scripts/process_owner_decision.py`
+- `scripts/validate_case_readiness.py`
+- `scripts/generate_artifact_manifest.py`
+- `scripts/reconcile_hermes_kanban.py`
+- `scripts/prepare_chatgpt_drive_packet.py`
+- `scripts/stage_chatgpt_return.py`
+- `scripts/stage_deep_research_leads.py`
+
+*System version: v4.1 | Hermes-native design | Event-ledger hardened | Public-template reference implementation | External actions remain owner-gated*

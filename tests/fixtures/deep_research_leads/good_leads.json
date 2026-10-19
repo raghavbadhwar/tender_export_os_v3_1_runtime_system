@@ -1,0 +1,50 @@
+{
+  "research_report_id": "DR-20260701-LOWCOMP-RADAR",
+  "report_title": "Daily Low-Competition Order Radar",
+  "generated_at_local": "2026-07-01T08:30:00+05:30",
+  "timezone": "Asia/Kolkata",
+  "leads": [
+    {
+      "lead_id": "DRL-20260701-001",
+      "research_report_id": "DR-20260701-LOWCOMP-RADAR",
+      "source_url": "https://example.gov.in/tenders/retender-ro-filter-amc",
+      "source_name": "Example District Procurement Page",
+      "buyer_name": "Example District Hospital",
+      "buyer_type": "District Hospital",
+      "workflow_type": "GOV",
+      "category": "RO/water filter AMC",
+      "lead_title": "Retender for RO water filter AMC",
+      "location": "Pune, Maharashtra",
+      "deadline": "2026-07-08",
+      "evidence_level": "PUBLIC_LISTING_ONLY",
+      "why_interesting": "Retender notice appears in a low-visibility district procurement page.",
+      "why_low_competition": "Retender and AMC category suggest fewer qualified local responses.",
+      "fulfilment_hypothesis": "Potentially simple local service fulfilment if documents confirm scope.",
+      "risks": "Documents not downloaded; eligibility and BOQ are unverified.",
+      "missing_info": "Full tender document, BOQ, EMD, eligibility, delivery schedule.",
+      "recommended_repo_action": "MANUAL_SOURCE_CHECK",
+      "owner_review_required": true
+    },
+    {
+      "lead_id": "DRL-20260701-002",
+      "research_report_id": "DR-20260701-LOWCOMP-RADAR",
+      "source_url": "https://example.gov.in/tenders/digitisation-boq-downloaded",
+      "source_name": "Example University Tender Page",
+      "buyer_name": "Example State University",
+      "buyer_type": "University",
+      "workflow_type": "GOV",
+      "category": "record scanning and digitisation",
+      "lead_title": "Record scanning and digitisation with downloaded BOQ",
+      "location": "Nagpur, Maharashtra",
+      "deadline": "2026-07-12",
+      "evidence_level": "DOCUMENTS_DOWNLOADED",
+      "why_interesting": "Clear BOQ and repeat institutional buyer pattern make it worth operational review.",
+      "why_low_competition": "Boring service category, modest local delivery, and clear BOQ reduce search cost.",
+      "fulfilment_hypothesis": "Supplier readiness may exist through existing document scanning vendors.",
+      "risks": "Eligibility and data-security clauses still require Deep Read.",
+      "missing_info": "Supplier quote proof and complete eligibility extraction.",
+      "recommended_repo_action": "CREATE_CASE_CANDIDATE_AFTER_EVIDENCE",
+      "owner_review_required": true
+    }
+  ]
+}
