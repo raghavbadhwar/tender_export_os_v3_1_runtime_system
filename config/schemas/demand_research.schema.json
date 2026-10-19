@@ -1,0 +1,30 @@
+{
+  "file": "data/demand_research.csv",
+  "primary_key": "research_id",
+  "required_columns": [
+    "research_id",
+    "category_code",
+    "category_name",
+    "country",
+    "buyer_type",
+    "source_tier",
+    "source_name",
+    "source_url",
+    "market_fit_score",
+    "source_reliability_score",
+    "evidence_density_score",
+    "recommended_next_action",
+    "approval_required",
+    "notes",
+    "created_at",
+    "updated_at"
+  ],
+  "required_fields": ["research_id", "category_code", "category_name", "country", "source_tier", "recommended_next_action", "created_at"],
+  "enums": {
+    "source_tier": ["", "TIER_1_INSTITUTIONAL", "TIER_2_SECTOR", "TIER_3_IMPORTER_DISTRIBUTOR", "TIER_4_MARKETPLACE_RFQ", "TIER_5_STRATEGIC_ACCOUNT"],
+    "approval_required": ["", "TRUE", "FALSE"]
+  },
+  "date_fields": ["created_at", "updated_at"],
+  "numeric_fields": ["market_fit_score", "source_reliability_score", "evidence_density_score"],
+  "url_fields": ["source_url"]
+}

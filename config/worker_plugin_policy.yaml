@@ -1,0 +1,74 @@
+version: 2
+purpose: "Small, role-specific, profile-local skill imports for the real Tender Export OS Hermes specialist profiles."
+
+policy:
+  mode: profile_local_skill_imports
+  original_external_directories_modified: false
+  hermes_native_plugins_auto_enabled: false
+  mcp_servers_auto_enabled: false
+  external_message_plugins_require_owner_approval: true
+  credential_heavy_plugins_require_owner_approval: true
+  submit_upload_payment_dsc_plugins_require_owner_approval: true
+  teos_external_actions_allowed: false
+  import_only_when_role_relevant: true
+  imported_skills_are_subordinate_to:
+    - specialist SOUL.md
+    - config/hermes_specialist_profiles.yaml
+    - Tender Export OS approval policy
+    - live task instructions
+
+# These are current, locally installed and readable skill libraries. The damaged
+# `/Volumes/RAGHAV2/...` source roots are deliberately not used for live imports.
+source_roots:
+  accio: /Users/raghav/.codex/skills
+  claude: /Users/raghav/.agents/skills
+
+profiles_root: /Users/raghav/.hermes/profiles
+import_category_path: tender-export-os/plugin-imports
+
+# Candidates only. Nothing in this section is enabled by the importer.
+hermes_native_plugin_candidates:
+  gov-tender-intelligence: [web-firecrawl, web-tavily, web-exa, browser-firecrawl, browser-browserbase]
+  export-buyer-intelligence: [web-firecrawl, web-tavily, web-exa, browser-firecrawl, browser-browserbase]
+  relationship-ops: [gmail]
+
+profile_imports:
+  teos-orchestrator:
+    maps_runtime_agents: [hermes_chief_operator, approval_desk_agent]
+    accio: [ai-agents-architect, concise-planning, agent-resource-allocator]
+    claude: []
+
+  gov-tender-intelligence:
+    maps_runtime_agents: [radar_agent, fast_kill_agent, deep_read_agent, source_health_agent]
+    accio: [agent-researcher, browser-automation, business-analyst]
+    claude: [data-quality-frameworks]
+
+  export-buyer-intelligence:
+    maps_runtime_agents: [radar_agent, fast_kill_agent, deep_read_agent]
+    accio: [agent-researcher, browser-automation, business-analyst]
+    claude: [competitive-landscape, data-quality-frameworks]
+
+  supplier-commercial:
+    maps_runtime_agents: [supplier_engine_agent]
+    accio: [agent-researcher, business-analyst]
+    claude: [carrier-relationship-management, data-quality-frameworks]
+
+  pricing-risk:
+    maps_runtime_agents: [pricing_agent]
+    accio: [cost-optimization, backtesting-frameworks, business-analyst, analytics-tracking]
+    claude: [data-quality-frameworks]
+
+  compliance-due-diligence:
+    maps_runtime_agents: [compliance_agent]
+    accio: [claims, agent-researcher, business-analyst]
+    claude: [data-quality-frameworks]
+
+  relationship-ops:
+    maps_runtime_agents: [execution_tracker_agent, sales_followup_agent]
+    accio: [copywriting, customer-support, business-analyst]
+    claude: [carrier-relationship-management]
+
+  learning-evaluation:
+    maps_runtime_agents: [learning_review_agent]
+    accio: [analytics-tracking, backtesting-frameworks, business-analyst]
+    claude: [agent-evaluation, agent-memory-systems, data-quality-frameworks]

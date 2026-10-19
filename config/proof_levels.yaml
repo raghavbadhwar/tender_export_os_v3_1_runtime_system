@@ -1,0 +1,73 @@
+version: 1
+description: "Formal proof-level constants for Tender Export OS V5 internal gates."
+safety_boundary: "Proof levels guide internal routing only. They do not authorize external sends, submissions, uploads, payments, DSC use, final pricing, final HS/HTS/ITC-HS, origin, delivery, or legal/compliance commitments."
+
+domains:
+  buyer_rfq:
+    levels:
+      RESEARCH_THESIS_ONLY: "Market/category thesis without buyer-specific proof."
+      PUBLIC_LISTING_ONLY: "Public or marketplace listing; lead only, not bid-ready."
+      BUYER_VISIBLE: "Buyer/institution visible but RFQ details incomplete."
+      RFQ_DETAIL_CAPTURED: "Buyer-specific detail/source captured with citations."
+      RFQ_VERIFIED: "Buyer identity, RFQ/source detail, and evidence bundle verified."
+  supplier:
+    levels:
+      PUBLIC_LISTING_ONLY: "Supplier/public catalogue/listing only."
+      SUPPLIER_IDENTITY_VISIBLE: "Supplier identity and business source visible."
+      SUPPLIER_CAPABILITY_EVIDENCE: "Product fit, capacity, and certificates indicated."
+      SUPPLIER_SPECIFIC_QUOTE_PROOF: "Written supplier-specific quote proof exists."
+      SUPPLIER_TERMS_CERTS_PACKING_PROVEN: "Quote, terms, certificate, provenance, and packing proof present."
+  pricing_quote:
+    levels:
+      NO_PRICE: "No price data."
+      INDICATIVE_MARKETPLACE_SIGNAL: "Marketplace/catalogue/public benchmark only."
+      COMPARABLE_PRICE_SIGNAL: "Comparable historical or public benchmark."
+      SUPPLIER_SPECIFIC_QUOTE_PROOF: "Supplier-specific quote proof tied to supplier and case."
+      LANDED_COST_READY: "Supplier quote plus landed cost, terms, buffers, and proof references."
+  compliance:
+    levels:
+      NOT_REVIEWED: "No compliance review."
+      DRAFT_CATEGORY_CHECK: "Draft category/HSN/ITC-HS note only."
+      DRAFT_POLICY_AND_DOC_CHECK: "Draft export policy, docs, and alerts captured."
+      SPECIALIST_REVIEW_REQUIRED: "SCOMET/prohibited/restricted or ambiguous item."
+      OWNER_APPROVED_DRAFT_ONLY: "Owner-reviewed draft; still not final expert certification."
+  source_document:
+    levels:
+      RAW_LEAD: "Unproven lead."
+      PUBLIC_LISTING_ONLY: "Lead page only."
+      DETAIL_PAGE_READ: "Detail page read and cited."
+      DOCUMENTS_DISCOVERED: "Documents found but not captured."
+      DOCUMENTS_DOWNLOADED: "Documents captured locally."
+      STRUCTURED_EVIDENCE_BUNDLE: "Parsed evidence bundle with citations."
+
+strict_quote_proof:
+  accepted_proof_types:
+    - supplier_specific_response
+    - supplier_written_quote
+    - supplier_quote_pdf
+    - proforma
+    - proforma_invoice
+    - email_quote
+    - quotation_pdf
+    - verified_portal_quote
+    - signed_quote
+  indicative_or_marketplace_proof_types:
+    - marketplace_listing
+    - public_listing
+    - public_catalog
+    - public_price_list
+    - catalogue_price
+    - catalog_price
+    - tradeindia_listing
+    - indiamart_listing
+    - alibaba_listing
+    - generic_benchmark
+    - comparable_price
+  required_semantics:
+    - case_id present
+    - quote_received_at present
+    - supplier_id or supplier_name present
+    - quote_proof_type is supplier-specific
+    - quote_proof_path or supplier_specific_quote=TRUE present
+    - indicative_price_only/marketplace_listing_price/not_a_quote_warning are not true
+  marketplace_public_listings_are_quote_proof: false

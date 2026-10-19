@@ -1,0 +1,92 @@
+version: 1
+shared_contract:
+  version: 2
+  evidence:
+    private_root: outputs/evidence/private
+    redacted_root: outputs/evidence/redacted
+    raw_evidence_commit_allowed: false
+  hard_limits:
+    max_pages: 50
+    max_depth: 3
+    timeout_seconds: 120
+    max_file_size_mb: 100
+  access_boundaries:
+    public_https_read_only: true
+    captcha_bypass: false
+    login_bypass: false
+    paywall_bypass: false
+    external_actions: false
+  escalation_labels:
+    login: MANUAL_LOGIN_REQUIRED
+    captcha: CAPTCHA_BLOCKED
+    paywall: PAYWALL_BLOCKED
+    owner_approval: OWNER_APPROVAL_REQUIRED
+    source_conflict: SOURCE_TEXT_CONFLICT
+description: "Read-only agent-browser routes for evidence capture and buyer-market research."
+
+policy:
+  mode: READ_ONLY_EVIDENCE
+  content_boundaries: true
+  max_output_characters: 50000
+  timeout_seconds: 90
+  profile_root: .local/browser_profiles/agent_browser
+  permitted_commands:
+    - open
+    - snapshot
+    - get
+    - screenshot
+    - close
+  forbidden_commands:
+    - click
+    - dblclick
+    - fill
+    - type
+    - press
+    - check
+    - uncheck
+    - select
+    - upload
+    - download
+    - eval
+    - auth
+    - confirm
+  forbidden_business_actions:
+    - submit_form
+    - send_message
+    - upload_document
+    - pay
+    - use_dsc
+    - accept_terms
+    - commit_price
+    - commit_delivery
+
+artifacts:
+  raw_output_root: outputs/evidence/private/agent_browser
+  redacted_output_root: outputs/evidence/redacted/agent_browser
+  raw_evidence_commit_allowed: false
+
+core_sources:
+  gem:
+    source_name: "GeM — Government e-Marketplace"
+    start_url: https://bidplus.gem.gov.in/all-bids
+    allowed_domains: [gem.gov.in, "*.gem.gov.in"]
+    workflow: GOV
+  cppp:
+    source_name: "CPPP — Central Public Procurement Portal"
+    start_url: https://eprocure.gov.in/eprocure/app
+    allowed_domains: [eprocure.gov.in, "*.eprocure.gov.in"]
+    workflow: GOV
+  ungm:
+    source_name: "UN Global Marketplace (UNGM)"
+    start_url: https://www.ungm.org/Public/Notice
+    allowed_domains: [ungm.org, "*.ungm.org"]
+    workflow: EXPORT
+
+dynamic_public_research:
+  enabled: true
+  rule: "Allow only the requested public HTTPS host and its subdomains after private-network rejection."
+  purpose:
+    - foreign retailer catalogue evidence
+    - public company identity and contact-page evidence
+    - market and assortment demand signals
+  external_actions: false

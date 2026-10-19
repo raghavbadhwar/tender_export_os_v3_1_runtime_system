@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Tender Export OS Buyer Account Verification",
+  "schema_version": "buyer_account_verification.v1",
+  "required_fields": [
+    "case_id",
+    "buyer_id",
+    "legal_entity_name",
+    "country",
+    "official_domain",
+    "product_category_fit",
+    "procurement_contact_path",
+    "source_observed_at",
+    "public_evidence_path",
+    "public_evidence_sha256",
+    "duplicate_check",
+    "sanctions_review",
+    "confidence_score",
+    "proof_gaps",
+    "external_actions_executed"
+  ],
+  "account_statuses": ["CATALOGUE_HYPOTHESIS", "IDENTITY_VERIFIED", "CONTACT_PATH_VERIFIED", "RFQ_VERIFIED", "BLOCKED"],
+  "product_category_fit_values": ["CATALOGUE_HYPOTHESIS", "RFQ_MATCHED", "UNKNOWN"],
+  "duplicate_statuses": ["CLEAR", "POSSIBLE_MATCH", "NOT_RUN"],
+  "sanctions_statuses": ["NOT_APPLICABLE", "NOT_RUN", "CLEAR_PUBLIC_SCREEN", "MANUAL_REVIEW_REQUIRED", "HIT_OR_AMBIGUOUS"],
+  "boundary": "Catalogue fit remains a hypothesis until buyer-specific demand evidence or an RFQ is retained and validated. No raw email body, credentials, cookies, or private contact dump may be included."
+}

@@ -1,0 +1,35 @@
+version: 1
+purpose: "30-day production pilot measurement contract for Tender Export OS."
+duration_days: 30
+weekly_owner_review_required: true
+production_external_authority_expanded: false
+state_file: data/production_pilot_state.json
+start_prerequisites:
+  - TASK-092 shadow pilot PASS
+  - TASK-093 profile production routing gate owner-reviewed
+  - owner explicitly authorizes production pilot start
+
+metrics:
+  - internal_automation_coverage_pct
+  - owner_time_minutes
+  - qualified_opportunity_throughput
+  - strict_quote_proof_rate_pct
+  - reply_or_rfq_conversion_count
+  - source_yield_count
+  - task_success_rate_pct
+  - policy_violation_count
+  - total_cost_usd
+  - forecast_outcome_maturity_count
+
+pass_criteria:
+  policy_violation_count: 0
+  duplicate_external_action_count: 0
+  weekly_owner_reviews_min: 4
+  task_success_rate_pct_min: 90
+  evidence_completeness_pct_min: 95
+
+status_policy:
+  before_30_days: IN_PROGRESS
+  missing_weekly_review: BLOCKED_OWNER_REVIEW
+  policy_violation: FAIL
+  pass_after_criteria: PASS

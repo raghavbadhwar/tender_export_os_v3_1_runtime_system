@@ -1,0 +1,4 @@
+# Tender Export OS bounded Hermes MCP gateway.
+# Installed into the existing project virtual environment so every exposed tool
+# uses the same validated document/browser/business dependencies as the repo.
+fastmcp==3.4.4

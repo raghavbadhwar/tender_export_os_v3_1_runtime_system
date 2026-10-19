@@ -1,0 +1,75 @@
+version: 1
+module: privacy_controlled_trajectory_policy
+safety_boundary: "Internal learning metadata only. Do not capture raw prompts, raw documents, email bodies, credentials, cookies, private browser content, payment/bank details, DSC material, or secret tokens."
+
+trajectory_capture:
+  enabled: true
+  purpose: "Evaluate agent/process quality, proposal effectiveness, source/supplier learning, and forecast improvement without storing sensitive raw content."
+  allowed_fields:
+    - task_id
+    - case_id
+    - workflow_type
+    - profile
+    - tool_names
+    - decision_ids
+    - policy_decision_ids
+    - approval_ids
+    - outcome_ids
+    - evidence_receipt_paths
+    - evaluator_scores
+    - latency_ms
+    - token_counts
+    - cost_usd
+    - status
+    - error_code
+    - created_at
+  excluded_fields:
+    - raw_prompt
+    - raw_chain_of_thought
+    - raw_document_text
+    - raw_full_pdf_text
+    - raw_html
+    - email_body
+    - private_browser_content
+    - password
+    - token
+    - cookie
+    - session
+    - dsc
+    - bank_details
+    - payment_card
+    - government_identifier
+    - supplier_table_dump
+  allowed_references:
+    - hashed_evidence_receipt
+    - bounded_summary
+    - file_path_reference
+    - event_id_reference
+    - proposal_id_reference
+
+retention:
+  default_days: 180
+  raw_sensitive_content_retention_days: 0
+  deletion_review: "monthly"
+
+rl_training:
+  enabled: false
+  minimum_labelled_examples_required: 1000
+  approved_training_design_required: true
+  owner_approval_required: true
+  allowed_before_enablement:
+    - aggregate_quality_reporting
+    - evaluator_regression_tests
+    - proposal_effectiveness_analysis
+  forbidden_before_enablement:
+    - model_finetuning
+    - reinforcement_learning
+    - automatic_policy_update
+    - automatic_prompt_update
+    - automatic_weight_update
+
+approval_gates:
+  enable_rl_training: OWNER_APPROVAL_REQUIRED
+  export_trajectory_dataset: OWNER_APPROVAL_REQUIRED
+  include_new_sensitive_field: OWNER_APPROVAL_REQUIRED
+  change_retention: OWNER_APPROVAL_REQUIRED

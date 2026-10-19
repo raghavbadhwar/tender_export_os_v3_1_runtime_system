@@ -1,0 +1,10 @@
+{
+  "file": "data/historical_import_demand.csv",
+  "primary_key": "demand_id",
+  "required_columns": ["demand_id", "country", "category_code", "category_name", "product_or_service", "source_name", "source_url", "import_signal_type", "signal_score", "evidence_level", "observed_at", "created_at"],
+  "required_fields": ["demand_id", "country", "category_name", "source_name", "import_signal_type", "signal_score", "evidence_level", "observed_at", "created_at"],
+  "enums": {"evidence_level": ["PUBLIC_LISTING_ONLY", "DETAIL_PAGE_READ", "DOCUMENTS_DISCOVERED", "DOCUMENTS_DOWNLOADED", "STRUCTURED_EVIDENCE_BUNDLE"]},
+  "date_fields": ["observed_at", "created_at"],
+  "numeric_fields": ["signal_score"],
+  "url_fields": ["source_url"]
+}

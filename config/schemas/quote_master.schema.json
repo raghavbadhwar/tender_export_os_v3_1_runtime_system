@@ -1,0 +1,77 @@
+{
+  "file": "data/quote_master.csv",
+  "primary_key": "quote_id",
+  "required_columns": [
+    "quote_id",
+    "case_id",
+    "supplier_id",
+    "supplier_name",
+    "quote_request_sent_at",
+    "quote_received_at",
+    "product_description",
+    "quantity",
+    "unit",
+    "currency",
+    "selected_for_pricing",
+    "indicative_price_only",
+    "quote_proof_type",
+    "quote_proof_path",
+    "quote_proof_sha256",
+    "quote_verification_status",
+    "case_spec_match",
+    "min_order_qty",
+    "tax_treatment",
+    "locked_after_approval",
+    "created_at",
+    "updated_at"
+  ],
+  "required_fields": ["quote_id", "case_id", "supplier_id", "supplier_name"],
+  "enums": {
+    "selected_for_pricing": ["", "TRUE", "FALSE"],
+    "certificate_included": ["", "TRUE", "FALSE"],
+    "sample_available": ["", "TRUE", "FALSE"],
+    "indicative_price_only": ["", "TRUE", "FALSE"],
+    "marketplace_listing_price": ["", "TRUE", "FALSE"],
+    "supplier_specific_quote": ["", "TRUE", "FALSE"],
+    "quote_verification_status": ["", "UNVERIFIED", "EVIDENCE_PRESENT", "VERIFIED", "REJECTED", "SUPERSEDED"],
+    "case_spec_match": ["", "TRUE", "FALSE", "UNKNOWN"],
+    "used_in_approved_bid": ["", "TRUE", "FALSE"],
+    "locked_after_approval": ["", "TRUE", "FALSE"],
+    "price_outlier_flag": ["", "TRUE", "FALSE"]
+  },
+  "date_fields": ["created_at", "updated_at", "quote_validity_date"],
+  "datetime_fields": ["quote_request_sent_at", "quote_received_at"],
+  "numeric_fields": [
+    "response_hrs",
+    "quantity",
+    "min_order_qty",
+    "unit_price_inr",
+    "unit_price_usd",
+    "total_price_inr",
+    "total_price_usd",
+    "gst_rate_pct",
+    "gst_amount_inr",
+    "price_incl_gst_inr",
+    "lead_time_days",
+    "validity_days",
+    "sample_cost_inr",
+    "fob_price_usd",
+    "cif_price_usd",
+    "quote_clarity_score",
+    "price_rank",
+    "category_price_zscore"
+  ],
+  "cross_field_rules": [
+    {
+      "rule": "selected_for_pricing_not_indicative",
+      "if": {"selected_for_pricing": "TRUE", "indicative_price_only": "TRUE"},
+      "error": "selected_for_pricing cannot be TRUE when indicative_price_only is TRUE"
+    },
+    {
+      "rule": "locked_after_approval_requires_receipt",
+      "if": {"locked_after_approval": "TRUE"},
+      "requires_any": ["used_in_approved_bid", "quote_proof_path"],
+      "error": "locked_after_approval rows must carry approval usage or quote proof path"
+    }
+  ]
+}

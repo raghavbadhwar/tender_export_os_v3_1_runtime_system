@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Tender Export OS Supplier Performance Projection",
+  "schema_version": "supplier_performance_projection.v1",
+  "required_fields": [
+    "schema_version",
+    "generated_at",
+    "projection_status",
+    "external_actions_executed",
+    "suppliers"
+  ],
+  "projection_statuses": ["PASS", "PARTIAL", "BLOCKED"],
+  "supplier_statuses": ["NO_OPERATIONAL_HISTORY", "WEAK_PUBLIC_SIGNAL_ONLY", "QUOTE_VERIFIED", "OPERATIONAL_EVIDENCE", "OWNER_REVIEW"],
+  "evidence_classes": [
+    "verified_quote_response",
+    "delivery_evidence",
+    "defect_or_claim_evidence",
+    "documentation_evidence",
+    "payment_terms_evidence",
+    "owner_correction",
+    "weak_public_signal"
+  ],
+  "boundary": "This projection is internal only. Public reviews and marketplace listings are weak evidence and do not count as delivery history. Supplier score changes remain advisory until owner-approved learning promotion."
+}

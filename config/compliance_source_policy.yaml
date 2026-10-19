@@ -1,0 +1,62 @@
+version: compliance_source_policy.v1
+boundary: "Draft-only source validation. Passing this policy does not finalize legal, tax, HSN/ITC-HS, SCOMET, origin, certificate, or destination-country compliance."
+
+workflows:
+  GOV:
+    default_max_age_days: 365
+    requirement_types:
+      general:
+        allowed_source_kinds: [tender_document, corrigendum, official_portal, owner_uploaded_primary]
+        primary_required: true
+        max_age_days: 365
+      eligibility:
+        allowed_source_kinds: [tender_document, corrigendum, official_portal, owner_uploaded_primary]
+        primary_required: true
+        max_age_days: 365
+      certificate:
+        allowed_source_kinds: [tender_document, corrigendum, official_portal, supplier_certificate, owner_uploaded_primary]
+        primary_required: true
+        max_age_days: 365
+      tax:
+        allowed_source_kinds: [gst_portal, tender_document, corrigendum, official_portal, owner_uploaded_primary]
+        primary_required: true
+        max_age_days: 180
+      delivery:
+        allowed_source_kinds: [tender_document, corrigendum, official_portal, owner_uploaded_primary]
+        primary_required: true
+        max_age_days: 365
+  EXPORT:
+    default_max_age_days: 180
+    requirement_types:
+      general:
+        allowed_source_kinds: [dgft, customs_tariff, scomet_list, official_destination_regulator, buyer_rfq, supplier_certificate, owner_uploaded_primary]
+        primary_required: true
+        max_age_days: 180
+      hsn_itchs:
+        allowed_source_kinds: [dgft, customs_tariff, official_tariff_source, owner_uploaded_primary]
+        primary_required: true
+        max_age_days: 90
+      scomet:
+        allowed_source_kinds: [dgft, scomet_list, owner_uploaded_primary]
+        primary_required: true
+        max_age_days: 90
+      tariff:
+        allowed_source_kinds: [customs_tariff, official_tariff_source, official_destination_regulator]
+        primary_required: true
+        max_age_days: 90
+      tax:
+        allowed_source_kinds: [gst_portal, customs_tariff, official_destination_regulator]
+        primary_required: true
+        max_age_days: 90
+      certificate:
+        allowed_source_kinds: [dgft, commodity_board, official_destination_regulator, supplier_certificate, owner_uploaded_primary]
+        primary_required: true
+        max_age_days: 180
+      destination:
+        allowed_source_kinds: [official_destination_regulator, buyer_rfq, embassy_trade_source, owner_uploaded_primary]
+        primary_required: true
+        max_age_days: 180
+      origin:
+        allowed_source_kinds: [dgft, customs_tariff, official_destination_regulator, chamber_of_commerce, owner_uploaded_primary]
+        primary_required: true
+        max_age_days: 180

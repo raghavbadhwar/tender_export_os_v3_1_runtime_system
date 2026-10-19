@@ -1,0 +1,384 @@
+{
+  "spec_version": "1.0.0",
+  "date": "2026-06-30",
+  "agent_name": "agent_loop_scheduler",
+  "timezone": "Asia/Kolkata",
+  "sources_used": [
+    "config/agent_loops.json",
+    "workflows/agent_loop_runtime.md",
+    "workflows/daily_autopilot.md",
+    "config/approval_policy.yaml",
+    "data/master_cases.csv",
+    "data/agent_run_log.csv",
+    "data/approvals_receipts.csv"
+  ],
+  "global_rules": {
+    "autonomy_level": "supervised",
+    "case_key": "case_id",
+    "run_log": "data/agent_run_log.csv",
+    "approval_policy": "config/approval_policy.yaml",
+    "external_effects_allowed_without_approval": false,
+    "credentials_allowed_in_outputs": false,
+    "default_failure_handoff": "Log the blocker, keep the case at the safest current status, and surface it in the next owner brief.",
+    "schedule_change_rule": "Validate config/agent_loops.json and config/loop_schedule.json before changing any recurring run."
+  },
+  "schedules": [
+    {
+      "schedule_id": "daily_morning_autopilot",
+      "status": "ACTIVE",
+      "cadence": "Daily at 06:00 IST. On weekends, run brief-only unless manually overridden.",
+      "purpose": "Run the full supervised morning operating cycle and produce the owner brief.",
+      "max_total_runtime_minutes": 210,
+      "entries": [
+        {
+          "slot": "05:55",
+          "loop_name": "daily_autopilot_supervised_loop",
+          "phase": "preflight",
+          "mode": "validate",
+          "input_scope": "config/agent_loops.json and config/loop_schedule.json",
+          "max_runtime_minutes": 5,
+          "depends_on": [],
+          "approval_behavior": "No external action allowed. Fail closed if validation fails.",
+          "outputs": [
+            "terminal validation result",
+            "data/agent_run_log.csv"
+          ]
+        },
+        {
+          "slot": "06:00",
+          "loop_name": "source_scan_loop",
+          "phase": "radar_scan",
+          "mode": "scan_active_sources",
+          "input_scope": "Working GOV and EXPORT sources",
+          "max_runtime_minutes": 30,
+          "depends_on": [
+            "preflight"
+          ],
+          "approval_behavior": "No approval required for scan or case creation. Stop on CAPTCHA, paywall, or login.",
+          "outputs": [
+            "data/master_cases.csv",
+            "data/source_health.csv",
+            "data/agent_run_log.csv"
+          ]
+        },
+        {
+          "slot": "06:30",
+          "loop_name": "case_progression_loop",
+          "phase": "fast_kill",
+          "mode": "process_NEW_cases",
+          "input_scope": "Cases with status NEW",
+          "max_runtime_minutes": 20,
+          "depends_on": [
+            "radar_scan"
+          ],
+          "approval_behavior": "No approval required for internal scoring. Never reject solely because data is missing.",
+          "outputs": [
+            "data/master_cases.csv",
+            "outputs/case_reports/{case_id}/no_go_reason_note.txt",
+            "data/agent_run_log.csv"
+          ]
+        },
+        {
+          "slot": "07:00",
+          "loop_name": "case_progression_loop",
+          "phase": "deep_read",
+          "mode": "extract_surviving_cases",
+          "input_scope": "Cases with status WATCHLIST or DEEP_READ and readable documents",
+          "max_runtime_minutes": 30,
+          "depends_on": [
+            "fast_kill"
+          ],
+          "approval_behavior": "No approval required for extraction. Ambiguous eligibility remains unresolved and flagged.",
+          "outputs": [
+            "outputs/case_reports/{case_id}/deep_read_{case_id}.md",
+            "data/master_cases.csv",
+            "data/agent_run_log.csv"
+          ]
+        },
+        {
+          "slot": "07:30",
+          "loop_name": "supplier_proof_loop",
+          "phase": "supplier_search",
+          "mode": "research_only_5_3_2",
+          "input_scope": "Cases with status SUPPLIER_SEARCH",
+          "max_runtime_minutes": 30,
+          "depends_on": [
+            "deep_read"
+          ],
+          "approval_behavior": "Create approval card before quote requests. Do not contact suppliers.",
+          "outputs": [
+            "outputs/case_reports/{case_id}/supplier_shortlist_{case_id}.md",
+            "receipts/approvals/{case_id}_approval_card.html",
+            "data/supplier_master.csv",
+            "data/agent_run_log.csv"
+          ]
+        },
+        {
+          "slot": "08:00",
+          "loop_name": "compliance_draft_loop",
+          "phase": "export_compliance",
+          "mode": "draft_only",
+          "input_scope": "EXPORT cases with deep read complete",
+          "max_runtime_minutes": 20,
+          "depends_on": [
+            "deep_read"
+          ],
+          "approval_behavior": "Draft only. Stop on SCOMET suspicion, prohibited category, final HSN/ITC-HS, or origin claim.",
+          "outputs": [
+            "outputs/case_reports/{case_id}/compliance_draft_{case_id}.md",
+            "data/master_cases.csv",
+            "data/agent_run_log.csv"
+          ]
+        },
+        {
+          "slot": "08:15",
+          "loop_name": "pricing_pack_approval_loop",
+          "phase": "pricing_and_pack",
+          "mode": "price_when_2_quote_proofs_exist",
+          "input_scope": "Cases with at least 2 quote proofs or PRICING_READY cases",
+          "max_runtime_minutes": 35,
+          "depends_on": [
+            "supplier_search",
+            "export_compliance"
+          ],
+          "approval_behavior": "No price commitment. Create approval card before any buyer quote or tender submission.",
+          "outputs": [
+            "outputs/case_reports/{case_id}/pricing_{case_id}.md",
+            "outputs/bid_packs/{case_id}/",
+            "outputs/export_quote_packs/{case_id}/",
+            "receipts/approvals/{case_id}_approval_card.html",
+            "data/agent_run_log.csv"
+          ]
+        },
+        {
+          "slot": "08:50",
+          "loop_name": "approval_gate_loop",
+          "phase": "approval_queue_refresh",
+          "mode": "ensure_pending_cards",
+          "input_scope": "Any case requiring owner approval",
+          "max_runtime_minutes": 10,
+          "depends_on": [
+            "pricing_and_pack",
+            "supplier_search"
+          ],
+          "approval_behavior": "Create or refresh pending approval records. Never pre-fill owner decision.",
+          "outputs": [
+            "receipts/approvals/{case_id}_approval_card.html",
+            "data/approvals_receipts.csv",
+            "data/master_cases.csv",
+            "data/agent_run_log.csv"
+          ]
+        },
+        {
+          "slot": "09:00",
+          "loop_name": "owner_briefing_loop",
+          "phase": "daily_owner_brief",
+          "mode": "render_brief",
+          "input_scope": "All active cases, today's run log, approvals, and source health",
+          "max_runtime_minutes": 10,
+          "depends_on": [
+            "approval_queue_refresh"
+          ],
+          "approval_behavior": "No external forwarding. Owner reads brief locally or in Hermes.",
+          "outputs": [
+            "outputs/daily_briefs/brief_YYYYMMDD.html",
+            "data/agent_run_log.csv"
+          ]
+        }
+      ]
+    },
+    {
+      "schedule_id": "intra_day_monitor",
+      "status": "ACTIVE",
+      "cadence": "Weekdays at 11:00, 15:00, and 18:00 IST.",
+      "purpose": "Monitor pending approvals, quote responses, quote validity, deadlines, and post-approval receipts.",
+      "max_total_runtime_minutes": 45,
+      "entries": [
+        {
+          "slot": "11:00,15:00,18:00",
+          "loop_name": "approval_gate_loop",
+          "phase": "pending_approval_check",
+          "mode": "read_only_queue_check",
+          "input_scope": "PENDING approval rows and APPROVAL_REQUIRED cases",
+          "max_runtime_minutes": 10,
+          "depends_on": [],
+          "approval_behavior": "Do not infer approval from silence. Surface stale approvals in next brief.",
+          "outputs": [
+            "data/approvals_receipts.csv",
+            "data/agent_run_log.csv"
+          ]
+        },
+        {
+          "slot": "11:00,15:00,18:00",
+          "loop_name": "supplier_proof_loop",
+          "phase": "quote_response_monitor",
+          "mode": "track_proofs_only",
+          "input_scope": "Cases waiting for quote proofs",
+          "max_runtime_minutes": 15,
+          "depends_on": [],
+          "approval_behavior": "Do not send reminders or quote requests without approval.",
+          "outputs": [
+            "data/quote_master.csv",
+            "receipts/supplier_quotes/",
+            "data/agent_run_log.csv"
+          ]
+        },
+        {
+          "slot": "11:00,15:00,18:00",
+          "loop_name": "execution_tracker_loop",
+          "phase": "approved_action_tracker",
+          "mode": "track_only_approved_actions",
+          "input_scope": "Approved actions with receipt references",
+          "max_runtime_minutes": 20,
+          "depends_on": [],
+          "approval_behavior": "Do not resend, resubmit, or escalate without a new owner command.",
+          "outputs": [
+            "receipts/submissions/",
+            "receipts/supplier_quotes/",
+            "data/master_cases.csv",
+            "data/agent_run_log.csv"
+          ]
+        }
+      ]
+    },
+    {
+      "schedule_id": "weekly_system_review",
+      "status": "ACTIVE",
+      "cadence": "Mondays at 09:30 IST.",
+      "purpose": "Check schedule health, stale cases, source health, and loop registry drift.",
+      "max_total_runtime_minutes": 45,
+      "entries": [
+        {
+          "slot": "09:30",
+          "loop_name": "daily_autopilot_supervised_loop",
+          "phase": "schedule_and_registry_audit",
+          "mode": "audit_only",
+          "input_scope": "loop registry, schedule registry, source health, active cases, run logs",
+          "max_runtime_minutes": 20,
+          "depends_on": [],
+          "approval_behavior": "No external action. Recommend changes only.",
+          "outputs": [
+            "outputs/daily_briefs/brief_YYYYMMDD.html",
+            "data/agent_run_log.csv"
+          ]
+        },
+        {
+          "slot": "09:50",
+          "loop_name": "owner_briefing_loop",
+          "phase": "weekly_owner_summary",
+          "mode": "brief_schedule_health",
+          "input_scope": "source health issues, stale approvals, stale cases, schedule validation status",
+          "max_runtime_minutes": 10,
+          "depends_on": [
+            "schedule_and_registry_audit"
+          ],
+          "approval_behavior": "No external forwarding.",
+          "outputs": [
+            "outputs/daily_briefs/brief_YYYYMMDD.html",
+            "data/agent_run_log.csv"
+          ]
+        }
+      ]
+    },
+    {
+      "schedule_id": "event_driven_case_triggers",
+      "status": "ACTIVE",
+      "cadence": "Triggered only by new internal evidence or explicit owner decision.",
+      "purpose": "Run the smallest safe loop when new case evidence arrives outside the morning schedule.",
+      "max_total_runtime_minutes": 120,
+      "entries": [
+        {
+          "slot": "on_new_document_uploaded",
+          "loop_name": "case_progression_loop",
+          "phase": "document_reprocess",
+          "mode": "deep_read_single_case",
+          "input_scope": "One case_id and newly provided document",
+          "max_runtime_minutes": 30,
+          "depends_on": [],
+          "approval_behavior": "No external action. Re-check kill rules after extraction.",
+          "outputs": [
+            "outputs/case_reports/{case_id}/deep_read_{case_id}.md",
+            "data/master_cases.csv",
+            "data/agent_run_log.csv"
+          ]
+        },
+        {
+          "slot": "on_quote_proof_received",
+          "loop_name": "pricing_pack_approval_loop",
+          "phase": "pricing_trigger",
+          "mode": "price_single_case_if_gate_passes",
+          "input_scope": "One case_id with quote proof update",
+          "max_runtime_minutes": 35,
+          "depends_on": [],
+          "approval_behavior": "Require 2 quote proofs. Stop before price commitment.",
+          "outputs": [
+            "outputs/case_reports/{case_id}/pricing_{case_id}.md",
+            "receipts/approvals/{case_id}_approval_card.html",
+            "data/agent_run_log.csv"
+          ]
+        },
+        {
+          "slot": "on_owner_decision_recorded",
+          "loop_name": "approval_gate_loop",
+          "phase": "owner_decision_route",
+          "mode": "record_and_route",
+          "input_scope": "One approval_id or case_id owner decision",
+          "max_runtime_minutes": 15,
+          "depends_on": [],
+          "approval_behavior": "Only explicit Approve, Reject, or Ask Changes is valid.",
+          "outputs": [
+            "receipts/owner_decisions/",
+            "data/approvals_receipts.csv",
+            "data/master_cases.csv",
+            "data/agent_run_log.csv"
+          ]
+        },
+        {
+          "slot": "on_approved_action_needs_tracking",
+          "loop_name": "execution_tracker_loop",
+          "phase": "receipt_follow_up",
+          "mode": "track_approved_action",
+          "input_scope": "One approved action with approval reference",
+          "max_runtime_minutes": 20,
+          "depends_on": [],
+          "approval_behavior": "New or changed external action requires a new approval card.",
+          "outputs": [
+            "receipts/submissions/",
+            "receipts/supplier_quotes/",
+            "data/master_cases.csv",
+            "data/agent_run_log.csv"
+          ]
+        }
+      ]
+    }
+  ],
+  "app_automation_targets": [
+    {
+      "name": "Tender Export OS Daily Autopilot",
+      "automation_id": "tender-export-os-daily-autopilot",
+      "schedule_id": "daily_morning_autopilot",
+      "kind": "cron",
+      "status": "ACTIVE",
+      "workspace": "/Users/raghav/Downloads/tender_export_os_v3_1_runtime_system",
+      "prompt_file": "codex/scheduled_daily_autopilot_prompt.md"
+    },
+    {
+      "name": "Tender Export OS Intra-day Monitor",
+      "automation_id": "tender-export-os-intra-day-monitor",
+      "schedule_id": "intra_day_monitor",
+      "kind": "cron",
+      "status": "ACTIVE",
+      "workspace": "/Users/raghav/Downloads/tender_export_os_v3_1_runtime_system",
+      "prompt_file": "codex/scheduled_intraday_monitor_prompt.md"
+    },
+    {
+      "name": "Tender Export OS Weekly System Review",
+      "automation_id": "tender-export-os-weekly-system-review",
+      "schedule_id": "weekly_system_review",
+      "kind": "cron",
+      "status": "ACTIVE",
+      "workspace": "/Users/raghav/Downloads/tender_export_os_v3_1_runtime_system",
+      "prompt_file": "codex/scheduled_weekly_system_review_prompt.md"
+    }
+  ]
+}

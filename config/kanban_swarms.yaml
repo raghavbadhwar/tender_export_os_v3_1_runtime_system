@@ -1,0 +1,132 @@
+version: 1
+board: tender-export-os
+workspace: /Users/raghav/Downloads/tender_export_os_v3_1_runtime_system
+external_effects_allowed: false
+max_concurrency: 2
+output_schema: config/schemas/swarm_worker_output.schema.json
+swarms:
+  - id: gov_deep_read
+    title: "GOV Deep Read"
+    workflow_types: [GOV]
+    minimum_evidence: 4
+    max_concurrency: 2
+    external_effects_allowed: false
+    verifier_profile: tender-export-os
+    synthesizer_profile: tender-export-os
+    preserve_disagreements: true
+    workers:
+      - id: requirement_extractor
+        profile: gov-tender-intelligence
+        role: "Extract requirements and evidence anchors"
+        evidence_keys: [requirements]
+        allowed_toolsets: [file, skills, todo]
+      - id: eligibility_critic
+        profile: compliance-due-diligence
+        role: "Critique eligibility and ambiguity without final legal claims"
+        evidence_keys: [eligibility]
+        allowed_toolsets: [web, file, skills, todo]
+      - id: deadline_corrigenda_verifier
+        profile: gov-tender-intelligence
+        role: "Verify deadline and corrigenda evidence"
+        evidence_keys: [deadline, corrigenda]
+        allowed_toolsets: [web, file, skills, todo]
+  - id: supplier_proof
+    title: "Supplier Proof"
+    workflow_types: [GOV, EXPORT]
+    minimum_evidence: 3
+    max_concurrency: 2
+    external_effects_allowed: false
+    verifier_profile: tender-export-os
+    synthesizer_profile: supplier-commercial
+    preserve_disagreements: true
+    workers:
+      - id: candidate_provenance_reviewer
+        profile: supplier-commercial
+        role: "Review candidate provenance and source diversity"
+        evidence_keys: [candidates]
+        allowed_toolsets: [web, file, skills, todo]
+      - id: strict_quote_validator
+        profile: supplier-commercial
+        role: "Validate strict quote proof without supplier contact"
+        evidence_keys: [quotes]
+        allowed_toolsets: [file, skills, todo]
+      - id: capacity_delivery_critic
+        profile: supplier-commercial
+        role: "Critique capacity, delivery, and readiness gaps"
+        evidence_keys: [capacity]
+        allowed_toolsets: [file, skills, todo]
+  - id: pricing_red_team
+    title: "Pricing Red Team"
+    workflow_types: [GOV, EXPORT]
+    minimum_evidence: 3
+    max_concurrency: 2
+    external_effects_allowed: false
+    verifier_profile: tender-export-os
+    synthesizer_profile: pricing-risk
+    preserve_disagreements: true
+    workers:
+      - id: deterministic_waterfall_reviewer
+        profile: pricing-risk
+        role: "Review deterministic cost waterfall"
+        evidence_keys: [waterfall]
+        allowed_toolsets: [file, terminal, skills, todo]
+      - id: working_capital_critic
+        profile: pricing-risk
+        role: "Critique working-capital and cash exposure"
+        evidence_keys: [working_capital]
+        allowed_toolsets: [file, skills, todo]
+      - id: l1_sensitivity_critic
+        profile: pricing-risk
+        role: "Review L1 sensitivity and walk-away scenarios"
+        evidence_keys: [l1_sensitivity]
+        allowed_toolsets: [file, skills, todo]
+  - id: export_buyer_intelligence
+    title: "Export Buyer Intelligence"
+    workflow_types: [EXPORT]
+    minimum_evidence: 3
+    max_concurrency: 2
+    external_effects_allowed: false
+    verifier_profile: tender-export-os
+    synthesizer_profile: export-buyer-intelligence
+    preserve_disagreements: true
+    workers:
+      - id: identity_verifier
+        profile: export-buyer-intelligence
+        role: "Verify public buyer identity"
+        evidence_keys: [identity]
+        allowed_toolsets: [web, file, skills, todo]
+      - id: catalogue_fit_reviewer
+        profile: export-buyer-intelligence
+        role: "Review catalogue fit as a demand hypothesis, not an RFQ"
+        evidence_keys: [catalogue]
+        allowed_toolsets: [web, file, skills, todo]
+      - id: public_contact_path_verifier
+        profile: export-buyer-intelligence
+        role: "Verify public contact path without inventing procurement contacts"
+        evidence_keys: [contact_path]
+        allowed_toolsets: [web, file, skills, todo]
+  - id: compliance_draft
+    title: "Compliance Draft"
+    workflow_types: [GOV, EXPORT]
+    minimum_evidence: 3
+    max_concurrency: 2
+    external_effects_allowed: false
+    verifier_profile: tender-export-os
+    synthesizer_profile: compliance-due-diligence
+    preserve_disagreements: true
+    workers:
+      - id: clause_extractor
+        profile: compliance-due-diligence
+        role: "Extract clauses and proof requirements"
+        evidence_keys: [clauses]
+        allowed_toolsets: [web, file, skills, todo]
+      - id: official_source_freshness_reviewer
+        profile: compliance-due-diligence
+        role: "Review official-source freshness"
+        evidence_keys: [official_sources]
+        allowed_toolsets: [web, file, skills, todo]
+      - id: unknowns_scomet_critic
+        profile: compliance-due-diligence
+        role: "Identify unknowns and SCOMET escalation points"
+        evidence_keys: [unknowns]
+        allowed_toolsets: [web, file, skills, todo]

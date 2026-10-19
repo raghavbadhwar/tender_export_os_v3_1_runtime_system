@@ -1,0 +1,271 @@
+sources:
+  gem:
+    display_name: GeM
+    public_access_level: listing_search
+    login_required: true
+    login_required_for: [bid_participation, seller_details, some_documents, clarification, submission]
+    data_available_without_login: [listing_title, bid_number, buyer, deadline, partial_item_summary]
+    data_requiring_login: [full_bid_documents, seller_actions, participation, declarations]
+    manual_seeding_workflow: owner_browser_session_or_manual_document_upload
+    otp_or_captcha_policy: pause_and_request_owner_help
+    typical_tender_density: high
+    autonomous_allowed_actions: [search, read_public_listing, download_public_document_if_available, parse, draft]
+    forbidden_actions: [submit_bid, upload_document, pay, use_dsc, accept_declaration]
+    evidence_level_possible_without_login: [PUBLIC_LISTING_ONLY, DETAIL_PAGE_READ]
+    evidence_level_requires_login: [DOCUMENTS_DOWNLOADED, DEEP_READ_COMPLETE]
+    notes: Public listings are not fully actionable until documents are downloaded or manually uploaded.
+  cppp:
+    display_name: CPPP/eProcure
+    public_access_level: public_listing_and_documents_when_available
+    login_required: true
+    login_required_for: [submission, bid_participation, some_document_downloads, corrigenda_acknowledgement]
+    data_available_without_login: [active_tender_listing, tender_detail, corrigenda_links, public_document_links]
+    data_requiring_login: [bid_submission, declarations, encrypted_bid_docs, some_boQ_downloads]
+    manual_seeding_workflow: public_download_or_owner_browser_session
+    otp_or_captcha_policy: pause_and_request_owner_help
+    typical_tender_density: high
+    autonomous_allowed_actions: [search, read_public_listing, read_detail, discover_documents, download_public_document_if_available]
+    forbidden_actions: [submit_bid, upload_document, pay, use_dsc, accept_declaration]
+    evidence_level_possible_without_login: [PUBLIC_LISTING_ONLY, DETAIL_PAGE_READ, DOCUMENTS_DISCOVERED, DOCUMENTS_DOWNLOADED]
+    evidence_level_requires_login: [DEEP_READ_COMPLETE]
+    notes: Do not represent logged-in-only documents as public evidence.
+  epublishing:
+    display_name: ePublishing
+    public_access_level: public_listing
+    login_required: false
+    login_required_for: [none]
+    data_available_without_login: [notices, basic_tender_details]
+    data_requiring_login: []
+    manual_seeding_workflow: public_read
+    otp_or_captcha_policy: structured_blocker_if_present
+    typical_tender_density: medium
+    autonomous_allowed_actions: [search, read_public_listing, download_public_document_if_available]
+    forbidden_actions: [submit_bid, upload_document, pay, use_dsc, accept_declaration]
+    evidence_level_possible_without_login: [PUBLIC_LISTING_ONLY, DETAIL_PAGE_READ, DOCUMENTS_DISCOVERED]
+    evidence_level_requires_login: []
+    notes: Treat as discovery source.
+  mahatenders:
+    display_name: Mahatenders
+    public_access_level: listing_and_detail
+    login_required: true
+    login_required_for: [submission, some_downloads, declarations]
+    data_available_without_login: [listing, detail, public_documents_if_linked]
+    data_requiring_login: [submission, restricted_documents]
+    manual_seeding_workflow: public_read_or_owner_browser_session
+    otp_or_captcha_policy: pause_and_request_owner_help
+    typical_tender_density: medium
+    autonomous_allowed_actions: [search, read_public_listing, discover_documents]
+    forbidden_actions: [submit_bid, upload_document, pay, use_dsc, accept_declaration]
+    evidence_level_possible_without_login: [PUBLIC_LISTING_ONLY, DETAIL_PAGE_READ, DOCUMENTS_DISCOVERED]
+    evidence_level_requires_login: [DOCUMENTS_DOWNLOADED]
+    notes: NIC-style portal behavior varies by tender.
+  punjab_etender:
+    display_name: Punjab eTender
+    public_access_level: listing_and_detail
+    login_required: true
+    login_required_for: [submission, restricted_downloads]
+    data_available_without_login: [listing, detail]
+    data_requiring_login: [submission, restricted_documents]
+    manual_seeding_workflow: public_read_or_owner_browser_session
+    otp_or_captcha_policy: pause_and_request_owner_help
+    typical_tender_density: medium
+    autonomous_allowed_actions: [search, read_public_listing, discover_documents]
+    forbidden_actions: [submit_bid, upload_document, pay, use_dsc, accept_declaration]
+    evidence_level_possible_without_login: [PUBLIC_LISTING_ONLY, DETAIL_PAGE_READ]
+    evidence_level_requires_login: [DOCUMENTS_DOWNLOADED]
+    notes: Use structured blockers for login walls.
+  ireps:
+    display_name: IREPS
+    public_access_level: public_listing_limited
+    login_required: true
+    login_required_for: [detailed_documents, participation, submission]
+    data_available_without_login: [selected_public_notices]
+    data_requiring_login: [full_documents, railway_bid_participation]
+    manual_seeding_workflow: owner_session_or_manual_upload
+    otp_or_captcha_policy: pause_and_request_owner_help
+    typical_tender_density: high_specialized
+    autonomous_allowed_actions: [search, read_public_listing]
+    forbidden_actions: [submit_bid, upload_document, pay, use_dsc, accept_declaration]
+    evidence_level_possible_without_login: [PUBLIC_LISTING_ONLY]
+    evidence_level_requires_login: [DETAIL_PAGE_READ, DOCUMENTS_DOWNLOADED]
+    notes: Registration and category specialization matter.
+  defence_procurement:
+    display_name: Defence Procurement
+    public_access_level: notice_limited
+    login_required: true
+    login_required_for: [restricted_documents, participation, submission]
+    data_available_without_login: [public_notices]
+    data_requiring_login: [restricted_documents, security_declarations]
+    manual_seeding_workflow: owner_manual_review
+    otp_or_captcha_policy: stop_and_request_specialist_review
+    typical_tender_density: specialized
+    autonomous_allowed_actions: [search, read_public_notice]
+    forbidden_actions: [submit_bid, upload_document, pay, use_dsc, accept_declaration]
+    evidence_level_possible_without_login: [PUBLIC_LISTING_ONLY]
+    evidence_level_requires_login: [DOCUMENTS_DOWNLOADED, DEEP_READ_COMPLETE]
+    notes: Security clearance requirements are common hard filters.
+  ungm:
+    display_name: UNGM
+    public_access_level: notice_search_and_detail
+    login_required: true
+    login_required_for: [supplier_registration, some_documents, response_submission]
+    data_available_without_login: [notice_title, agency, country, deadline, summary, public_documents]
+    data_requiring_login: [supplier_profile, some_attachments, bid_response]
+    manual_seeding_workflow: public_notice_or_owner_registration_session
+    otp_or_captcha_policy: pause_and_request_owner_help
+    typical_tender_density: medium
+    autonomous_allowed_actions: [search, read_public_notice, download_public_document_if_available]
+    forbidden_actions: [submit_quote, send_buyer_reply, upload_document, pay, accept_declaration]
+    evidence_level_possible_without_login: [PUBLIC_LISTING_ONLY, DETAIL_PAGE_READ, DOCUMENTS_DISCOVERED, DOCUMENTS_DOWNLOADED]
+    evidence_level_requires_login: [DEEP_READ_COMPLETE]
+    notes: Multilateral notices require buyer and compliance review before supplier work.
+  undp_notices:
+    display_name: UNDP notices
+    public_access_level: public_notice
+    login_required: true
+    login_required_for: [Quantum_supplier_portal_response, registration]
+    data_available_without_login: [notice, deadline, country, agency, contact_or_portal_path]
+    data_requiring_login: [response_submission, some_attachments]
+    manual_seeding_workflow: public_notice_then_owner_quantum_decision
+    otp_or_captcha_policy: pause_and_request_owner_help
+    typical_tender_density: medium
+    autonomous_allowed_actions: [search, read_public_notice, parse_public_notice]
+    forbidden_actions: [submit_quote, send_buyer_reply, upload_document, pay, accept_declaration]
+    evidence_level_possible_without_login: [PUBLIC_LISTING_ONLY, DETAIL_PAGE_READ]
+    evidence_level_requires_login: [DOCUMENTS_DOWNLOADED]
+    notes: Treat Quantum registration as owner/manual.
+  world_bank:
+    display_name: World Bank procurement
+    public_access_level: public_notice
+    login_required: false
+    login_required_for: [external_borrower_submission_process]
+    data_available_without_login: [notices, procurement plan, award summaries]
+    data_requiring_login: []
+    manual_seeding_workflow: public_read_with_manual_borrower_followup_decision
+    otp_or_captcha_policy: structured_blocker_if_present
+    typical_tender_density: low_medium
+    autonomous_allowed_actions: [search, read_public_notice, parse]
+    forbidden_actions: [send_buyer_reply, submit_quote, upload_document, pay]
+    evidence_level_possible_without_login: [PUBLIC_LISTING_ONLY, DETAIL_PAGE_READ, DOCUMENTS_DISCOVERED]
+    evidence_level_requires_login: []
+    notes: High compliance burden; do not assume trader fit.
+  india_business_portal:
+    display_name: India Business Portal
+    public_access_level: portal_listing
+    login_required: false
+    login_required_for: [some_buyer_interactions]
+    data_available_without_login: [buyer_leads, product_categories]
+    data_requiring_login: [direct_contact_or_response]
+    manual_seeding_workflow: public_read_then_buyer_verification
+    otp_or_captcha_policy: structured_blocker_if_present
+    typical_tender_density: medium
+    autonomous_allowed_actions: [search, read_public_listing, classify_lead]
+    forbidden_actions: [send_buyer_reply, send_export_quote]
+    evidence_level_possible_without_login: [PUBLIC_LISTING_ONLY, DETAIL_PAGE_READ]
+    evidence_level_requires_login: [DOCUMENTS_DOWNLOADED]
+    notes: Buyer verification gate remains mandatory.
+  indian_trade_portal:
+    display_name: Indian Trade Portal
+    public_access_level: public_information
+    login_required: false
+    login_required_for: []
+    data_available_without_login: [tariff_data, market_reports, trade_information]
+    data_requiring_login: []
+    manual_seeding_workflow: public_research
+    otp_or_captcha_policy: structured_blocker_if_present
+    typical_tender_density: research_only
+    autonomous_allowed_actions: [read_public_information, cite]
+    forbidden_actions: [send_buyer_reply, submit_quote]
+    evidence_level_possible_without_login: [DETAIL_PAGE_READ]
+    evidence_level_requires_login: []
+    notes: Research source, not a direct RFQ truth source.
+  apeda_agriexchange:
+    display_name: APEDA AgriXchange
+    public_access_level: public_research_and_leads
+    login_required: false
+    login_required_for: [member_specific_services]
+    data_available_without_login: [market_data, agri_export_information]
+    data_requiring_login: [member_services]
+    manual_seeding_workflow: public_research_then_compliance_review
+    otp_or_captcha_policy: structured_blocker_if_present
+    typical_tender_density: category_specific
+    autonomous_allowed_actions: [read_public_information, cite]
+    forbidden_actions: [claim_certificate, send_quote]
+    evidence_level_possible_without_login: [DETAIL_PAGE_READ]
+    evidence_level_requires_login: []
+    notes: Certificate lead time and APEDA requirements must be checked.
+  fieo_connect:
+    display_name: FIEO Connect
+    public_access_level: limited_public
+    login_required: true
+    login_required_for: [buyer_leads, member_services]
+    data_available_without_login: [public_pages]
+    data_requiring_login: [RFQs, buyer_contacts]
+    manual_seeding_workflow: owner_membership_or_manual_export
+    otp_or_captcha_policy: pause_and_request_owner_help
+    typical_tender_density: member_dependent
+    autonomous_allowed_actions: [read_public_information]
+    forbidden_actions: [send_buyer_reply, send_quote, pay_subscription]
+    evidence_level_possible_without_login: [PUBLIC_LISTING_ONLY]
+    evidence_level_requires_login: [DETAIL_PAGE_READ, DOCUMENTS_DISCOVERED]
+    notes: Membership/registration state must be explicit.
+  tradekey:
+    display_name: TradeKey
+    public_access_level: marketplace_listing
+    login_required: false
+    login_required_for: [contact_details, direct_response]
+    data_available_without_login: [some_buy_leads, masked_buyer_info]
+    data_requiring_login: [contact, direct_response, unmasked_buyer]
+    manual_seeding_workflow: buyer_verification_queue
+    otp_or_captcha_policy: structured_blocker_if_present
+    typical_tender_density: high_weak
+    autonomous_allowed_actions: [read_public_listing, classify_lead]
+    forbidden_actions: [send_buyer_reply, send_quote]
+    evidence_level_possible_without_login: [PUBLIC_LISTING_ONLY]
+    evidence_level_requires_login: [DETAIL_PAGE_READ]
+    notes: Marketplace-only lead is weak demand.
+  alibaba_rfq:
+    display_name: Alibaba RFQ
+    public_access_level: marketplace_listing_limited
+    login_required: true
+    login_required_for: [RFQ_detail, buyer_contact, response]
+    data_available_without_login: [generic_listing_or_landing_pages]
+    data_requiring_login: [buyer_identity, RFQ_detail, contact_path]
+    manual_seeding_workflow: owner_session_or_manual_Rfq_capture
+    otp_or_captcha_policy: pause_and_request_owner_help
+    typical_tender_density: high_weak
+    autonomous_allowed_actions: [read_public_listing, classify_lead]
+    forbidden_actions: [send_buyer_reply, send_quote, pay_subscription]
+    evidence_level_possible_without_login: [PUBLIC_LISTING_ONLY]
+    evidence_level_requires_login: [DETAIL_PAGE_READ, DOCUMENTS_DISCOVERED]
+    notes: Never treat a generic marketplace landing page as verified RFQ demand.
+  shipment_data:
+    display_name: Volza/Panjiva/ImportGenius/manual shipment exports
+    public_access_level: licensed_or_manual
+    login_required: true
+    login_required_for: [shipment_records, importer_details]
+    data_available_without_login: [marketing_pages, limited_samples]
+    data_requiring_login: [shipment_history, importer_identity, volumes]
+    manual_seeding_workflow: licensed_export_imported_manually
+    otp_or_captcha_policy: no_bypass
+    typical_tender_density: intelligence_only
+    autonomous_allowed_actions: [parse_owner_provided_export, summarize]
+    forbidden_actions: [scrape_paywalled_data, bypass_login, send_buyer_reply]
+    evidence_level_possible_without_login: [PUBLIC_LISTING_ONLY]
+    evidence_level_requires_login: [DETAIL_PAGE_READ]
+    notes: Use only licensed/manual exports; do not scrape around paywalls.
+  paid_aggregators:
+    display_name: TenderTiger / TendersInfo paid aggregators
+    public_access_level: teaser_or_paid
+    login_required: true
+    login_required_for: [full_records, documents, alerts]
+    data_available_without_login: [teasers, marketing_pages]
+    data_requiring_login: [full_tender_data, documents]
+    manual_seeding_workflow: owner_subscription_or_skip
+    otp_or_captcha_policy: no_bypass
+    typical_tender_density: high_paid
+    autonomous_allowed_actions: [read_public_teaser, log_paywall]
+    forbidden_actions: [scrape_paywall, pay_subscription_without_approval]
+    evidence_level_possible_without_login: [PUBLIC_LISTING_ONLY, BLOCKED_PAYWALL]
+    evidence_level_requires_login: [DETAIL_PAGE_READ, DOCUMENTS_DOWNLOADED]
+    notes: Paywall is a structured blocker, not a failure to invent data.

@@ -1,0 +1,30 @@
+source: ungm
+start_url: https://www.ungm.org/Public/Notice
+listing_card:
+  - "#tblNotices .tableBody .notice-table"
+  - ".notice-card"
+fields:
+  tender_id:
+    - "[data-description='Reference']"
+    - ".notice-id"
+  title:
+    - ".resultTitle .ungm-title"
+    - ".notice-title"
+  buyer:
+    - ".resultAgency"
+    - ".agency"
+  deadline:
+    - ".deadline"
+  value:
+    - ".value"
+  detail_link:
+    - ".resultTitle a[href*='/Public/Notice/']"
+    - "a.notice-link"
+  document_link:
+    - "a.document-link"
+    - "a[href$='.pdf']"
+  corrigendum_link:
+    - "a.corrigendum-link"
+  boq_link:
+    - "a.boq-link"
+unsafe_actions: [submit, upload, pay, declaration]

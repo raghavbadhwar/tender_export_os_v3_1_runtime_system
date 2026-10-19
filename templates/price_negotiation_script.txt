@@ -1,0 +1,36 @@
+PRICE NEGOTIATION SCRIPT — {{CASE_ID}}
+
+Product: {{PRODUCT_NAME}}
+Supplier: {{SUPPLIER_NAME}}
+Current Quote: ₹/$ {{CURRENT_PRICE}} per {{UNIT}}
+Target Price: ₹/$ {{TARGET_PRICE}} per {{UNIT}}
+Gap: {{PRICE_GAP}}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+OPENING (use these points):
+
+1. Thank the supplier for the quote.
+2. Confirm product specification understanding is correct.
+3. State that we have received competitive offers.
+4. Ask if they can improve the price for the following reasons:
+   - Higher quantity: {{QUANTITY}} {{UNIT}} all at once
+   - Quick payment: {{OUR_PAYMENT_TERMS}}
+   - Repeat business potential: {{REPEAT_BUSINESS_PITCH}}
+
+KEY NEGOTIATION LEVERS:
+- Quantity increase possibility: {{QUANTITY_FLEX}}
+- Payment terms improvement: {{PAYMENT_OFFER}}
+- Long-term supplier relationship
+- Reference/testimonial in exchange
+
+WALK-AWAY PRICE: {{WALK_AWAY_PRICE}} per {{UNIT}}
+(Do not go below this — pricing model shows loss below this)
+
+FALLBACK SUPPLIER: {{FALLBACK_SUPPLIER}}
+(Mention this only if supplier is unresponsive to negotiation)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ NOTE: This is a draft script only.
+Owner reviews before any price discussion with supplier.
+Reference: Case {{CASE_ID}} | pricing_agent

@@ -1,0 +1,290 @@
+#!/usr/bin/env python3
+"""Rebuild CSV projections from data/events.jsonl."""
+
+from __future__ import annotations
+
+import argparse
+import csv
+import shutil
+from pathlib import Path
+from typing import Any
+
+try:
+    from event_ledger import EVENTS_FILE, load_events
+except ModuleNotFoundError:  # pragma: no cover - pytest package import path
+    from scripts.event_ledger import EVENTS_FILE, load_events
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "outputs" / "projections"
+
+PROJECTIONS = {
+    "case": {
+        "file": PROJECT_ROOT / "data" / "master_cases.csv",
+        "id_field": "case_id",
+        "snapshot_event": "case.snapshot_imported",
+        "upsert_events": ["case.updated_from_corrigendum", "case.historical_intelligence_recorded"],
+    },
+    "approval": {
+        "file": PROJECT_ROOT / "data" / "approvals_receipts.csv",
+        "id_field": "approval_id",
+        "snapshot_event": "approval.snapshot_imported",
+    },
+    "supplier": {
+        "file": PROJECT_ROOT / "data" / "supplier_master.csv",
+        "id_field": "supplier_id",
+        "snapshot_event": "supplier.snapshot_imported",
+    },
+    "quote": {
+        "file": PROJECT_ROOT / "data" / "quote_master.csv",
+        "id_field": "quote_id",
+        "snapshot_event": "quote.snapshot_imported",
+    },
+    "source_health": {
+        "file": PROJECT_ROOT / "data" / "source_health.csv",
+        "id_field": "source_name",
+        "snapshot_event": "source_health.snapshot_imported",
+    },
+    "plugin_health": {
+        "file": PROJECT_ROOT / "data" / "plugin_health.csv",
+        "id_field": "plugin_or_tool",
+        "snapshot_event": "plugin_health.snapshot_imported",
+    },
+    "buyer": {
+        "file": PROJECT_ROOT / "data" / "buyer_master.csv",
+        "id_field": "buyer_id",
+        "snapshot_event": "buyer.snapshot_imported",
+    },
+    "rfq": {
+        "file": PROJECT_ROOT / "data" / "rfq_master.csv",
+        "id_field": "rfq_id",
+        "snapshot_event": "rfq.snapshot_imported",
+    },
+    "demand_research": {
+        "file": PROJECT_ROOT / "data" / "demand_research.csv",
+        "id_field": "research_id",
+        "snapshot_event": "demand_research.snapshot_imported",
+    },
+    "buyer_demand_signal": {
+        "file": PROJECT_ROOT / "data" / "buyer_demand_signals.csv",
+        "id_field": "signal_id",
+        "snapshot_event": "buyer_demand_signal.snapshot_imported",
+    },
+    "outreach": {
+        "file": PROJECT_ROOT / "data" / "outreach_queue.csv",
+        "id_field": "outreach_id",
+        "snapshot_event": "outreach.snapshot_imported",
+    },
+    "communication": {
+        "file": PROJECT_ROOT / "data" / "communication_log.csv",
+        "id_field": "communication_id",
+        "snapshot_event": "communication.snapshot_imported",
+    },
+    "case_outcome": {
+        "file": PROJECT_ROOT / "data" / "case_outcomes.csv",
+        "id_field": "outcome_id",
+        "snapshot_event": "case_outcome.snapshot_imported",
+        "upsert_events": ["case.outcome_recorded"],
+    },
+    "learning_proposal": {
+        "file": PROJECT_ROOT / "data" / "learning_proposals.csv",
+        "id_field": "proposal_id",
+        "snapshot_event": "learning_proposal.snapshot_imported",
+        "upsert_events": ["learning.proposal_staged", "learning.proposal_evaluated", "learning.promoted"],
+    },
+    "model_registry": {
+        "file": PROJECT_ROOT / "data" / "model_registry.csv",
+        "id_field": "model_id",
+        "snapshot_event": "model_registry.snapshot_imported",
+    },
+    "agent_evaluation": {
+        "file": PROJECT_ROOT / "data" / "agent_evaluations.csv",
+        "id_field": "evaluation_id",
+        "snapshot_event": "agent_evaluation.snapshot_imported",
+    },
+    "historical_notice": {
+        "file": PROJECT_ROOT / "data" / "historical_tender_notices.csv",
+        "id_field": "notice_id",
+        "snapshot_event": "historical_notice.snapshot_imported",
+        "upsert_events": ["historical_notice.captured"],
+    },
+    "historical_award": {
+        "file": PROJECT_ROOT / "data" / "historical_awards.csv",
+        "id_field": "award_id",
+        "snapshot_event": "historical_award.snapshot_imported",
+        "upsert_events": ["historical_award.captured"],
+    },
+}
+
+
+# Historical adapters used short labels while the register used owner-facing
+# source names. Keep those events on the same durable source-health row.
+SOURCE_HEALTH_ID_ALIASES = {
+    "CPPP/eProcure": "CPPP — Central Public Procurement Portal",
+    "GeM": "GeM — Government e-Marketplace",
+    "Indian Trade Portal (ITP)": "Indian Trade Portal",
+    "UNGM": "UN Global Marketplace (UNGM)",
+}
+
+
+def load_headers(path: Path) -> list[str]:
+    with path.open("r", newline="", encoding="utf-8") as f:
+        return next(csv.reader(f), [])
+
+
+def normalize_row(row: dict[str, Any], headers: list[str]) -> dict[str, str]:
+    return {field: str(row.get(field, "") or "") for field in headers}
+
+
+def apply_update(current: dict[str, str], payload: dict[str, Any], headers: list[str]) -> dict[str, str]:
+    row = dict(current)
+    updates = payload
+    for nested_key in ("updates", "row", "after"):
+        nested_value = payload.get(nested_key) if isinstance(payload, dict) else None
+        if isinstance(nested_value, dict):
+            updates = nested_value
+            break
+    for field, value in updates.items():
+        if field in headers:
+            row[field] = str(value if value is not None else "")
+    return row
+
+
+def update_values(payload: dict[str, Any]) -> dict[str, Any]:
+    """Return the row-shaped portion of an event payload."""
+    if not isinstance(payload, dict):
+        return {}
+    for nested_key in ("updates", "row", "after"):
+        nested_value = payload.get(nested_key)
+        if isinstance(nested_value, dict):
+            return nested_value
+    return payload
+
+
+def has_projection_fields(payload: dict[str, Any], headers: list[str], id_field: str) -> bool:
+    """Reject metadata-only events that do not mutate a CSV projection."""
+    values = update_values(payload)
+    return any(field in headers and field != id_field for field in values)
+
+
+def event_record_id(event: dict[str, Any], id_field: str) -> str:
+    """Resolve the canonical register key represented by an event."""
+    payload = event.get("payload", {}) if isinstance(event.get("payload", {}), dict) else {}
+    values = update_values(payload)
+
+    if event.get("object_type") == "case":
+        # case_id is the cross-system key. Some workspace events legitimately
+        # use a path as object_id, which must never become a register row.
+        record_id = event.get("case_id") or values.get(id_field) or event.get("object_id")
+    else:
+        record_id = event.get("object_id") or values.get(id_field)
+
+    record_id = str(record_id or "")
+    if event.get("object_type") == "source_health":
+        return SOURCE_HEALTH_ID_ALIASES.get(record_id, record_id)
+    return record_id
+
+
+def project(events: list[dict]) -> dict[str, list[dict[str, str]]]:
+    states: dict[str, dict[str, dict[str, str]]] = {name: {} for name in PROJECTIONS}
+    headers = {name: load_headers(spec["file"]) for name, spec in PROJECTIONS.items()}
+
+    for event in events:
+        object_type = event.get("object_type", "")
+        if object_type not in PROJECTIONS:
+            continue
+        spec = PROJECTIONS[object_type]
+        id_field = spec["id_field"]
+        payload = event.get("payload", {})
+        if not isinstance(payload, dict):
+            continue
+        object_id = event_record_id(event, id_field)
+        if not object_id:
+            continue
+
+        if event.get("event_type") == spec["snapshot_event"] and isinstance(payload.get("row"), dict):
+            row = normalize_row(payload["row"], headers[object_type])
+            row[id_field] = str(object_id)
+            states[object_type][object_id] = row
+        elif event.get("event_type") in {
+            f"{object_type}.updated",
+            f"{object_type}.created",
+            *spec.get("upsert_events", []),
+        }:
+            if not has_projection_fields(payload, headers[object_type], id_field):
+                continue
+            existing = states[object_type].get(object_id, {field: "" for field in headers[object_type]})
+            row = apply_update(existing, payload, headers[object_type])
+            row[id_field] = str(object_id)
+            states[object_type][object_id] = row
+        elif event.get("event_type") == "case.status_changed" and object_type == "case":
+            existing = states[object_type].get(object_id, {field: "" for field in headers[object_type]})
+            updates = {
+                "status": payload.get("new_status", ""),
+                "updated_at": str(event.get("event_time", ""))[:10],
+            }
+            if payload.get("actor"):
+                updates["created_by_agent"] = payload["actor"]
+            row = apply_update(existing, {"updates": updates}, headers[object_type])
+            row[id_field] = str(object_id)
+            states[object_type][object_id] = row
+        elif event.get("event_type") == "approval.owner_decision_recorded" and object_type == "approval":
+            decision = update_values(payload)
+            decision_case_id = str(event.get("case_id") or decision.get("case_id") or "")
+            if not decision_case_id or not decision.get("approval_status"):
+                # Standing policies are durable approval events, but they are
+                # not row-level case approvals in approvals_receipts.csv.
+                continue
+            existing = states[object_type].get(object_id, {field: "" for field in headers[object_type]})
+            row = apply_update(existing, payload, headers[object_type])
+            row[id_field] = str(object_id)
+            states[object_type][object_id] = row
+
+    return {
+        name: sorted(rows.values(), key=lambda row: row.get(PROJECTIONS[name]["id_field"], ""))
+        for name, rows in states.items()
+    }
+
+
+def write_projection(path: Path, headers: list[str], rows: list[dict[str, str]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=headers)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Rebuild CSV projections from the v4.1 event ledger")
+    parser.add_argument("--events", default=str(EVENTS_FILE), help="Event ledger path")
+    parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR), help="Dry-run projection output directory")
+    parser.add_argument("--write", action="store_true", help="Write rebuilt projections back to data/*.csv")
+    args = parser.parse_args()
+
+    events_path = Path(args.events)
+    if not events_path.is_absolute():
+        events_path = PROJECT_ROOT / events_path
+    events = load_events(events_path)
+    projected = project(events)
+
+    output_dir = Path(args.output_dir)
+    if not output_dir.is_absolute():
+        output_dir = PROJECT_ROOT / output_dir
+
+    for name, rows in projected.items():
+        spec = PROJECTIONS[name]
+        headers = load_headers(spec["file"])
+        target = spec["file"] if args.write else output_dir / spec["file"].name
+        if args.write:
+            backup = spec["file"].with_suffix(spec["file"].suffix + ".projection.bak")
+            shutil.copy2(spec["file"], backup)
+        write_projection(target, headers, rows)
+        print(f"{name}: wrote {len(rows)} rows to {target}")
+
+    if not args.write:
+        print("Dry-run projection complete. Use --write only after reviewing output.")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

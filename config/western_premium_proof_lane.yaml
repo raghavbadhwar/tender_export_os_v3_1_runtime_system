@@ -1,0 +1,33 @@
+version: 1
+lane: western_premium_proof
+safety_boundary: "Internal proof lane only. No buyer contact, supplier commitment, quote send, portal upload, payment, DSC, final price, final HS/HTS/ITC-HS, origin, delivery, tax, legal, or compliance claim."
+
+target_markets:
+  - UK
+  - USA
+  - Canada
+  - Germany
+
+target_categories:
+  - premium Indian handicrafts
+  - small decor
+  - small décor
+  - artisan textiles
+  - corporate gifting
+
+conditional_categories:
+  spices:
+    allowed_only_after_food_safety_docs: true
+    accepted_docs:
+      - FSSAI
+      - APEDA
+      - HACCP
+      - ISO 22000
+      - organic certificate
+
+guardrails:
+  no_buyer_specific_proof: "research_lane_only"
+  no_hs_hts_itchs_tariff_check: "no_quote"
+  no_supplier_certificate_provenance_packing_proof: "no_buyer_commitment"
+  fragile_or_bulky_requires_freight_packaging_breakage_proof: true
+  minimum_landed_margin_pct: 35

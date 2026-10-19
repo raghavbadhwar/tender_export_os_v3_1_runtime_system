@@ -1,0 +1,64 @@
+.DS_Store
+
+# Python/local tooling
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+
+# Dependency and build outputs
+node_modules/
+dist/
+build/
+.venv/
+venv/
+
+# Local secrets and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+
+# Private runtime state
+.local/
+.local/browser_profiles/
+browser_profiles/
+.hermes/
+
+# Live outputs and evidence
+outputs/**
+!outputs/examples/
+!outputs/examples/**
+
+receipts/**
+!receipts/examples/
+!receipts/examples/**
+
+# Live ledgers and registers
+data/**
+
+# Allow examples/templates only
+!data/examples/
+!data/examples/**
+
+# Browser/session/cache/evidence
+.crawl4ai/
+*.sqlite
+Cookies
+Local Storage/
+Session Storage/
+downloads/
+artifacts/private/
+cases/**/HERMES.md
+cases/**/case.md
+cases/**/evidence/**
+cases/*/HERMES.md
+cases/*/case.md
+cases/*/evidence/**
+!cases/examples/
+!cases/examples/**
